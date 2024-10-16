@@ -1,17 +1,26 @@
+'use client'
+
+import Image from "next/image";
+import { motion } from 'framer-motion';
+
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
+        <motion.div
+            initial={{ opacity: 0 }} // 初期状態
+            animate={{ opacity: 1 }} // アニメーション後の状態
+            transition={{ duration: 2 }} // アニメーションの持続時間
         >
-
-          me (fixed)
-        </a>
-      </main>
+            <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
+                <div className="shrink-0">
+                    <Image src="/azure.png" width={128} height={128} alt="Azure Logo"/>
+                </div>
+                <div>
+                    <div className="text-xl font-medium text-black">Azure</div>
+                    <p className="text-slate-500">You have a new message!</p>
+                </div>
+            </div>
+        </motion.div>
     </div>
   );
 }
