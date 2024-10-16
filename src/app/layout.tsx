@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from "next";
 import { motion } from 'framer-motion';
 import localFont from "next/font/local";
