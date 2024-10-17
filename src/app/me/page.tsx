@@ -2,9 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-    FaBirthdayCake
-  } from "react-icons/fa";
 
 export default function Home() {
   return (

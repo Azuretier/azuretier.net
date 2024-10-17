@@ -14,6 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  title: 'azuret.net',
   description: "A website created by Azuret.",
   openGraph: {
     title: "azuret.net",
