@@ -7,11 +7,11 @@ export default function Home() {
   return (
     <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
         <motion.div
-            key={Math.random()}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
-              type: 'spring',
+              duration: 0.5,      // アニメーションの時間
+              ease: 'easeOut',    // イージングで動きを調整
             }}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
