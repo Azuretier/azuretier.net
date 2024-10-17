@@ -11,8 +11,8 @@ export default function Home() {
             animate="show"
             viewport={{ once: true }}
             variants={{
-                hidden: { opacity: 0, y: 500 },
-                show: { opacity: 1, y: 0, transition: { type: 'spring'}},
+                hidden: { opacity: 0, y: 500, scale: 0},
+                show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', bounce: 0.3 }},
             }}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
