@@ -14,14 +14,19 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "azuret.net",
+  title: {
+    default: "azuret.net",
+    template: `%s - azuret.net`,
+  },
   description: "A website created by Azuret.",
-  themeColor: "#FFA500",
+  themeColor: '#ffa500',
   openGraph: {
-    images: [{
-      url: "https://azuret.net/public/azure.png"
-    }],
-  }
+    title: "azuret.net",
+    description: "A website created by Azuret.",
+    siteName: "azuret.net",
+    locale: 'ja-JP',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
