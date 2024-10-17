@@ -8,12 +8,11 @@ export default function Home() {
     <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
         <AnimatePresence>
         <motion.div
-            layout
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{
-              type: 'spring'
+              duration: 1
             }}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
