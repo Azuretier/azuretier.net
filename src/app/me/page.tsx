@@ -2,14 +2,23 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        setIsLoaded(true);
+    }, []); // 初回レンダリング時のみ実行される
+    
   return (
     <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
         <AnimatePresence>
         <motion.div
+            layout
+            key={Math.random()}
             initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={isLoaded ? { opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{
               duration: 1
