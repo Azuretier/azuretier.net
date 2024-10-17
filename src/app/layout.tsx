@@ -32,6 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+        <meta name="theme-color" content="#ffa500"></meta>
         <link rel="icon" href="/favicon.ico" />
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
