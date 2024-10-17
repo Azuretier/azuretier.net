@@ -10,7 +10,7 @@ export default function Home() {
             initial={{ opacity: 0, y: -100 }}
             animate={{
                 opacity: 1,
-                y: [-30, 10, -5, 0], // 上にバウンスしてから少し下にバウンド
+                y: [-30, 10, 3, 0], // 上にバウンスしてから少し下にバウンド
             }}
             transition={{
                 duration: 1.5, // アニメーションの持続時間
