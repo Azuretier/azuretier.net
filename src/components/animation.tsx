@@ -30,7 +30,7 @@ const FadeUpStagger = ({ children }: { children: React.ReactNode }) => {
 };
 
 const FadeUpDiv = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLAnchorElement>>(
-  ({ className, children }, ref) => (
+  ({ className, children }) => (
     <motion.div className={className} variants={FADE_UP_ANIMATION_VARIANTS}>
       {children}
     </motion.div>
@@ -39,7 +39,7 @@ const FadeUpDiv = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLAnch
 FadeUpDiv.displayName = 'FadeUpDiv';
 
 const FadeUpCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLAnchorElement>>(
-  ({ className, children }, ref) => (
+  ({ className, children }) => (
     <motion.div
       className={cn('rounded-xl border bg-card text-card-foreground shadow', className)}
       variants={FADE_UP_ANIMATION_VARIANTS}
