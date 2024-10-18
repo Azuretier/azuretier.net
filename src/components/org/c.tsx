@@ -1,4 +1,4 @@
-const konyuuta = () => {
+const Konyuuta = () => {
     return (
         <main>
             <div>aiueo</div>
@@ -6,4 +6,4 @@ const konyuuta = () => {
     );
 }
 
-export default konyuuta
+export default Konyuuta
