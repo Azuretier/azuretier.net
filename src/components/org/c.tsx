@@ -3,7 +3,7 @@ const Konyuuta = () => {
         // items-center = vertical
         // justify-center = horizontal
 
-        <main className="flex items-center justify-center">
+        <main className="flex items-center justify-center h-screen">
             <div>aiueo</div>
         </main>
     );
