@@ -34,7 +34,7 @@ export default function Home() {
                         delay: delay,
                     },
                     opacity: {
-                        duration: 2,
+                        duration: 3,
                         delay: delay,
                     },
                     scale: {
