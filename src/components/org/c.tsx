@@ -7,7 +7,7 @@ const KonYuuta = () => {
     // justify-center = horizontal
     return (
         <main className="flex items-center justify-center h-screen">
-            <div>aiueo</div>
+            <div className="bg-white font-semibold">aiueo</div>
         </main>
     )
 }
