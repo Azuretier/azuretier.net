@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from 'react';
+import { motion } from "framer-motion";
 
 export default function Home() {
     const [isLoaded, setIsLoaded] = useState(false);
