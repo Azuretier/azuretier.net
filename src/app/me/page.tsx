@@ -17,9 +17,8 @@ export default function Home() {
             <motion.div
                 layout
                 key={Math.random()}
-                initial={{ opacity: 0, y: 10 }}
+                initial={isLoaded ? { opacity: 0, y: 10 }: {}}
                 animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-                exit={{ opacity: 0, y: 10 }}
                 transition={{
                     type: 'spring'
                 }}
