@@ -9,7 +9,9 @@ const OrgButton = () => {
     }
 
     return (
-        <button className="square" onClick={Plus}>{value}</button>
+        <div className="flex justify-center items-center">
+            <button className="p-6  bg-white rounded-xl shadow-lg" onClick={Plus}>{value}</button>
+        </div>
     )
 }
 
