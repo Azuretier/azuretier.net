@@ -7,8 +7,8 @@ import {motion} from 'framer-motion'
 import {animate} from 'framer-motion/dom'
 
 const Gatiiku = () => {
-    const fadeUp = document.getElementById("fadeUp")
     useEffect(() => {
+        const fadeUp = document.getElementById("fadeUp")
         if (fadeUp != null) {
             animate(fadeUp, {opacity: [0, 1]})
         }
