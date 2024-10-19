@@ -24,7 +24,7 @@ const Gatiiku = () => {
                         y:0,
                         transition: { 
                             type: 'spring',
-                            delay: 1
+                            delay: 0.2
                         }
                     }
                 }
