@@ -14,6 +14,7 @@ const Gatiiku = () => {
     return (
         <main className="flex justify-center items-center h-screen" key={count}>
             <motion.div
+                key={count}
                 className="bg-white p-4 rounded-xl text-xl"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
