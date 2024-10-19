@@ -1,14 +1,12 @@
 import Center from "@/components/org/c"
-import {FadeUpDiv, FadeUpStagger} from "@/components/animation"
+import {Anim} from "@/components/org/anim"
 
 export default function gatiiku() {
     return (
         <main className="flex items-center justify-center h-screen">
-            <FadeUpStagger>
-                <FadeUpDiv>
+            <Anim>
                     <Center>Hello how are yo&apos; doing bro</Center>
-                </FadeUpDiv>
-            </FadeUpStagger> 
+            </Anim>
         </main>
     )
 }
