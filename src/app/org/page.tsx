@@ -8,7 +8,7 @@ import {animate} from 'framer-motion/dom'
 
 const Gatiiku = () => {
     useEffect(() => {
-        const fadeUp = document.getElementById("fadeUp")
+        const fadeUp = null
         if (fadeUp != null) {
             animate(fadeUp, {opacity: [0, 1]})
         }
@@ -18,8 +18,9 @@ const Gatiiku = () => {
         <main className="flex items-center justify-center h-screen">    
             <motion.div 
                 className="bg-white p-4 rounded-xl text-xl text-black"
-                initial={{y: 10}}
-                animate={{y: 0}}
+                initial={{opacity: 0}}
+                //animate={{y: 0}}
+                whileInView={{ opacity: 1 }}
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >gatiiku</motion.div>
