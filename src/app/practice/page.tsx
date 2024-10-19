@@ -7,13 +7,13 @@ import {
   FaUserGraduate,
 } from 'react-icons/fa';
 
+//<div className='flex h-16 items-center justify-end'>
+//<ThemeToggle />
+//</div>
 export default function Home() {
   return (
     <main className='container space-y-6 py-6 lg:my-10'>
-      <FadeUpStagger>
-        <div className='flex h-16 items-center justify-end'>
-          <ThemeToggle />
-        </div>
+      <FadeUpStagger> 
         <div className='grid grid-cols-12 grid-rows-3 gap-5 lg:gap-6'>
           <FadeUpDiv className='col-span-12 row-span-3 space-y-5 md:space-y-7 lg:col-span-4 lg:space-y-8'>
             <Image
