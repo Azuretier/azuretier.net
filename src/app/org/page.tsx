@@ -9,7 +9,7 @@ const Gatiiku = () => {
 
     useEffect(() => {
         // ページが読み込まれた時に isLoaded を true に設定
-        animate("div", { x: [0, 100] }, { type: "spring" })
+        animate("div", { y: [10, 0] }, { type: "spring" })
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
