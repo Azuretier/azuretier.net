@@ -5,9 +5,7 @@ export default function gatiiku() {
     return (
         <main className="flex items-center justify-center h-screen">
             <FadeUpStagger>
-                <div>
-                    gatiiku
-                </div>
+                <div></div>
                 <div>
                     <FadeUpDiv>
                         <Center>Hello how are yo&apos; doing bro</Center>
