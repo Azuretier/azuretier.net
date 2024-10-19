@@ -1,16 +1,10 @@
-import { FadeUpCard, FadeUpDiv, FadeUpStagger } from '@/components/animation';
-import { CardIcon } from '@/components/link-card-icon';
-import { CardName } from '@/components/link-card-name';
-import { LinkCard } from '@/components/link-card';
+import { FadeUpDiv, FadeUpStagger } from '@/components/animation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import Image from 'next/image';
 import {
   FaBirthdayCake,
   FaLocationArrow,
-  FaSteam,
   FaUserGraduate,
-  FaXbox,
-  FaYoutube,
 } from 'react-icons/fa';
 
 export default function Home() {
