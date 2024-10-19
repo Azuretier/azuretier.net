@@ -18,7 +18,7 @@ const Gatiiku = () => {
 
     return (
         <main className="flex items-center justify-center h-screen">    
-            <div>gatiiku</div>
+            <div id="fadeUpElement">gatiiku</div>
         </main>
     )
 }
