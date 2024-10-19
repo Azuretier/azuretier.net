@@ -30,6 +30,8 @@ export default function Home() {
               className='pointer-events-none w-[150px] rounded-full shadow-xl lg:w-[200px]'
               src="/azure.png"
               alt="nonick's avatar"
+              width={200}
+              height={200}
             />
             <section>
               <h1 className='text-3xl font-black lg:text-4xl'>NoNICK</h1>
