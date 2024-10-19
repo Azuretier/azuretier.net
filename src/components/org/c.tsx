@@ -1,13 +1,13 @@
 import React from "react"
 
 //componentとfuncの違い: componentはuiを, funcは動作を提供
-const Center = ({children, text}: {children: React.ReactNode, text: string;}) => {
+const Center = ({children}: {children: React.ReactNode}) => {
 
     // items-center = vertical
     // justify-center = horizontal
     return (
         <main className="flex items-center justify-center h-screen">
-            <div className="bg-white font-semibold text-xl text-black">{text}: {children}</div>
+            <div className="bg-white font-semibold text-xl text-yellow">{children}</div>
         </main>
     )
 }
