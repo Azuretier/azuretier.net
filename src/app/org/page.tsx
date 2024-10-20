@@ -24,7 +24,7 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section>あずれーと</section>
+                <section>あずれーと</section><br/>
                 <p>Happy Birthday 200X/2/18</p>
             </motion.div>
             <section className="row-span-2"></section>  
