@@ -24,7 +24,7 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="justify-self-center">あずれーと</section>
+                <section className="text-3xl font-black justify-self-center">あずれーと</section>
                 <div className="grid gap-1">
                     <p>Happy Birthday 200X/2/18</p>
                 </div>
