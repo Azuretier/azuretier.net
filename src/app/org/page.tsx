@@ -24,7 +24,7 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                Make your world
+                <section>あずれーと</section>
             </motion.div>
             <section className="row-span-2"></section>  
         </main>
