@@ -28,7 +28,7 @@ const Main = () => {
                 id="fadeUp"
             >
                 <section className="text-3xl font-black justify-self-center">あずれーと</section>
-                <div className="grid grid-flow-col gap-1">
+                <div className="grid grid-flow-col items-center gap-1">
                     <FaBirthdayCake/>
                     <p>200X/2/18</p>
                 </div>
