@@ -28,7 +28,7 @@ const Main = () => {
                 id="fadeUp"
             >
                 <section className="text-3xl font-black justify-self-center">あずれーと</section>
-                <div className="grid grid-flow-col items-center justify-start gap-2 text-var(--subtext)">
+                <div className="grid grid-flow-col items-center justify-start gap-2 text-subtext">
                     <FaBirthdayCake/>
                     <p>200X/2/18</p>
                 </div>
