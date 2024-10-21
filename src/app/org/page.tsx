@@ -21,9 +21,9 @@ const Main = () => {
 
     return (
         <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">
-            <section className="row-span-2"></section>    
+            <section className="row-span-1"></section>    
             <motion.div 
-                className="grid gap-6 p-4 rounded-xl text-xl text-white row-start-2 col-span-3 self-start dark:border-zinc-800"
+                className="grid gap-6 p-4 rounded-xl text-xl text-white row-start-2 col-start-1 col-span-2 self-start dark:border-zinc-800"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
