@@ -23,7 +23,7 @@ const Main = () => {
         <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">
             <section className="row-span-2"></section>    
             <motion.div 
-                className="grid p-4 rounded-xl text-xl text-white row-start-2 col-span-3 self-start dark:border-zinc-800"
+                className="grid gap-6 p-4 rounded-xl text-xl text-white row-start-2 col-span-3 self-start dark:border-zinc-800"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
@@ -33,12 +33,12 @@ const Main = () => {
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
                     <p className="justify-self-center">Azuret</p>
                 </section>
-                <div className="grid grid-flow-row gap-2 text-subtext">
-                    <div className="grid grid-flow-col justify-start">
+                <div className="grid grid-flow-row gap-1 text-subtext">
+                    <div className="grid grid-flow-col gap-2 justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>    
                     </div>
-                    <div className="grid grid-flow-col justify-start">
+                    <div className="grid grid-flow-col gap-2  justify-start">
                         <FaAngleDoubleUp/>
                         <p>Level up enguage</p>
                     </div>
