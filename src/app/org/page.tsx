@@ -29,7 +29,7 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="grid text-base justify-center font-black">
+                <section className="grid text-base font-black">
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
                     <p className="text-3xl">Azuret</p>
                     <p className="text-subtext">あずれーと</p>
