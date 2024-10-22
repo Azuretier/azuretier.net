@@ -35,20 +35,14 @@ const Main = () => {
                     <p className="text-subtext">あずれーと</p>
                     <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                 </div>
-                <div className="grid grid-flow-row grid-flow-col grid-cols-1 gap-1 text-subtext">
-                    <div className="grid gap-2 justify-start">
-                        <FaBirthdayCake/>
-                        <p>200X/2/18</p>    
-                    </div>
-                    <div className="grid gap-2 justify-start">
-                        <FaAngleDoubleUp/>
-                        <p>Get experience to level up</p>
-                    </div>
-                    <div className="grid gap-2 justify-start">
-                        <FaPaperPlane/>
-                        <p>人生って紙飛行機だよね</p>
-                    </div>
-                </div>     
+                <div className="grid grid-flow-col gap-2 grid-cols-2 justify-start">
+                    <FaBirthdayCake/>
+                    <p>200X/2/18</p>    
+                    <FaAngleDoubleUp/>
+                    <p>Get experience to level up</p>
+                    <FaPaperPlane/>
+                    <p>人生って紙飛行機だよね</p>
+                </div>
             </motion.div>
         </main>
     )
