@@ -20,19 +20,18 @@ const Main = () => {
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
-        <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">
-            <section className="row-span-1"></section>    
+        <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">   
             <motion.div 
-                className="grid gap-6 p-4 rounded-xl text-xl text-white row-start-2 col-start-1 col-span-3 self-start dark:border-zinc-800"
+                className="grid gap-6 p-4 rounded-xl text-xl text-white row-start-2 col-start-2 col-span-3"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="grid gap-1 text-base font-black">
+                <section className="grid row-start-2 gap-1 text-base font-black">
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
                     <div className="grid row-start-2 col-start-2">
-                        <p className="text-3xl">Azuret</p>
+                        <p className="justify-self-center text-3xl">Azuret</p>
                         <p className="text-subtext">あずれーと</p>
                         <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                         <div className="text-subtext">
@@ -58,7 +57,6 @@ const Main = () => {
                     </div>
                 </div>
             </motion.div>
-            <section className="row-span-2"></section>  
         </main>
     )
 }
