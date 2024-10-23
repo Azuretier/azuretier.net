@@ -21,7 +21,7 @@ const Main = () => {
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
-        <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">   
+        <main className="grid grid-cols-12 grid-rows-3 grid-flow-row items-center justify-center space-y-6 py-6">   
             <motion.div 
                 className="grid gap-4 p-4 rounded-xl text-base font-black text-white row-start-2 col-start-2 col-span-3"
                 initial={{y: 20, opacity: 0}}
