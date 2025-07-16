@@ -85,7 +85,7 @@ const Main = () => {
               <FaUserGraduate />
               <p>Student</p>
             </div>
-            <div className="grid justify-start gap-2 content-center grid-flow-col">
+            <div className="grid justify-start gap-2 content-center grid-flow-col col-span-5">
               <FaPaperPlane />
               <div className="grid grid-rows-1 grid-cols-2">
                 <span id="rotating-text">{displayedText}</span>
