@@ -77,15 +77,15 @@ const Main = () => {
             <p className="font-normal text-subtext text-lg">I make my world myself</p>
           </div>
           <div className="grid gap-1 text-subtext row-start-3 grid-rows-3">
-            <div className="grid gap-2 content-center grid-rows-1 row-start-1">
+            <div className="grid gap-2 content-center grid-flow-col row-start-1">
               <FaBirthdayCake />
               <p>200X/2/18</p>
             </div>
-            <div className="grid gap-2 content-center grid-rows-1 row-start-2">
+            <div className="grid gap-2 content-center grid-flow-col row-start-2">
               <FaUserGraduate />
               <p>Student</p>
             </div>
-            <div className="grid gap-2 content-center grid-rows-1 row-start-3">
+            <div className="grid gap-2 content-center grid-flow-col row-start-3">
               <FaPaperPlane />
               <div className="grid grid-rows-1 grid-cols-2">
                 <span id="rotating-text">{displayedText}</span>
