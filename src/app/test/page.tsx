@@ -1,10 +1,6 @@
 "use client"
 
-//import Center from "@/components/org/c"
-//import {FadeUpDiv, FadeUpStagger} from "@/components/animation"
-import {useEffect} from 'react'
 import {motion} from 'framer-motion'
-import {animate} from 'framer-motion/dom'
 import {
     FaBirthdayCake,
     FaAngleDoubleUp,
