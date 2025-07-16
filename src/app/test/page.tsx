@@ -43,10 +43,11 @@ const Main = () => {
                     </div>
                     <div className="flex gap-2 items-center">
                         <FaPaperPlane/>
-                        <p>{"Life is like a paper airplane, isn't it?"}</p>
+                        <span id="rotating-text">{"Life is like a paper airplane, isn't it?"}</span>
                     </div>
                 </div>
             </motion.div>
+            <script src="script.js"></script>
         </main>
     )
 }
