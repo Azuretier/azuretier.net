@@ -87,8 +87,7 @@ const Main = () => {
             </div>
             <div className="flex gap-2 items-center row-start-3">
               <FaPaperPlane />
-              <span id="rotating-text">{displayedText}</span>
-              <span className="animate-pulse">|</span>
+              <span id="blinking-cursor rotating-text">{displayedText}</span>
             </div>
           </div>
         </motion.div>
