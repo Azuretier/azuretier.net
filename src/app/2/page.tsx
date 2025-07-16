@@ -74,16 +74,16 @@ const Main = () => {
           <p className="text-subtext">あずれーと</p>
           <p className="font-normal text-subtext text-lg">I make my world myself</p>
         </div>
-        <div className="grid gap-1 text-subtext row-start-3">
-          <div className="flex gap-2 items-center">
+        <div className="grid gap-1 text-subtext row-start-3 grid-rows-3">
+          <div className="flex gap-2 items-center row-start-1">
             <FaBirthdayCake />
             <p>200X/2/18</p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center row-start-2">
             <FaUserGraduate />
             <p>Student</p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center row-start-3">
             <FaPaperPlane />
             <span id="rotating-text">{displayedText}</span>
           </div>
