@@ -32,7 +32,7 @@ const Main = () => {
     elements.forEach((el, index) => {
       // Add delay based on element index
       setTimeout(() => {
-        animate(el, { opacity: [0, 1], y: [50, 0] }, { type: 'spring'});
+        animate(el, { opacity: [0.1, 1], y: [50, 0] }, { type: 'spring'});
       }, index * 150); // delay 150ms between each
     });
   }, []);
@@ -95,18 +95,18 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-gray-400 transition">
+          <motion.a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-gray-400 transition">
             <FaXTwitter size={24} />
-          </a>
-          <a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-7 text-gray-400 transition">
+          </motion.a>
+          <motion.a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-7 text-gray-400 transition">
             <FaGithub size={24} />
-          </a>
-          <a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
+          </motion.a>
+          <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
             <FaDiscord size={24} />
-          </a>
-          <a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 text-red-500 transition">
+          </motion.a>
+          <motion.a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 text-red-500 transition">
             <FaYoutube size={24} />
-          </a>
+          </motion.a>
       </main>
     </>
   )
