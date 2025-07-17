@@ -83,12 +83,6 @@ export default function Home() {
               <DiscordPartnerIcon />
             </CardName>
           </LinkCard>
-          <FadeUpCard className='col-span-6 grid gap-3 p-6 transition-colors hover:border-xbox md:col-span-3 lg:col-span-2'>
-            <CardIcon className='bg-xbox'>
-              <FaXbox size={25} />
-            </CardIcon>
-            <CardName name='Xbox' id='NULL1017' />
-          </FadeUpCard>
           <LinkCard
             className='col-span-6 grid gap-3 p-6 transition-colors hover:border-steam md:col-span-3 lg:col-span-2'
             href='https://steamcommunity.com/id/nonick-mc/'
