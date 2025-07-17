@@ -19,7 +19,7 @@ const FadeUpStagger = ({ children }: { children: React.ReactNode }) => {
         hidden: {},
         show: {
           transition: {
-            staggerChildren: 0.15,
+            staggerChildren: 1,
           },
         },
       }}
