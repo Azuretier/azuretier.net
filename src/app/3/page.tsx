@@ -32,7 +32,7 @@ const Main = () => {
     elements.forEach((el, index) => {
       // Add delay based on element index
       setTimeout(() => {
-        animate(el, { opacity: [0.1, 1], y: [20, 0] });
+        animate(el, { opacity: [0, 1], y: [50, 0] }, { type: 'spring'});
       }, index * 150); // delay 150ms between each
     });
   }, []);
@@ -70,10 +70,6 @@ const Main = () => {
       <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
           <motion.div
             className="fade-up grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0 }}
-            transition={{ type: "spring" }}
-            id="fadeUp"
           >
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
