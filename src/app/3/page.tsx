@@ -71,7 +71,7 @@ const Main = () => {
   return (
     <>
       {/* Main Content */}
-      <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen bg-black">
+      <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen bg-white">
           <motion.div
             className="fade-up grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-3 col-span-4"
           >
