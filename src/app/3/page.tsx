@@ -100,19 +100,21 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid p-4 rounded-xl text-base font-black text-white grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
-            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border-2 border-black transition-colors hover:border-gray-400 rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border shadow transition-colors hover:border-gray-400 rounded-lg row-span-3 col-span-4">
               <FaXTwitter size={24} />
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 col-start-6 text-white border-2 border-black transition-colors hover:border-gray-400 rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 col-start-6 text-white border shadow transition-colors hover:border-gray-400 rounded-lg row-span-3 col-span-4">
               <FaGithub size={24} />
             </motion.a>
-            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid place-items-center gap-3 row-start-5 border-2 border-black transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid place-items-center gap-3 row-start-5 border shadow transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
               </div>
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 text-red-500 border-2 border-black transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
-              <FaYoutube size={24} />
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 text-red-500 border shadow transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[rgb(255,0,0)] bg-white shadow">
+                <FaYoutube size={24} />
+              </div>
             </motion.a>
           </div>
       </main>
