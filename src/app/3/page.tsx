@@ -111,7 +111,7 @@ const Main = () => {
               </div>
             </motion.a>
             <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid place-items-center gap-3 row-start-5 border shadow transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
+              <div className="flex h-10 w-10 rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
               </div>
             </motion.a>
