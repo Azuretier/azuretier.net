@@ -83,16 +83,16 @@ const Main = () => {
               <p className="text-gray-500 font-black">あずれーと</p>
               <p className="text-gray-500 font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid text-gray-500 col-span-3 row-start-4 items-center">
-              <div className="grid justify-start gap-2 grid-flow-col">
+            <div className="grid text-gray-500 col-span-3 row-start-4">
+              <div className="grid justify-start gap-2 grid-flow-col items-center">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
               </div>
-              <div className="grid justify-start gap-2 grid-flow-col">
+              <div className="grid justify-start gap-2 grid-flow-col items-center">
                 <FaUserGraduate />
                 <p>Student</p>
               </div>
-              <div className="grid justify-start gap-2 grid-flow-col">
+              <div className="grid justify-start gap-2 grid-flow-col items-center">
                 <FaPaperPlane />
                 <div className="grid grid-rows-1 grid-flow-col justify-start">
                   <span id="rotating-text">{displayedText}</span>
