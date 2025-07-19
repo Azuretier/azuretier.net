@@ -80,10 +80,10 @@ const Main = () => {
             </div>
             <div className="grid col-span-3 row-start-3">
               <p className="text-3xl font-black">Azure</p>
-              <p className="font-black">あずれーと</p>
-              <p className="font-normal text-lg">I make my world myself</p>
+              <p className="text-gray-500 font-black">あずれーと</p>
+              <p className="text-gray-500 font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid col-span-3 row-start-4">
+            <div className="grid text-gray-500 col-span-3 row-start-4">
               <div className="grid justify-start gap-2 items-center grid-flow-col">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
