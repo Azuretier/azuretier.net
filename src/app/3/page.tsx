@@ -101,7 +101,7 @@ const Main = () => {
           </motion.div>
           <div className="grid rounded-xl grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
             <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 border shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(0,255,255,0.9)]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(0,0,44,0.9)]">
                 <FaXTwitter size={48} />
               </div>
               <div className="grid">
