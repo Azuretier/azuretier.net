@@ -112,7 +112,7 @@ const Main = () => {
               </div>
             </motion.a>
             <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 col-start-6 border shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(230,255,255,0.5)]">
                 <FaGithub size={48} />
               </div>
               <div className="grid">
