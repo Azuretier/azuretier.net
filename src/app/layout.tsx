@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from 'next/font/google';
+import localFont from "next/font/local";
 import "./globals.css"; //apply style
 import React from 'react'
 
 import Provider from './provider';
 
-const notoSansJp = Noto_Sans_JP({
-  subsets: ['latin'],
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +33,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang='ja'>
       <meta name="theme-color" content="#ffbd43"></meta>
       <link rel="icon" href="/favicon.ico" />
-      <body className={`${notoSansJp.className} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Provider>{children}</Provider>
       </body>
     </html>
