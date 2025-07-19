@@ -16,11 +16,11 @@ const config: Config = {
         subtext: "var(--subtext)"
       },
     },
+    fontFamily: {
+      arial: ['Arial', 'sans-serif'],
+      sanserif: ['sans-serif'],
+    },
   },
-  fontFamily: {
-  arial: ['Arial'],
-  sanserif: ['sans-serif'], // your custom font
-},
   plugins: [],
 };
 export default config;
