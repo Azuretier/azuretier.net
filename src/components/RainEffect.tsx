@@ -1,18 +1,17 @@
-"use client"; // important for Next.js to run on client
+"use client";
 
 import { useEffect } from "react";
 import * as THREE from "three";
 
-export default function RainEffect() {
+export default function RainEffect(): null {
   useEffect(() => {
-    let scene: THREE.Scene,
-      camera: THREE.PerspectiveCamera,
-      renderer: THREE.WebGLRenderer,
-      rainParticles: THREE.Points;
+    let scene: THREE.Scene;
+    let camera: THREE.PerspectiveCamera;
+    let renderer: THREE.WebGLRenderer;
+    let rainParticles: THREE.Points;
 
     function init() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x000000);
 
       camera = new THREE.PerspectiveCamera(
         75,
@@ -22,22 +21,27 @@ export default function RainEffect() {
       );
       camera.position.z = 5;
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.domElement.style.position = "fixed";
+      renderer.domElement.style.top = "0";
+      renderer.domElement.style.left = "0";
+      renderer.domElement.style.zIndex = "-1";
+      renderer.domElement.style.pointerEvents = "none";
       document.body.appendChild(renderer.domElement);
 
       const rainCount = 15000;
-      const rainGeometry = new THREE.BufferGeometry();
       const rainPositions: number[] = [];
 
       for (let i = 0; i < rainCount; i++) {
         rainPositions.push(
           (Math.random() - 0.5) * 200, // x
-          Math.random() * 200 - 50, // y
-          (Math.random() - 0.5) * 200 // z
+          Math.random() * 200 - 50,    // y
+          (Math.random() - 0.5) * 200  // z
         );
       }
 
+      const rainGeometry = new THREE.BufferGeometry();
       rainGeometry.setAttribute(
         "position",
         new THREE.Float32BufferAttribute(rainPositions, 3)
@@ -80,7 +84,10 @@ export default function RainEffect() {
 
     return () => {
       window.removeEventListener("resize", onWindowResize);
-      if (renderer) renderer.dispose();
+      if (renderer) {
+        renderer.dispose();
+        document.body.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
