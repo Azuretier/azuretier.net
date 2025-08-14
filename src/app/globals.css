@@ -21,7 +21,7 @@
     border-color: var(--border);
   }
   body {
-    background-color: var(--background);
+    background-color: transparent;
     color: var(--foreground);
     font-family: Arial, sans-serif;
   }
