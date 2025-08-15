@@ -22,7 +22,7 @@ export default function RainEffect() {
 
       // Scene + Camera
       scene = new THREE.Scene();
-      camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
 
       // Shader material
       material = new THREE.ShaderMaterial({
