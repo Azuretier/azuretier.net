@@ -51,6 +51,8 @@ export default function RainEffect({
     });
     mount.appendChild(renderer.domElement);
 
+    renderer.setClearColor(0x000000, 0); // transparent background
+
     // Vertex shader: pass UVs and draw a plane
     const vertexShader = /* glsl */ `
       varying vec2 vUv;
