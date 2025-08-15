@@ -10,13 +10,6 @@ import {
 import Image from "next/image"
 
 const Main = () => {
-  const texts = [
-    "Life is like a paper airplane, isn't it?",
-    "Keep flying high!",
-    "Every day is a new flight.",
-    "Catch the wind and soar!",
-  ]
-
   useEffect(() => {
     const fadeUp = document.getElementById("fadeUp")
     if (fadeUp != null) {
