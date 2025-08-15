@@ -180,10 +180,6 @@ document.addEventListener("mousemove", function (event) {
   container.style.transform = `translateX(${x}px) translateY(${y}px) scale(1.09)`;
 });
 
-//helpers
-function getExtension(filePath) {
-  return filePath.substring(filePath.lastIndexOf(".") + 1, filePath.length) || filePath;
-}
 
 function createVideoElement(src) {
   let htmlVideo = document.createElement("video");
