@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-      const texts = ["Welcome", "Hello", "Enjoy!", "Thanks for visiting"];
+      const texts = ["Hi", "greetings"];
       let index = 0;
       const textElement = document.getElementById("rotatingText");
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect} from "react"
 import { motion, animate } from "framer-motion"
 import {
   FaBirthdayCake,
@@ -17,47 +17,12 @@ const Main = () => {
     "Catch the wind and soar!",
   ]
 
-  const [displayedText, setDisplayedText] = useState("")
-  const [textIndex, setTextIndex] = useState(0)
-  const [typing, setTyping] = useState(true) // true: typing, false: deleting
-
   useEffect(() => {
     const fadeUp = document.getElementById("fadeUp")
     if (fadeUp != null) {
       animate(fadeUp, { opacity: [0.1, 1] })
     }
   }, [])
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout
-
-    if (typing) {
-      // Typing mode - add one char at a time
-      if (displayedText.length < texts[textIndex].length) {
-        timeout = setTimeout(() => {
-          setDisplayedText(
-            texts[textIndex].slice(0, displayedText.length + 1)
-          )
-        }, 100) // typing speed
-      } else {
-        // Done typing, pause before deleting
-        timeout = setTimeout(() => setTyping(false), 1500)
-      }
-    } else {
-      // Deleting mode - remove one char at a time
-      if (displayedText.length > 0) {
-        timeout = setTimeout(() => {
-          setDisplayedText(displayedText.slice(0, -1))
-        }, 50) // deleting speed (usually faster)
-      } else {
-        // Done deleting, move to next text & start typing again
-        setTyping(true)
-        setTextIndex((prev) => (prev + 1) % texts.length)
-      }
-    }
-
-    return () => clearTimeout(timeout)
-  }, [displayedText, typing, textIndex, texts])
 
   return (
     <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
@@ -85,7 +50,7 @@ const Main = () => {
           </div>
           <div className="flex gap-2 items-center row-start-3">
             <FaPaperPlane />
-            <span id="rotating-text">{displayedText}</span>
+            <span id="rotating-text">initial text</span>
           </div>
         </div>
       </motion.div>
