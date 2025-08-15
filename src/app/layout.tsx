@@ -37,7 +37,6 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <link rel="icon" href="/favicon.ico" />
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Provider>
-          <RainEffect/>
           {children}
         </Provider>
       </body>
