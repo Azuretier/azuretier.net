@@ -41,32 +41,8 @@ export default function RainEffect() {
         }
       `,
       fragmentShader: `
-        precision mediump float;
-        uniform float u_time;
-        uniform vec2 u_resolution;
-        varying vec2 vUv;
-
-        float rand(vec2 co) {
-          return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
-        }
-
         void main() {
-          vec2 uv = vUv;
-
-          // Stretch vertically
-          uv.y *= 3.0;
-
-          // Animate downward
-          uv.y += u_time * 2.0;
-
-          // Randomize drops
-          float drops = step(0.98, rand(floor(uv * 20.0)));
-
-          // Fade intensity
-          float alpha = smoothstep(0.5, 0.0, fract(uv.y));
-
-          vec3 col = mix(vec3(0.0,0.0,0.0,1.0), vec3(0.6,0.6,1.0), drops * alpha);
-          gl_FragColor = vec4(col, drops * alpha);
+          gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5); // semi-transparent red
         }
       `,
       transparent: true, // allow background through
