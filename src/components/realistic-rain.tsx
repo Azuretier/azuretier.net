@@ -20,7 +20,7 @@ export default function RainEffect() {
     containerRef.current.appendChild(renderer.domElement);
 
     const textureLoader = new THREE.TextureLoader();
-    const tex0 = textureLoader.load("/media/sn.png");
+    const tex0 = textureLoader.load("/media/image.jpg");
 
     // All uniforms must be defined here
     const uniforms: Record<string, any> = {
