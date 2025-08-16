@@ -77,7 +77,8 @@ const Main = () => {
     
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
       {showOverlay && (
-        <div className="fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-700">
+        <div className="flex flex-col items-center gap-4 fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-700">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           <span className="text-white text-2xl">Loading...</span>
         </div>
       )}
