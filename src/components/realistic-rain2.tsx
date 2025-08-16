@@ -92,7 +92,7 @@ export default function RainEffect({ onLoaded }: RainEffectProps) {
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, [onLoaded]);
+  }, []);
 
   return <div ref={containerRef} />
 }
