@@ -33,7 +33,17 @@ export function RainEffect() {
           gl_Position = vec4(position, 1.0);
         }
       `,
-      fragmentShader: ` // paste shader code above here `,
+      fragmentShader: `
+        precision mediump float;
+        uniform float u_time;
+        varying vec2 vUv;
+
+        void main() {
+          // Moving gradient background test
+          vec3 color = vec3(0.2, 0.4, 0.6) + 0.2 * sin(u_time + vUv.xyx * 10.0);
+          gl_FragColor = vec4(color, 1.0);
+        } 
+      `,
     });
 
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);

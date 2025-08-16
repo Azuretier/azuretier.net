@@ -150,7 +150,6 @@ const Main = () => {
       <div className="flex items-center justify-center col-span-1 row-span-1 col-start-11 row-start-2">
         <ThemeToggle />
       </div>
-      <script src="script.js"></script>
     </main>
   )
 }
