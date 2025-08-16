@@ -32,12 +32,13 @@ const Main = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [transitionStarted, setTransitionStarted] = useState(false);
+  const [transitionComplete, setTransitionComplete] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
 
     if (showLoadingScreen) {
-      setTimeout(() => {setShowLoadingScreen(false), setTransitionStarted(true)}, 400); 
+      setTimeout(() => {setShowLoadingScreen(false); setTransitionStarted(true); setTimeout(() => setTransitionComplete(true), 1200);}, 400); 
       // timeout runs on its own line, so it won't block the rest of the code
     }else {
       const elements = document.querySelectorAll(".fade-up");
@@ -81,7 +82,7 @@ const Main = () => {
 
   return (
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-      {!transitionStarted && (
+      {!transitionComplete && (
         <div
           className={`fixed inset-0 bg-black z-40 transition-transform duration-1000 ${
             transitionStarted ? "-translate-y-full" : "translate-y-0"
