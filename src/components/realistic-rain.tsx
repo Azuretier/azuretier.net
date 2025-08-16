@@ -10,24 +10,19 @@ export default function RainEffect() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    const renderer = new THREE.WebGLRenderer({ alpha: true }); // transparent
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.style.position = "fixed";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
-    renderer.domElement.style.zIndex = "9999";
-    renderer.domElement.style.pointerEvents = "none";
+    renderer.domElement.style.zIndex = "9999"; // above all content
+    renderer.domElement.style.pointerEvents = "none"; // clicks pass through
     containerRef.current.appendChild(renderer.domElement);
 
-    const textureLoader = new THREE.TextureLoader();
-    const tex0 = textureLoader.load("/media/image.jpg");
-
-    // All uniforms must be defined here
+    // uniforms: no PNG background now
     const uniforms: Record<string, any> = {
-      u_tex0: { value: tex0 },
-      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       u_time: { value: 0.0 },
+      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       u_speed: { value: 0.5 },
       u_intensity: { value: 0.7 },
       u_normal: { value: 0.5 },
@@ -42,7 +37,7 @@ export default function RainEffect() {
     };
 
     async function loadShader() {
-      const fragShader = await fetch("/shaders/rain.frag").then(res => res.text());
+      const fragShader = await fetch("/shaders/rain.frag").then((res) => res.text());
 
       const material = new THREE.ShaderMaterial({
         uniforms,
@@ -54,7 +49,7 @@ export default function RainEffect() {
           }
         `,
         fragmentShader: fragShader,
-        transparent: true,
+        transparent: true, // allow page content behind
       });
 
       const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
