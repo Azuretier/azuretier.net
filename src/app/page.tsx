@@ -26,10 +26,7 @@ const Main = () => {
   const images = [
     "profile_image/♔.png",
     "profile_image/azure.jpg",
-    "profile_image/azure2.jpg",
-    "profile_image/deprecated1.png",
     "profile_image/doll.jpg",
-    "profile_image/hutao.png",
     "profile_image/hutao2.jpg",
     "profile_image/original_azure.png",
     "profile_image/siesta.jpg",
@@ -144,11 +141,11 @@ const Main = () => {
             />
           </AnimatePresence>
         </div>
-        <div className="grid row-start-3 items-center">
-          <p className="text-2xl font-bold">Azuretier</p>
-          <p className="text-sm text-gray-500">@09xgg</p>
+        <div className="grid row-span-1 row-start-3 items-center">
+          <p className="text-2xl font-bold">Azure</p>
+          <p className="text-sm text-gray-500">He/Him</p>
         </div>
-        <div className="grid text-lg font-sanserif row-start-5">
+        <div className="grid row-span-2 text-lg font-sanserif row-start-5">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
             <p>200X/2/18</p>
