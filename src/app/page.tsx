@@ -24,16 +24,16 @@ const Main = () => {
   ]
 
   const images = [
-    "profile_image\♔.png",
-    "profile_image\azure.jpg",
-    "profile_image\azure2.jpg",
-    "profile_image\deprecated1.png",
-    "profile_image\doll.jpg",
-    "profile_image\hutao.png",
-    "profile_image\hutao2.jpg",
-    "profile_image\original_azure.png",
-    "profile_image\siesta.jpg",
-    "profile_image\Switch_Edition.png",
+    "profile_image/♔.png",
+    "profile_image/azure.jpg",
+    "profile_image/azure2.jpg",
+    "profile_image/deprecated1.png",
+    "profile_image/doll.jpg",
+    "profile_image/hutao.png",
+    "profile_image/hutao2.jpg",
+    "profile_image/original_azure.png",
+    "profile_image/siesta.jpg",
+    "profile_image/Switch_Edition.png",
   ];
 
   const [displayedText, setDisplayedText] = useState("")
