@@ -106,7 +106,7 @@ const Main = () => {
         </div>
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
-      <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
+      <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex h-50 w-50 items-center justify-start row-span-2">
           <Image src="/azure.png" alt="avatar" width={200} height={200} />
         </div>
@@ -135,7 +135,7 @@ const Main = () => {
       </motion.div>
       <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
         <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(230,255,255,0.5)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaXTwitter size={48} />
           </div>
           <div className="grid">
@@ -146,7 +146,7 @@ const Main = () => {
           </div>
         </motion.a>
         <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(230,255,255,0.5)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaGithub size={48} />
           </div>
           <div className="grid">
@@ -157,7 +157,7 @@ const Main = () => {
           </div>
         </motion.a>
         <motion.a className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 row-start-5 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[rgb(88,101,242)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[rgb(88,101,242)] drop-shadow-md">
             <FaDiscord size={48} />
           </div>
           <div className="grid">
