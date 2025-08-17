@@ -127,6 +127,8 @@ const Main = () => {
               src={images[profImageIndex]}
               alt="Profile Avatar"
               className="absolute inset-0 w-full h-full object-cover"
+              width={128}
+              height={128}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
