@@ -120,13 +120,13 @@ const Main = () => {
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
       <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
-        <div className="flex items-center justify-start row-span-2 w-32 relative w-32 h-32 rounded-full overflow-hidden shrink-0">
+        <div className="flex items-center justify-start row-span-2 w-32 h-32 rounded-full overflow-hidden shadow-lg">
           <AnimatePresence mode="wait">
             <motion.img
               key={images[profImageIndex]} // Use key to trigger re-render on image change
               src={images[profImageIndex]}
               alt="Profile Avatar"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="w-full h-full object-cover"
               width={128}
               height={128}
               initial={{ opacity: 0 }}
