@@ -24,11 +24,10 @@ const Main = () => {
   ]
 
   const images = [
+    "profile_image/original_azure.png",
     "profile_image/♔.png",
     "profile_image/azure.jpg",
     "profile_image/doll.jpg",
-    "profile_image/hutao2.jpg",
-    "profile_image/original_azure.png",
     "profile_image/siesta.jpg",
     "profile_image/Switch_Edition.png",
   ];
@@ -147,15 +146,15 @@ const Main = () => {
         </div>
         <div className="grid row-span-2 text-lg font-bold row-start-4">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
-            <FaBirthdayCake />
+            <FaBirthdayCake className="font-sanserif"/>
             <p>200X/2/18</p>
           </div>
           <div className="grid justify-start gap-2 grid-flow-col items-center">
-            <FaUserGraduate />
+            <FaUserGraduate className="font-sanserif"/>
             <p>Student</p>
           </div>
           <div className="grid justify-start gap-2 grid-flow-col items-center">
-            <FaPaperPlane />
+            <FaPaperPlane className="font-sanserif"/>
             <div className="grid grid-rows-1 grid-flow-col justify-start">
               <span>{displayedText}</span>
               <span className="blinking">|</span>
