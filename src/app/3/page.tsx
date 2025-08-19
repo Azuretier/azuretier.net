@@ -131,7 +131,7 @@ const Main = () => {
         initial="hidden"
         animate={fadeUpAnimationStarted ? "visible" : "hidden"}
         custom={0}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
         <div className="flex items-center justify-start row-span-2 w-32 h-32 rounded-full overflow-hidden shadow-lg">
@@ -184,7 +184,7 @@ const Main = () => {
           initial="hidden"
           animate={fadeUpAnimationStarted ? "visible" : "hidden"}
           custom={1}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaXTwitter size={48} />
@@ -204,7 +204,7 @@ const Main = () => {
           initial="hidden"
           animate={fadeUpAnimationStarted ? "visible" : "hidden"}
           custom={2}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaGithub size={48} />
@@ -221,7 +221,7 @@ const Main = () => {
           initial="hidden"
           animate={fadeUpAnimationStarted ? "visible" : "hidden"}
           custom={3}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[rgb(88,101,242)] drop-shadow-md">
             <FaDiscord size={48} />
@@ -241,7 +241,7 @@ const Main = () => {
           initial="hidden"
           animate={fadeUpAnimationStarted ? "visible" : "hidden"}
           custom={4}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
             <FaYoutube size={48} />
