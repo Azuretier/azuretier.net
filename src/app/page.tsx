@@ -124,7 +124,7 @@ const Main = () => {
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
       <motion.div 
-        className="fade-up grid backdrop-blur-xl transition-transform duration-300 bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-6 row-start-3 col-start-2 row-span-3 col-span-3 h-full"
+        className="fade-up grid backdrop-blur-xl transition-transform bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-6 row-start-3 col-start-2 row-span-3 col-span-3 h-full"
         whileHover={{ scale: 1.1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
@@ -171,7 +171,7 @@ const Main = () => {
           href="https://x.com/09xgg"
           target="_blank"
           rel="noopener noreferrer"
-          className="fade-up grid backdrop-blur-xl transition-transform duration-300 bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4"
+          className="fade-up grid backdrop-blur-xl transition-transform bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4"
           whileHover={{ scale: 1.1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -188,7 +188,7 @@ const Main = () => {
         <motion.a
           href="https://github.com/Azuretier"
           target="_blank" rel="noopener noreferrer"
-          className="fade-up grid backdrop-blur-xl transition-transform hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4"
+          className="fade-up grid backdrop-blur-xl transition-transform bg-[var(--widget-bg)] gap-3 p-6 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4"
           whileHover={{ scale: 1.1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -203,7 +203,7 @@ const Main = () => {
           </div>
         </motion.a>
         <motion.a
-          className="fade-up grid backdrop-blur-xl transition-transform hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 row-start-5 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4"
+          className="fade-up grid backdrop-blur-xl transition-transform bg-[var(--widget-bg)] gap-3 p-6 row-start-5 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4"
           whileHover={{ scale: 1.1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -220,7 +220,7 @@ const Main = () => {
         <motion.a
           href="https://youtube.com/@Azuret"
           target="_blank" rel="noopener noreferrer"
-          className="fade-up grid backdrop-blur-xl transition-transform hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4"
+          className="fade-up grid backdrop-blur-xl transition-transform bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4"
           whileHover={{ scale: 1.1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
