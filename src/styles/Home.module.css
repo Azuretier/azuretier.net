@@ -9,10 +9,12 @@
 
 /* --- BACKGROUNDS --- */
 .bgPanorama {
-  /* Classic Console Edition Panorama */
-  background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), 
-              url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed;
+  /* Using a forest/jungle panorama similar to the Switch edition */
+  background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') repeat-x center center fixed;
   background-size: cover;
+  filter: blur(4px); /* The specific blur seen in the menu */
+  transform: scale(1.1); /* Scale up slightly to hide blur edges */
+  animation: panoramaPan 60s linear infinite alternate;
   z-index: 50;
 }
 
@@ -21,103 +23,182 @@
               url('https://www.transparenttextures.com/patterns/cubes.png'), #2e2e2e;
 }
 
-/* --- TITLE SCREEN (Restored) --- */
+/* --- LOGO SECTION --- */
 .logoContainer {
-  position: relative; margin-bottom: 2rem; text-align: center; margin-top: -50px;
+  position: relative;
+  text-align: center;
+  margin-top: -60px; /* Position it high like the screenshot */
+  margin-bottom: 20px;
+  z-index: 60;
 }
 
-.gameLogo {
-  font-family: var(--font-pixel); font-size: 6rem; color: #c6c6c6;
-  text-shadow: 0px 4px 0px #555, 0px 8px 0px #333, 4px 4px 0px #222, 4px 8px 0px #111;
-  letter-spacing: 2px; line-height: 1; margin: 0; position: relative; z-index: 2;
+/* The Main "MINECRAFT" Text */
+.logoMain {
+  font-family: 'VT323', monospace; /* Using pixel font to simulate the blocky logo */
+  font-size: 7rem;
+  color: #c6c6c6;
+  margin: 0;
+  line-height: 0.8;
+  letter-spacing: -2px;
+  /* Deep 3D Shadow effect */
+  text-shadow: 
+    0px 4px 0 #5f5f5f,
+    0px 8px 0 #3f3f3f,
+    4px 4px 0 #282828,
+    4px 8px 0 #181818;
+  transform: scaleY(1.2); /* Stretch vertically to match official logo */
 }
 
-.gameSubtitle {
-  font-family: var(--font-pixel); font-size: 1.5rem; color: #fff;
-  text-shadow: 2px 2px 0 #000; margin-top: 5px; letter-spacing: 1px; text-transform: uppercase;
+/* The "NINTENDO SWITCH EDITION" Subtitle */
+.logoSub {
+  font-family: var(--font-pixel);
+  font-size: 2rem;
+  color: white;
+  text-transform: uppercase;
+  margin-top: 15px;
+  letter-spacing: 1px;
+  /* Thick black outline simulation */
+  text-shadow: 
+    -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
+    0px 4px 0 #000;
 }
 
+/* Yellow Splash Text */
 .splashText {
-  position: absolute; top: 40px; right: -80px;
-  font-family: var(--font-pixel); font-size: 1.8rem; color: #ffff55;
-  text-shadow: 3px 3px 0 #3f3f00; transform: rotate(-20deg);
-  animation: splashBounce 0.6s infinite alternate; z-index: 10; white-space: nowrap;
+  position: absolute;
+  top: 60px;
+  right: -100px;
+  font-family: var(--font-pixel);
+  font-size: 1.8rem;
+  color: #ffff55;
+  text-shadow: 2px 2px 0 #3f3f00;
+  width: 300px;
+  text-align: center;
+  animation: splashAnim 0.6s infinite alternate;
+  z-index: 70;
 }
 
-@keyframes splashBounce {
-  0%, 100% { transform: scale(1) rotate(-20deg); }
-  50% { transform: scale(1.1) rotate(-20deg); }
-}
-
+/* --- MENU BUTTONS (Switch Style) --- */
 .menuContainer {
-  display: flex; flex-direction: column; gap: 8px; width: 400px; z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Precise gap */
+  width: 450px;
+  z-index: 60;
+  margin-top: 20px;
 }
 
-.consoleBtn {
-  position: relative; width: 100%; padding: 12px 0;
-  font-family: var(--font-pixel); font-size: 1.5rem; color: #fff; text-align: center;
-  background-color: #777; /* Stone Grey */
-  border: 4px solid;
-  border-top-color: #888; border-left-color: #888;
-  border-right-color: #444; border-bottom-color: #444;
-  box-shadow: 0 4px 0 #222; cursor: pointer; text-shadow: 2px 2px 0 #222;
+.switchBtn {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  font-family: var(--font-pixel);
+  font-size: 1.4rem;
+  color: #e0e0e0; /* Default text color */
+  background-color: #767676; /* Base grey */
+  border: 2px solid #000; /* Outer black border */
+  box-shadow: 
+    inset 2px 2px 0 rgba(255,255,255,0.4), /* Inner Top/Left highlight */
+    inset -2px -2px 0 rgba(0,0,0,0.4),    /* Inner Bottom/Right shadow */
+    0 4px 0 #000; /* Bottom Drop Shadow */
+  cursor: pointer;
+  text-align: center;
+  line-height: 44px; /* Vertically center text */
+  text-shadow: 2px 2px 0 #383838;
+  transition: transform 0.05s;
 }
 
-.consoleBtn:hover:not(:disabled) {
-  background-color: #888; border-color: #fff; z-index: 2;
-}
-.consoleBtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; }
-.consoleBtn:disabled { color: #aaa; background-color: #555; border-color: #666; cursor: not-allowed; }
-
-.bottomHint {
-  position: absolute; bottom: 30px; left: 40px;
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-sans); font-size: 1.2rem; color: #fff; text-shadow: 2px 2px 0 #000;
-}
-
-.xButton {
-  width: 28px; height: 28px; background: #444; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+/* The Highlighted State (Blue Border + Yellow Text) */
+.switchBtn:hover:not(:disabled) {
+  background-color: #858585; /* Slightly lighter grey */
+  color: #ffff55; /* Minecraft Yellow */
+  border: 4px solid #aaaaff; /* The specific Switch selection blue/white glow */
+  margin: -2px; /* Offset the thicker border to prevent layout shift */
+  z-index: 10;
+  line-height: 40px; /* Adjust line height for thicker border */
+  text-shadow: 2px 2px 0 #3f3f00;
 }
 
-.xMark { color: #64b5f6; font-weight: bold; font-family: sans-serif; font-size: 16px; margin-top: 1px; }
-
-/* --- LOADING SCREEN --- */
-.loadingScreen {
-  z-index: 100;
-  background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed;
-  background-size: cover;
+.switchBtn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #000;
 }
-.loadingOverlay {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px);
-  display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 60px 0;
+
+.switchBtn:disabled {
+  color: #aaa;
+  background-color: #555;
+  cursor: not-allowed;
 }
-.loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
-.loadingCenter { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
-.loadingStatus { font-family: var(--font-pixel); font-size: 2rem; text-shadow: 2px 2px 0 #000; margin-bottom: 15px; }
-.loadingSubText { width: 60%; text-align: left; font-family: var(--font-sans); font-size: 1rem; color: #ddd; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
-.progressTrack { width: 60%; height: 20px; background: #555; border: 2px solid #888; padding: 2px; box-shadow: 2px 2px 0 #000; }
-.progressFill { height: 100%; background: #33bb33; width: 0%; box-shadow: inset 0 2px 0 rgba(255,255,255,0.3); transition: width 0.2s linear; }
-.tipBox { width: 70%; background: rgba(0, 0, 0, 0.5); border: 2px solid #fff; border-radius: 4px; padding: 25px; text-align: center; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000; margin-bottom: 40px; }
 
-/* --- SELECT WORLD & GENERIC --- */
-.heading { font-family: var(--font-pixel); font-size: 3rem; margin-bottom: 1.5rem; text-shadow: 2px 2px 0 #000; }
-.listContainer { width: 600px; height: 300px; background: rgba(0,0,0,0.6); border: 3px solid #777; overflow-y: auto; margin-bottom: 20px; padding: 10px; }
-.worldRow { background: #444; border: 2px solid #555; margin-bottom: 8px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #ddd; font-family: var(--font-pixel); }
-.worldRow:hover { background: #555; border-color: white; color: white; }
-.worldRowSelected { background: #2E7D32; border-color: #4CAF50; }
+/* The Large Download Button */
+.downloadBtn {
+  height: 70px;
+  line-height: 1.2;
+  font-size: 1.1rem;
+  white-space: pre-wrap;
+  padding: 5px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px; /* Extra gap */
+}
 
-.bgOverlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 60; }
-.modalBox { background: #c6c6c6; border: 4px solid #fff; outline: 4px solid #000; padding: 20px; text-align: center; width: 450px; color: #222; font-family: var(--font-pixel); }
-.input { width: 100%; background: #000; border: 2px solid #888; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
+/* --- FOOTER (Tooltips) --- */
+.footerBar {
+  position: absolute;
+  bottom: 20px;
+  left: 30px;
+  display: flex;
+  gap: 30px;
+  z-index: 60;
+  font-family: var(--font-pixel);
+  font-size: 1.4rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.footerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Switch Controller Icon (Circle) */
+.btnIcon {
+  width: 26px;
+  height: 26px;
+  background: #333;
+  border-radius: 50%;
+  border: 2px solid #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-family: sans-serif;
+  color: #fff;
+  box-shadow: 0 2px 0 #000;
+}
+
+/* --- GENERIC MODALS (World Select, etc) --- */
+.listContainer { width: 600px; height: 300px; background: rgba(0,0,0,0.6); border: 2px solid #888; overflow-y: auto; margin-bottom: 20px; padding: 10px; }
+.worldRow { background: #333; border: 2px solid #555; padding: 10px; margin-bottom: 5px; cursor: pointer; color:#ddd; font-family: var(--font-pixel); display: flex; justify-content: space-between; }
+.worldRow:hover { border-color: #fff; background: #444; }
+.worldRowSelected { border: 4px solid #aaaaff; margin: -2px; z-index:10; background: #444; }
+
+.modalBox { background: #c6c6c6; border: 2px solid #fff; outline: 2px solid #000; padding: 20px; text-align: center; width: 450px; color: #222; font-family: var(--font-pixel); }
+.input { width: 95%; background: #000; border: 2px solid #aaa; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
 .row { display: flex; gap: 10px; justify-content: center; }
 
-/* --- HUD --- */
+/* --- HUD & IN-GAME --- */
 .hudLayer { pointer-events: none; z-index: 10; }
-.crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white; transform: translate(-50%, -50%); border: 1px solid rgba(0,0,0,0.5); }
-.coords { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #ddd; }
-.hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; pointer-events: auto; }
-.slot { width: 48px; height: 48px; border: 3px solid #555; background: #333; cursor: pointer; transition: transform 0.1s; }
-.slotActive { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+.crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: url('https://i.imgur.com/8k9V5b3.png') no-repeat center; background-size: contain; transform: translate(-50%, -50%); opacity: 0.8; }
+.hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 2px; pointer-events: auto; }
+.slot { width: 40px; height: 40px; border: 2px solid #333; background: #222; cursor: pointer; }
+.slotActive { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px white; }
+.coords { position: absolute; top: 10px; left: 10px; font-family: var(--font-pixel); font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 0 #000; }
+
+/* --- LOADING --- */
+.loadingScreen { z-index: 100; background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed; background-size: cover; }
+.loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-shadow: 2px 2px 0 #000; font-family: var(--font-pixel); }
+.progressTrack { width: 500px; height: 10px; background: #555; border: 2px solid #fff; margin-top: 10px; }
+.progressFill { height: 100%; background: #33bb33; width: 0%; transition: width 0.2s; }
