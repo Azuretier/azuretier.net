@@ -166,10 +166,12 @@ export default function Home() {
       {/* --- TITLE SCREEN (NINTENDO SWITCH STYLE) --- */}
       {view === 'title' && (
         <div className={styles.fullScreen}>
-          {/* Background Layer (Blurred & Scaled) */}
+          
+          {/* BACKGROUND LAYERS */}
           <div className={styles.panorama}></div>
+          <div className={styles.vignette}></div>
 
-          {/* Content Layer (Sharp) */}
+          {/* CONTENT */}
           <div className={styles.menuLayer}>
             
             <div className={styles.logoContainer}>
@@ -226,6 +228,8 @@ export default function Home() {
       {view === 'worlds' && (
         <div className={styles.fullScreen}>
           <div className={styles.panorama}></div>
+          <div className={styles.vignette}></div>
+          
           <div className={styles.menuLayer}>
             <h1 className={styles.logoMain} style={{fontSize: '4rem', marginTop: 20}}>SELECT WORLD</h1>
             <div className={styles.listContainer}>

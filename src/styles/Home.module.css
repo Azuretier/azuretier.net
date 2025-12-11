@@ -1,43 +1,55 @@
 /* --- UTILITIES --- */
 .fullScreen {
-  position: absolute; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%;
-  overflow: hidden; /* FIX: Prevents scrollbar from scale(1.1) */
-}
-
-.flexCenter {
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center;
-}
-
-.hidden { display: none !important; }
-
-/* --- BACKGROUNDS --- */
-
-/* FIX: Separate class just for the background image layer */
-.panorama {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') repeat-x center center fixed;
-  background-size: cover;
-  filter: blur(4px); /* Blur only this element */
-  transform: scale(1.1); /* Scale up to hide blur edges */
-  animation: panoramaPan 60s linear infinite alternate;
-  z-index: 0; /* Sit behind content */
+  overflow: hidden; /* Critical: Hides the blurred edges sticking out */
 }
 
-/* FIX: New class for the content on top of the panorama */
+.flexCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden { display: none !important; }
+
+/* --- BACKGROUND SYSTEM --- */
+
+/* 1. The Moving Image */
+.panorama {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center;
+  background-size: cover;
+  
+  /* The Console Style Look */
+  filter: blur(6px); /* Heavy blur typical of menus */
+  animation: panoramaMove 120s linear infinite alternate; /* Slow, majestic movement */
+  z-index: 0;
+}
+
+/* 2. The Dark Edges (Vignette) */
+.vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
+  z-index: 1; /* Sits on top of image, below UI */
+}
+
+/* 3. The Content Container */
 .menuLayer {
   position: relative;
-  z-index: 10; /* Sit above panorama */
+  z-index: 10; /* Sharp content on top */
   width: 100%;
   height: 100%;
   display: flex;
@@ -46,9 +58,9 @@
   justify-content: center;
 }
 
-.bgDirt {
-  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-              url('https://www.transparenttextures.com/patterns/cubes.png'), #2e2e2e;
+@keyframes panoramaMove {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-5%, -2%) scale(1.1); } /* Subtle zoom and pan */
 }
 
 /* --- LOGO SECTION --- */
@@ -58,6 +70,13 @@
   margin-top: -60px;
   margin-bottom: 20px;
   z-index: 60;
+  /* Slight float animation for the whole logo */
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .logoMain {
@@ -101,7 +120,7 @@
   z-index: 70;
 }
 
-/* --- MENU BUTTONS --- */
+/* --- MENU BUTTONS (Nintendo Switch Style) --- */
 .menuContainer {
   display: flex;
   flex-direction: column;
@@ -118,7 +137,7 @@
   font-family: var(--font-pixel);
   font-size: 1.4rem;
   color: #e0e0e0;
-  background-color: #767676;
+  background-color: #767676; /* Stone Grey */
   border: 2px solid #000;
   box-shadow: 
     inset 2px 2px 0 rgba(255,255,255,0.4),
@@ -134,8 +153,8 @@
 .switchBtn:hover:not(:disabled) {
   background-color: #858585;
   color: #ffff55;
-  border: 4px solid #aaaaff;
-  margin: -2px;
+  border: 4px solid #aaaaff; /* Selection Blue/White Glow */
+  margin: -2px; /* Offset border thickness */
   z-index: 10;
   line-height: 40px;
   text-shadow: 2px 2px 0 #3f3f00;
@@ -167,8 +186,8 @@
 /* --- FOOTER --- */
 .footerBar {
   position: absolute;
-  bottom: 20px;
-  left: 30px;
+  bottom: 30px;
+  left: 40px;
   display: flex;
   gap: 30px;
   z-index: 60;
@@ -178,46 +197,33 @@
   text-shadow: 2px 2px 0 #000;
 }
 
-.footerItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.footerItem { display: flex; align-items: center; gap: 10px; }
 
 .btnIcon {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   background: #333;
   border-radius: 50%;
-  border: 2px solid #aaa;
+  border: 2px solid #bbb;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   font-family: sans-serif;
   color: #fff;
-  box-shadow: 0 2px 0 #000;
+  box-shadow: 0 3px 0 #000;
 }
 
-/* --- WORLD SELECT --- */
+/* --- GENERIC --- */
 .listContainer { width: 600px; height: 300px; background: rgba(0,0,0,0.6); border: 2px solid #888; overflow-y: auto; margin-bottom: 20px; padding: 10px; }
 .worldRow { background: #333; border: 2px solid #555; padding: 10px; margin-bottom: 5px; cursor: pointer; color:#ddd; font-family: var(--font-pixel); display: flex; justify-content: space-between; }
 .worldRow:hover { border-color: #fff; background: #444; }
 .worldRowSelected { border: 4px solid #aaaaff; margin: -2px; z-index:10; background: #444; }
 
-/* --- MODALS --- */
-.bgOverlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 60; }
 .modalBox { background: #c6c6c6; border: 2px solid #fff; outline: 2px solid #000; padding: 20px; text-align: center; width: 450px; color: #222; font-family: var(--font-pixel); }
+.bgOverlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 60; }
 .input { width: 95%; background: #000; border: 2px solid #aaa; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
 .row { display: flex; gap: 10px; justify-content: center; }
-
-/* --- IN-GAME --- */
-.hudLayer { pointer-events: none; z-index: 10; }
-.crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: url('https://i.imgur.com/8k9V5b3.png') no-repeat center; background-size: contain; transform: translate(-50%, -50%); opacity: 0.8; }
-.hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 2px; pointer-events: auto; }
-.slot { width: 40px; height: 40px; border: 2px solid #333; background: #222; cursor: pointer; }
-.slotActive { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px white; }
-.coords { position: absolute; top: 10px; left: 10px; font-family: var(--font-pixel); font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 0 #000; }
 
 /* --- LOADING --- */
 .loadingScreen { z-index: 100; background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed; background-size: cover; }
@@ -229,3 +235,11 @@
 .progressTrack { width: 60%; height: 20px; background: #555; border: 2px solid #888; padding: 2px; box-shadow: 2px 2px 0 #000; }
 .progressFill { height: 100%; background: #33bb33; width: 0%; box-shadow: inset 0 2px 0 rgba(255,255,255,0.3); transition: width 0.2s linear; }
 .tipBox { width: 70%; background: rgba(0, 0, 0, 0.5); border: 2px solid #fff; border-radius: 4px; padding: 25px; text-align: center; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000; margin-bottom: 40px; }
+
+/* --- HUD --- */
+.hudLayer { pointer-events: none; z-index: 10; }
+.crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: url('https://i.imgur.com/8k9V5b3.png') no-repeat center; background-size: contain; transform: translate(-50%, -50%); opacity: 0.8; }
+.hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 2px; pointer-events: auto; }
+.slot { width: 40px; height: 40px; border: 2px solid #333; background: #222; cursor: pointer; }
+.slotActive { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px white; }
+.coords { position: absolute; top: 10px; left: 10px; font-family: var(--font-pixel); font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 0 #000; }
