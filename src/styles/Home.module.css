@@ -1,0 +1,245 @@
+/* --- UTILITIES --- */
+.fullScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.flexCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- BACKGROUNDS --- */
+.bgDirt {
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+              url('https://www.transparenttextures.com/patterns/cubes.png'), 
+              #2e2e2e;
+  z-index: 50;
+}
+
+.bgOverlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+  z-index: 60;
+}
+
+.bgLoading {
+  background: #000;
+  z-index: 100;
+}
+
+/* --- TYPOGRAPHY --- */
+.title {
+  font-family: var(--font-pixel);
+  font-size: 5rem;
+  margin-bottom: 1rem;
+  text-shadow: 4px 4px 0 #000;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  color: #fdd835; /* Minecraft Yellow */
+  font-family: monospace;
+  margin-bottom: 2rem;
+}
+
+.heading {
+  font-family: var(--font-pixel);
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+/* --- BUTTONS --- */
+.btn {
+  background: #777;
+  border: 3px solid #fff;
+  color: #fff;
+  font-family: var(--font-pixel);
+  font-size: 1.5rem;
+  padding: 10px 30px;
+  width: 300px;
+  margin: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #333;
+  text-shadow: 2px 2px #000;
+  transition: transform 0.1s;
+  text-align: center;
+}
+
+.btn:hover:not(:disabled) {
+  background: #888;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #333;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #333;
+}
+
+.btn:disabled {
+  background: #444;
+  border-color: #666;
+  color: #888;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btnPrimary {
+  background: #4CAF50;
+  border-color: #81C784;
+}
+.btnPrimary:hover:not(:disabled) {
+  background: #56bb5b;
+}
+
+.btnDanger {
+  background: #d32f2f;
+  border-color: #ef5350;
+}
+
+/* --- LISTS & MODALS --- */
+.listContainer {
+  width: 600px;
+  height: 300px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 3px solid #777;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+
+.worldRow {
+  background: #444;
+  border: 2px solid #555;
+  margin-bottom: 8px;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.worldRow:hover {
+  background: #555;
+  border-color: white;
+}
+
+.worldRowSelected {
+  background: #2E7D32;
+  border-color: #4CAF50;
+}
+
+.modalBox {
+  background: #222;
+  border: 4px solid #fff;
+  padding: 40px;
+  text-align: center;
+  width: 450px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+
+.input {
+  width: 100%;
+  background: #333;
+  border: 2px solid #777;
+  padding: 10px;
+  color: white;
+  font-family: var(--font-pixel);
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 20px;
+  outline: none;
+}
+.input:focus {
+  border-color: #4CAF50;
+  background: #1a1a1a;
+}
+
+/* --- SPINNER --- */
+.spinner {
+  border: 8px solid #333;
+  border-top: 8px solid #4CAF50;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- HUD --- */
+.hudLayer {
+  pointer-events: none;
+  z-index: 10;
+}
+
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: white;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(0,0,0,0.5);
+}
+
+.coords {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.5);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #ddd;
+}
+
+.hotbar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: rgba(0,0,0,0.5);
+  padding: 8px;
+  border-radius: 8px;
+  pointer-events: auto;
+}
+
+.slot {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #555;
+  background: #333;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.slotActive {
+  border-color: #fff;
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* Helper flex row */
+.row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}

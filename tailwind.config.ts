@@ -17,8 +17,8 @@ const config: Config = {
       },
     },
     fontFamily: {
-      arial: ['Arial', 'sans-serif'],
-      sanserif: ['sans-serif'],
+      pixel: ["var(--font-pixel)"], 
+      sans: ["Inter", "Arial", "sans-serif"],
     },
   },
   plugins: [],

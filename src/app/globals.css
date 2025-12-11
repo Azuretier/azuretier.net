@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import the Game Font (VT323) and Inter */
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;700&display=swap');
+
 @layer base {
   :root {
     --background: #ffffff;
@@ -9,8 +12,11 @@
     --border: #E4e4e7;
 
     /* macOS widget style (light theme) */
-    --widget-bg: rgba(255, 255, 255, 0.7); /* frosted glass white */
+    --widget-bg: rgba(255, 255, 255, 0.7);
     --widget-border: rgba(255, 255, 255, 0.3);
+
+    /* Game Specific Variables */
+    --font-pixel: 'VT323', monospace;
   }
 
   .dark {
@@ -19,7 +25,7 @@
     --border: #27272a;
 
     /* macOS widget style (dark theme) */
-    --widget-bg: rgba(0, 0, 0, 0.6); /* frosted glass black */
+    --widget-bg: rgba(0, 0, 0, 0.6);
     --widget-border: rgba(255, 255, 255, 0.1);
   }
 }
@@ -31,27 +37,24 @@
   body {
     background-color: transparent;
     color: var(--foreground);
-    font-family: Arial, sans-serif;
+    /* Default to Inter, fall back to Arial */
+    font-family: 'Inter', Arial, sans-serif; 
   }
 }
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 
+  /* Game Utility: Blinking Cursor/Text */
   .blinking {
     animation: blink 1s steps(1, end) infinite;
   }
 
   @keyframes blink {
-    0% {
-      opacity: 1; /* fully visible */
-    }
-    50% {
-      opacity: 0; /* fully invisible */
-    }
-    100% {
-      opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
   }
 }
