@@ -1,4 +1,4 @@
-// pages/index.tsx
+"use client"
 
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
