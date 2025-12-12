@@ -24,9 +24,6 @@ const TIPS = [
   "Wolves can be tamed with bones.", "Shift-click to move items quickly."
 ];
 
-// Key for LocalStorage
-const SETTINGS_KEY = "voxel_verse_options_v1";
-
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [view, setView] = useState<'title' | 'worlds' | 'game' | 'loading'>('title');
@@ -46,27 +43,14 @@ export default function Home() {
   const [paused, setPaused] = useState(false);
   const [coords, setCoords] = useState("0, 0, 0");
   const [selectedSlot, setSelectedSlot] = useState(0);
+  const [sensitivity, setSensitivity] = useState(20);
   
+  // Nested Menu State: 'main' or 'options'
   const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
-  
-  // SETTINGS STATE (Default Values)
-  const [options, setOptions] = useState({
-    splitScreen: false,
-    autoJump: false,
-    viewBobbing: true,
-    viewRolling: true,
-    hints: true,
-    deathMessages: true,
-    sensitivity: 100, // Default 100%
-    difficulty: 1
-  });
-  
-  const [selectedOptionRow, setSelectedOptionRow] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
 
-  // 1. Auth Init
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (u) setUser(u);
@@ -75,35 +59,12 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // 2. Load Settings from LocalStorage on Mount
+  // Update Sensitivity Live
   useEffect(() => {
-    const saved = localStorage.getItem(SETTINGS_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Merge saved settings with defaults to ensure all keys exist
-        setOptions(prev => ({ ...prev, ...parsed }));
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-      }
-    }
-  }, []);
-
-  // 3. Save Settings & Sync Engine on Change
-  useEffect(() => {
-    // Save to LocalStorage whenever options change
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(options));
-
-    // Update Engine Sensitivity
     if (engineRef.current) {
-        // Map 0-200% to 0.000-0.004 (approx)
-        engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
+        engineRef.current.setSensitivity(sensitivity / 10000);
     }
-  }, [options]);
-
-  const toggleSetting = (key: keyof typeof options) => {
-    setOptions(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  }, [sensitivity]);
 
   const startLoadingSequence = (callback: () => void) => {
     setView('loading');
@@ -161,12 +122,12 @@ export default function Home() {
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); });
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-            // Apply loaded sensitivity immediately
-            engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
+            // Initialize sensitivity
+            engineRef.current.setSensitivity(sensitivity / 10000);
             setView('game');
             setShowPreGame(true);
             setPaused(false);
-            setPauseMenuState('main');
+            setPauseMenuState('main'); // Reset menu
         }
     };
     if (skipLoading) initEngine(); else startLoadingSequence(initEngine);
@@ -191,7 +152,7 @@ export default function Home() {
       } else {
         if (view === 'game' && !showPreGame) {
           setPaused(true);
-          setPauseMenuState('main'); 
+          setPauseMenuState('main'); // Always reset to main menu on pause
           if (engineRef.current) engineRef.current.isPaused = true;
         }
       }
@@ -213,7 +174,6 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
-  const getDiffText = (v: number) => ['Peaceful', 'Easy', 'Normal', 'Hard'][v];
 
   return (
     <main className={styles.fullScreen}>
@@ -323,125 +283,41 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- PAUSE / OPTIONS MENU --- */}
+      {/* --- PAUSE MENU (LAYERED) --- */}
       {view === 'game' && paused && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           
-          <div className={styles.logoContainer} style={{marginTop:0, marginBottom:10}}>
-            <h1 className={styles.logoMain} style={{fontSize:'5rem'}}>MINECRAFT</h1>
-            <div className={styles.logoSub} style={{fontSize:'1.5rem'}}>NINTENDO SWITCH EDITION</div>
-          </div>
+          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>
+            {pauseMenuState === 'main' ? 'GAME PAUSED' : 'OPTIONS'}
+          </h1>
 
-          {/* MAIN PAUSE MENU */}
-          {pauseMenuState === 'main' && (
-            <div className={styles.menuContainer}>
-              <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Play Game</button>
-              <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Help & Options</button>
-              <button onClick={quitGame} className={styles.switchBtn}>Exit Game</button>
-            </div>
-          )}
-
-          {/* OPTIONS MENU */}
-          {pauseMenuState === 'options' && (
-            <div className={styles.optionsBox}>
-                
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 0 ? styles.selected : ''} ${options.splitScreen ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(0)}
-                    onClick={() => toggleSetting('splitScreen')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>Vertical Splitscreen</span>
-                </div>
-
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 1 ? styles.selected : ''} ${options.autoJump ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(1)}
-                    onClick={() => toggleSetting('autoJump')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>Auto Jump</span>
-                </div>
-
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 2 ? styles.selected : ''} ${options.viewBobbing ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(2)}
-                    onClick={() => toggleSetting('viewBobbing')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>View Bobbing</span>
-                </div>
-
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 3 ? styles.selected : ''} ${options.viewRolling ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(3)}
-                    onClick={() => toggleSetting('viewRolling')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>Flying View Rolling</span>
-                </div>
-
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 4 ? styles.selected : ''} ${options.hints ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(4)}
-                    onClick={() => toggleSetting('hints')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>Hints</span>
-                </div>
-
-                <div 
-                    className={`${styles.optionRow} ${selectedOptionRow === 5 ? styles.selected : ''} ${options.deathMessages ? styles.checked : ''}`}
-                    onMouseEnter={() => setSelectedOptionRow(5)}
-                    onClick={() => toggleSetting('deathMessages')}
-                >
-                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                    <span>Death Messages</span>
-                </div>
-
-                {/* SENSITIVITY SLIDER */}
-                <div className={styles.consoleSliderContainer}>
-                    <input 
-                        type="range" min="1" max="200" value={options.sensitivity}
-                        onChange={(e) => setOptions({...options, sensitivity: parseInt(e.target.value)})}
-                        className={styles.consoleSliderInput}
-                    />
-                    <div className={styles.sliderLabel}>Game Sensitivity: {options.sensitivity}%</div>
-                </div>
-
-                {/* DIFFICULTY SLIDER */}
-                <div className={styles.consoleSliderContainer}>
-                    <input 
-                        type="range" min="0" max="3" value={options.difficulty}
-                        onChange={(e) => setOptions({...options, difficulty: parseInt(e.target.value)})}
-                        className={styles.consoleSliderInput}
-                    />
-                    <div className={styles.sliderLabel}>Difficulty: {getDiffText(options.difficulty)}</div>
-                </div>
-
-            </div>
-          )}
-
-          <div className={styles.footerBar}>
-            {pauseMenuState === 'main' ? (
-                <div className={styles.footerItem}>
-                    <div className={styles.btnIcon} onClick={() => document.body.requestPointerLock()}>A</div>
-                    <span>Select</span>
-                </div>
-            ) : (
+          <div className={styles.menuContainer}>
+            
+            {/* LAYER 1: MAIN MENU */}
+            {pauseMenuState === 'main' && (
                 <>
-                    <div className={styles.footerItem}>
-                        <div className={styles.btnIcon} onClick={() => {}}>A</div>
-                        <span>Select</span>
-                    </div>
-                    <div className={styles.footerItem}>
-                        <div className={styles.btnIcon} onClick={() => setPauseMenuState('main')}>B</div>
-                        <span>Back</span>
-                    </div>
+                    <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Resume Game</button>
+                    <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Options</button>
+                    <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
                 </>
             )}
-          </div>
 
+            {/* LAYER 2: OPTIONS MENU */}
+            {pauseMenuState === 'options' && (
+                <>
+                    {/* CUSTOM MINECRAFT STYLE SLIDER */}
+                    <div className={styles.sliderContainer}>
+                        <input type="range" min="1" max="200" value={sensitivity} 
+                            onChange={(e) => setSensitivity(parseInt(e.target.value))} 
+                            className={styles.sliderInput} />
+                        <div className={styles.sliderLabel}>Sensitivity: {sensitivity}%</div>
+                    </div>
+
+                    <button onClick={() => setPauseMenuState('main')} className={styles.switchBtn}>Back</button>
+                </>
+            )}
+
+          </div>
         </div>
       )}
 
