@@ -26,7 +26,7 @@ export default function PanoramaBackground() {
     const textureLoader = new THREE.TextureLoader();
     
     // FALLBACK: Use this reliable external Minecraft panorama
-    const textureURL = 'https://minecraft.wiki/w/Legacy_Console_Edition_panoramas#/media/File:TU46_Panorama_Background_S.png';
+    const textureURL = 'media/minecraft_panorama.png';
 
     const texture = textureLoader.load(
       textureURL,
