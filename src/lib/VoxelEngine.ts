@@ -5,24 +5,29 @@ import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firesto
 export type BlockType = 'grass' | 'dirt' | 'stone' | 'wood' | 'brick' | 'leaves' | 'water' | 'obsidian' | 'sand' | 'air';
 
 const BLOCK_SIZE = 10;
-const WORLD_SIZE = 128; // 128x128
-const HALF_WORLD = WORLD_SIZE / 2;
+const CHUNK_SIZE = 16;
+const WORLD_HEIGHT = 128; // Height limit
+const RENDER_DISTANCE = 4; // Chunks radius
 
-const COLORS: Record<string, number> = {
-    grass: 0x567d46, dirt: 0x5d4037, stone: 0x757575,
-    wood: 0x4e342e, brick: 0x8d6e63, leaves: 0x2e7d32,
-    water: 0x40a4df, obsidian: 0x121212, sand: 0xc2b280,
-    air: 0x000000
+const COLORS: Record<string, { r: number, g: number, b: number }> = {
+    grass: { r: 0.34, g: 0.49, b: 0.27 },
+    dirt: { r: 0.36, g: 0.25, b: 0.22 },
+    stone: { r: 0.46, g: 0.46, b: 0.46 },
+    wood: { r: 0.31, g: 0.20, b: 0.18 },
+    brick: { r: 0.55, g: 0.43, b: 0.39 },
+    leaves: { r: 0.18, g: 0.49, b: 0.20 },
+    water: { r: 0.25, g: 0.64, b: 0.87 },
+    obsidian: { r: 0.07, g: 0.07, b: 0.07 },
+    sand: { r: 0.76, g: 0.70, b: 0.50 },
+    air: { r: 0, g: 0, b: 0 }
 };
 
-// --- PERLIN NOISE IMPLEMENTATION ---
+// --- PERLIN NOISE (Simplified for performance) ---
 class Perlin {
     private p: number[] = [];
     constructor(seed: number) {
         this.p = new Array(512);
-        const p = new Array(256);
-        for(let i=0; i<256; i++) p[i] = i;
-        // Shuffle based on seed
+        const p = new Array(256).fill(0).map((_, i) => i);
         let currentSeed = seed;
         const random = () => {
             const x = Math.sin(currentSeed++) * 10000;
@@ -54,17 +59,42 @@ class Perlin {
     }
 }
 
+// --- CHUNK CLASS ---
+class Chunk {
+    public mesh: THREE.Mesh | null = null;
+    public data: Map<string, string> = new Map(); // "x,y,z" -> type
+    public isDirty = true;
+    public cx: number;
+    public cz: number;
+
+    constructor(cx: number, cz: number) {
+        this.cx = cx;
+        this.cz = cz;
+    }
+
+    setBlock(x: number, y: number, z: number, type: string) {
+        const key = `${x},${y},${z}`;
+        if (type === 'air') this.data.delete(key);
+        else this.data.set(key, type);
+        this.isDirty = true;
+    }
+
+    getBlock(x: number, y: number, z: number): string | undefined {
+        return this.data.get(`${x},${y},${z}`);
+    }
+}
+
 export class VoxelEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private raycaster: THREE.Raycaster;
     
-    private objects: THREE.Object3D[] = [];
-    private blockMeshes: Map<string, THREE.Mesh> = new Map();
-    private unsubscribeWorld: (() => void) | null = null;
+    // Chunk Management
+    private chunks: Map<string, Chunk> = new Map();
+    private activeChunkIds: Set<string> = new Set();
     
-    // Physics & Movement
+    // Physics
     private velocity = new THREE.Vector3();
     private moveState = { fwd: false, bwd: false, left: false, right: false };
     private canJump = false;
@@ -78,14 +108,11 @@ export class VoxelEngine {
     private container: HTMLElement;
     private worldPath: string;
     private updateHUD: (x: number, y: number, z: number) => void;
-
-    // Optimization: Shared Geometry
-    private boxGeometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    private materials: Map<string, THREE.Material> = new Map();
-
-    // Generation
+    
     private perlin: Perlin;
     private worldType: 'default' | 'superflat';
+    private matOpaque: THREE.MeshStandardMaterial;
+    private matTrans: THREE.MeshStandardMaterial;
 
     constructor(
         container: HTMLElement, 
@@ -99,44 +126,36 @@ export class VoxelEngine {
         this.worldType = settings.type;
         this.perlin = new Perlin(settings.seed);
 
-        // 1. Setup Three.js
+        // Setup Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB);
-        this.scene.fog = new THREE.Fog(0x87CEEB, 20, 500);
+        this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400); // Occlusion approximation
 
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 80, 0); // Start high
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 80, 0);
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: false }); // Disable AA for performance
+        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(this.renderer.domElement);
 
+        // Shared Materials (Vertex Colors)
+        this.matOpaque = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
+        this.matTrans = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.7, roughness: 0.1 });
+
         this.setupLights();
         this.raycaster = new THREE.Raycaster();
 
-        // 2. Pre-create Materials
-        Object.keys(COLORS).forEach(key => {
-            if(key === 'air') return;
-            const mat = new THREE.MeshLambertMaterial({ 
-                color: COLORS[key],
-                transparent: key === 'water' || key === 'leaves',
-                opacity: key === 'water' ? 0.6 : 1.0
-            });
-            this.materials.set(key, mat);
-        });
+        // Initial Generation
+        this.updateChunks();
 
-        // 3. Generate World
-        this.generateWorld();
-
-        // 4. Bind Events
+        // Listeners
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
         document.body.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
 
-        // 5. Connect DB (Apply overrides)
         this.connectToFirebase();
         this.animate();
     }
@@ -144,152 +163,228 @@ export class VoxelEngine {
     private setupLights() {
         const ambient = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-        sun.position.set(50, 150, 50);
-        sun.castShadow = false; // Disable shadows for performance
+        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+        sun.position.set(50, 200, 100);
         this.scene.add(sun);
     }
 
-    private addBlock(x: number, y: number, z: number, type: string, isNatural = false, docId?: string) {
-        if (type === 'air') return;
-        const key = `${x}_${y}_${z}`;
-        
-        // Don't add if already exists (handling overlap)
-        if (this.blockMeshes.has(key)) return;
+    // --- CHUNK LOGIC ---
 
-        const mat = this.materials.get(type);
-        if (!mat) return;
+    private getChunkKey(cx: number, cz: number) { return `${cx},${cz}`; }
 
-        const mesh = new THREE.Mesh(this.boxGeometry, mat);
-        mesh.position.set(x, y, z);
-        mesh.userData = { id: docId, natural: isNatural, type };
-        
-        // Simple culling: don't add to objects array for collision if it's too far down (optional opt)
-        this.scene.add(mesh);
-        this.objects.push(mesh);
-        this.blockMeshes.set(key, mesh);
-    }
+    private updateChunks() {
+        const playerCX = Math.floor(this.camera.position.x / (CHUNK_SIZE * BLOCK_SIZE));
+        const playerCZ = Math.floor(this.camera.position.z / (CHUNK_SIZE * BLOCK_SIZE));
 
-    private removeBlock(x: number, y: number, z: number) {
-        const key = `${x}_${y}_${z}`;
-        const mesh = this.blockMeshes.get(key);
-        if (mesh) {
-            this.scene.remove(mesh);
-            this.objects.splice(this.objects.indexOf(mesh), 1);
-            this.blockMeshes.delete(key);
+        const neededChunks = new Set<string>();
+
+        // 1. Identify needed chunks
+        for (let x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+            for (let z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
+                neededChunks.add(this.getChunkKey(playerCX + x, playerCZ + z));
+            }
+        }
+
+        // 2. Remove far chunks
+        for (const [key, chunk] of this.chunks) {
+            if (!neededChunks.has(key)) {
+                if (chunk.mesh) {
+                    this.scene.remove(chunk.mesh);
+                    chunk.mesh.geometry.dispose();
+                }
+                this.chunks.delete(key);
+            }
+        }
+
+        // 3. Create/Gen new chunks
+        neededChunks.forEach(key => {
+            if (!this.chunks.has(key)) {
+                const [cx, cz] = key.split(',').map(Number);
+                const chunk = new Chunk(cx, cz);
+                this.generateChunkData(chunk);
+                this.chunks.set(key, chunk);
+            }
+        });
+
+        // 4. Re-mesh dirty chunks (Max 2 per frame to prevent stutter)
+        let updates = 0;
+        for (const chunk of this.chunks.values()) {
+            if (chunk.isDirty && updates < 2) {
+                this.buildChunkMesh(chunk);
+                updates++;
+            }
         }
     }
 
-    private generateWorld() {
-        // Limit render distance for initial generation to prevent freeze
-        // But prompt asks for 128x128. We will generate it.
-        
-        const startX = -HALF_WORLD * BLOCK_SIZE;
-        const endX = HALF_WORLD * BLOCK_SIZE;
-        const startZ = -HALF_WORLD * BLOCK_SIZE;
-        const endZ = HALF_WORLD * BLOCK_SIZE;
+    private generateChunkData(chunk: Chunk) {
+        const startX = chunk.cx * CHUNK_SIZE;
+        const startZ = chunk.cz * CHUNK_SIZE;
 
-        for (let x = startX; x < endX; x += BLOCK_SIZE) {
-            for (let z = startZ; z < endZ; z += BLOCK_SIZE) {
-                
-                let height = 0;
-                
+        for (let x = 0; x < CHUNK_SIZE; x++) {
+            for (let z = 0; z < CHUNK_SIZE; z++) {
+                const wx = startX + x;
+                const wz = startZ + z;
+
+                let h = 0;
                 if (this.worldType === 'superflat') {
-                    // Superflat: Grass at 0, Dirt at -10, -20, Bedrock at -30
-                    this.addBlock(x, 0, z, 'grass', true);
-                    this.addBlock(x, -BLOCK_SIZE, z, 'dirt', true);
-                    this.addBlock(x, -BLOCK_SIZE * 2, z, 'dirt', true);
-                    this.addBlock(x, -BLOCK_SIZE * 3, z, 'obsidian', true);
+                    chunk.setBlock(x, 0, z, 'grass');
+                    chunk.setBlock(x, -1, z, 'dirt');
+                    chunk.setBlock(x, -2, z, 'dirt');
+                    chunk.setBlock(x, -3, z, 'obsidian');
                 } else {
-                    // Default: Perlin Terrain
-                    // Noise returns -1 to 1 mostly. 
-                    // Scale coord to smoothen (0.01). Amplitude 40.
-                    const n = this.perlin.noise(x * 0.005, 0, z * 0.005);
-                    const h = Math.floor(n * 4) * BLOCK_SIZE; // Discrete steps
-                    height = h;
-
-                    // Base Terrain
-                    this.addBlock(x, h, z, 'grass', true);
+                    // Simplex-like Noise
+                    const n = this.perlin.noise(wx * 0.01, 0, wz * 0.01);
+                    h = Math.floor(n * 20); // Height variation
                     
-                    // Fill dirt below
-                    for(let d=1; d<=3; d++) {
-                        this.addBlock(x, h - d*BLOCK_SIZE, z, 'dirt', true);
-                    }
-                    // Stone below that
-                    this.addBlock(x, h - 4*BLOCK_SIZE, z, 'stone', true);
+                    chunk.setBlock(x, h, z, 'grass');
+                    for (let d = 1; d <= 3; d++) chunk.setBlock(x, h - d, z, 'dirt');
+                    chunk.setBlock(x, h - 4, z, 'stone');
 
-                    // Trees (Simple)
-                    // Random chance on top of grass if not too low (water level logic skipped for simplicity)
-                    if (Math.random() < 0.015) {
-                        this.generateTree(x, h + BLOCK_SIZE, z);
+                    // Simple Tree
+                    if (Math.random() < 0.01 && x > 2 && x < 13 && z > 2 && z < 13) {
+                        const th = 4;
+                        for(let i=1; i<=th; i++) chunk.setBlock(x, h+i, z, 'wood');
+                        for(let lx=-1; lx<=1; lx++) 
+                            for(let lz=-1; lz<=1; lz++) 
+                                for(let ly=0; ly<=1; ly++) 
+                                    if(lx!==0||lz!==0||ly!==0) chunk.setBlock(x+lx, h+th+ly-1, z+lz, 'leaves');
+                        chunk.setBlock(x, h+th+1, z, 'leaves');
                     }
                 }
             }
         }
+    }
+
+    private buildChunkMesh(chunk: Chunk) {
+        if (chunk.mesh) {
+            this.scene.remove(chunk.mesh);
+            chunk.mesh.geometry.dispose();
+            chunk.mesh = null;
+        }
+
+        const vertices: number[] = [];
+        const colors: number[] = [];
+        const normals: number[] = [];
+        const indices: number[] = [];
         
-        // Caves (Post-pass: Remove blocks using 3D noise)
-        if (this.worldType === 'default') {
-             // Basic implementation: Iterate existing blocks? 
-             // Too slow to iterate ALL space. 
-             // We'll skip complex cave generation for 128x128 web performance 
-             // or just check noise during the loop above.
-             // (Cave generation omitted to ensure stable framerate on 16k blocks)
-        }
-    }
+        let vertCount = 0;
 
-    private generateTree(x: number, y: number, z: number) {
-        const trunkHeight = 4 + Math.floor(Math.random() * 2);
-        for(let i=0; i<trunkHeight; i++) {
-            this.addBlock(x, y + i*BLOCK_SIZE, z, 'wood', true);
-        }
-        // Leaves
-        const topY = y + trunkHeight * BLOCK_SIZE;
-        for(let lx=-1; lx<=1; lx++) {
-            for(let lz=-1; lz<=1; lz++) {
-                for(let ly=0; ly<=1; ly++) {
-                    // Don't replace the trunk top
-                    if(lx===0 && lz===0 && ly===0) continue; 
-                    this.addBlock(x + lx*BLOCK_SIZE, topY + ly*BLOCK_SIZE - BLOCK_SIZE, z + lz*BLOCK_SIZE, 'leaves', true);
+        // Neighbor check helper (local coords)
+        const isSolid = (x: number, y: number, z: number) => {
+            return chunk.getBlock(x, y, z) !== undefined && chunk.getBlock(x, y, z) !== 'water' && chunk.getBlock(x, y, z) !== 'leaves';
+        };
+
+        chunk.data.forEach((type, key) => {
+            const [x, y, z] = key.split(',').map(Number);
+            const wx = x * BLOCK_SIZE + chunk.cx * CHUNK_SIZE * BLOCK_SIZE;
+            const wy = y * BLOCK_SIZE;
+            const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
+            
+            const col = COLORS[type] || COLORS.dirt;
+            const s = BLOCK_SIZE / 2;
+
+            // Face generation data
+            const faces = [
+                { // Right (+x)
+                    dir: [1, 0, 0], 
+                    pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ],
+                    check: [x+1, y, z]
+                },
+                { // Left (-x)
+                    dir: [-1, 0, 0], 
+                    pos: [ [-s, -s, -s], [-s, -s, s], [-s, s, s], [-s, s, -s] ],
+                    check: [x-1, y, z]
+                },
+                { // Top (+y)
+                    dir: [0, 1, 0], 
+                    pos: [ [-s, s, s], [s, s, s], [s, s, -s], [-s, s, -s] ],
+                    check: [x, y+1, z]
+                },
+                { // Bottom (-y)
+                    dir: [0, -1, 0], 
+                    pos: [ [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s] ],
+                    check: [x, y-1, z]
+                },
+                { // Front (+z)
+                    dir: [0, 0, 1], 
+                    pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ],
+                    check: [x, y, z+1]
+                },
+                { // Back (-z)
+                    dir: [0, 0, -1], 
+                    pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ],
+                    check: [x, y, z-1]
                 }
+            ];
+
+            for (const face of faces) {
+                // Face Culling: If neighbor exists and is solid, don't draw
+                // Note: Only culling internal chunk faces for simplicity. 
+                // Cross-chunk culling requires accessing neighbor chunks (possible optimization).
+                if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
+
+                // Push Vertices
+                for (const v of face.pos) {
+                    vertices.push(wx + v[0], wy + v[1], wz + v[2]);
+                    colors.push(col.r, col.g, col.b);
+                    normals.push(face.dir[0], face.dir[1], face.dir[2]);
+                }
+
+                // Push Indices (2 triangles)
+                const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
+                indices.push(a, b, c, a, c, d);
+                vertCount += 4;
             }
-        }
-        this.addBlock(x, topY + BLOCK_SIZE, z, 'leaves', true);
+        });
+
+        if (vertices.length === 0) return;
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        geometry.setIndex(indices);
+
+        // Separate material based on content? (Simplified: everything uses opaque mat for perf, water uses transparent if we split meshes)
+        // For absolute speed: 1 mesh per chunk.
+        chunk.mesh = new THREE.Mesh(geometry, this.matOpaque);
+        this.scene.add(chunk.mesh);
+        chunk.isDirty = false;
     }
 
-    public setSensitivity(val: number) {
-        this.sensitivity = val;
-    }
+    // --- INTERACTION ---
 
     private connectToFirebase() {
-        // Listen for changes (User placed/broken blocks)
         const q = collection(db, `${this.worldPath}/blocks`);
-        this.unsubscribeWorld = onSnapshot(q, (snap) => {
+        onSnapshot(q, (snap) => {
             snap.docChanges().forEach(change => {
                 const d = change.doc.data();
-                const bx = d.x, by = d.y, bz = d.z;
+                // Map global coords to chunk coords
+                const x = d.x / BLOCK_SIZE;
+                const y = d.y / BLOCK_SIZE;
+                const z = d.z / BLOCK_SIZE;
                 
-                if (change.type === 'removed') {
-                    // This happens if a USER PLACED block is removed via DB console?
-                    // Or if we reverted a change.
-                    // For this engine, 'removed' in DB means the override is gone.
-                    // We should restore the natural block? 
-                    // Complexity: high. We assume DB is truth.
-                    this.removeBlock(bx, by, bz);
-                } else {
-                    // Added or Modified
-                    if (d.type === 'air') {
-                        // "Air" doc means a natural block was broken
-                        this.removeBlock(bx, by, bz);
+                const cx = Math.floor(x / CHUNK_SIZE);
+                const cz = Math.floor(z / CHUNK_SIZE);
+                const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+                const key = this.getChunkKey(cx, cz);
+                let chunk = this.chunks.get(key);
+                
+                // If chunk exists in memory, update it
+                if (chunk) {
+                    if (change.type === 'removed') {
+                        // Reverting to natural state not supported in this simplified version
                     } else {
-                        // User placed block
-                        // Remove existing mesh first (natural or prev user block)
-                        this.removeBlock(bx, by, bz);
-                        this.addBlock(bx, by, bz, d.type, false, change.doc.id);
+                        chunk.setBlock(lx, y, lz, d.type);
                     }
                 }
             });
         });
     }
+
+    // --- LOOP ---
 
     private animate = () => {
         if (!this.renderer) return; 
@@ -298,7 +393,10 @@ export class VoxelEngine {
         if (this.isRunning && !this.isPaused) {
             const time = performance.now();
             const delta = Math.min((time - this.prevTime) / 1000, 0.1);
+            
             this.physics(delta);
+            this.updateChunks(); // Dynamic Loading
+            
             this.prevTime = time;
             this.updateHUD(Math.round(this.camera.position.x), Math.round(this.camera.position.y), Math.round(this.camera.position.z));
         } else {
@@ -308,89 +406,86 @@ export class VoxelEngine {
     };
 
     private physics(delta: number) {
-        const damping = Math.exp(-(this.onGround ? 10.0 : 2.0) * delta);
-        this.velocity.x *= damping;
-        this.velocity.z *= damping;
-        this.velocity.y -= 500 * delta; // Gravity
+        // Simplified Physics
+        this.velocity.x *= 0.9;
+        this.velocity.z *= 0.9;
+        this.velocity.y -= 400 * delta;
 
         const direction = new THREE.Vector3();
         direction.set(Number(this.moveState.right) - Number(this.moveState.left), 0, Number(this.moveState.bwd) - Number(this.moveState.fwd));
         direction.normalize();
 
-        if (this.moveState.fwd || this.moveState.bwd || this.moveState.left || this.moveState.right) {
-            const camDir = new THREE.Vector3();
-            this.camera.getWorldDirection(camDir); camDir.y = 0; camDir.normalize();
-            const camRight = new THREE.Vector3();
-            camRight.crossVectors(camDir, this.camera.up).normalize();
+        const camDir = new THREE.Vector3();
+        this.camera.getWorldDirection(camDir); camDir.y = 0; camDir.normalize();
+        const camRight = new THREE.Vector3();
+        camRight.crossVectors(camDir, this.camera.up).normalize();
+
+        if (direction.length() > 0) {
             const moveVec = new THREE.Vector3().addScaledVector(camDir, -direction.z).addScaledVector(camRight, direction.x);
-            moveVec.normalize();
-            const speed = this.onGround ? 2000 : 500;
+            const speed = this.onGround ? 1500 : 500;
             this.velocity.addScaledVector(moveVec, speed * delta);
         }
 
+        // Apply
         this.camera.position.x += this.velocity.x * delta;
-        if (this.checkCollide()) { this.camera.position.x -= this.velocity.x * delta; this.velocity.x = 0; }
-
+        this.checkCol('x');
         this.camera.position.z += this.velocity.z * delta;
-        if (this.checkCollide()) { this.camera.position.z -= this.velocity.z * delta; this.velocity.z = 0; }
-
+        this.checkCol('z');
         this.onGround = false;
         this.camera.position.y += this.velocity.y * delta;
-        if (this.checkCollide()) {
-            this.camera.position.y -= this.velocity.y * delta;
-            if (this.velocity.y < 0) { this.onGround = true; this.canJump = true; }
-            this.velocity.y = 0;
-        }
+        this.checkCol('y');
 
-        if (this.camera.position.y < -150) {
-            // Respawn
-            this.velocity.set(0, 0, 0);
-            this.camera.position.set(0, 100, 0);
-        }
+        if(this.camera.position.y < -200) this.camera.position.set(0,100,0);
     }
 
-    private checkCollide() {
-        const playerR = 3;
-        const headY = this.camera.position.y;
-        const footY = this.camera.position.y - 18;
+    private checkCol(axis: 'x' | 'y' | 'z') {
+        // Raycast-based collision for chunk meshes is tricky.
+        // BoundingBox check against virtual block map is faster.
+        const r = 3; 
+        const minX = Math.floor((this.camera.position.x - r) / BLOCK_SIZE);
+        const maxX = Math.floor((this.camera.position.x + r) / BLOCK_SIZE);
+        const minY = Math.floor((this.camera.position.y - 18) / BLOCK_SIZE); // feet
+        const maxY = Math.floor((this.camera.position.y + 2) / BLOCK_SIZE); // head
+        const minZ = Math.floor((this.camera.position.z - r) / BLOCK_SIZE);
+        const maxZ = Math.floor((this.camera.position.z + r) / BLOCK_SIZE);
 
-        // Optimization: Only check objects near player
-        const pX = this.camera.position.x;
-        const pY = this.camera.position.y;
-        const pZ = this.camera.position.z;
-
-        for (const o of this.objects) {
-            // Fast distance check (AABB roughly)
-            if (Math.abs(o.position.x - pX) > 12) continue;
-            if (Math.abs(o.position.z - pZ) > 12) continue;
-            if (Math.abs(o.position.y - pY) > 25) continue;
-
-            const bMinX = o.position.x - 5, bMaxX = o.position.x + 5;
-            const bMinY = o.position.y - 5, bMaxY = o.position.y + 5;
-            const bMinZ = o.position.z - 5, bMaxZ = o.position.z + 5;
-
-            const pMinX = pX - playerR, pMaxX = pX + playerR;
-            const pMinZ = pZ - playerR, pMaxZ = pZ + playerR;
-
-            if (pMinX < bMaxX && pMaxX > bMinX && footY < bMaxY && headY > bMinY && pMinZ < bMaxZ && pMaxZ > bMinZ) {
-                return true;
+        for(let x=minX; x<=maxX; x++) {
+            for(let y=minY; y<=maxY; y++) {
+                for(let z=minZ; z<=maxZ; z++) {
+                    const cx = Math.floor(x / CHUNK_SIZE);
+                    const cz = Math.floor(z / CHUNK_SIZE);
+                    const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                    const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                    
+                    const chunk = this.chunks.get(this.getChunkKey(cx, cz));
+                    if(chunk && chunk.getBlock(lx, y, lz)) {
+                        // Collision detected
+                        if(axis === 'y') {
+                            if(this.velocity.y < 0) { this.onGround = true; this.canJump = true; }
+                            this.velocity.y = 0;
+                            // Snap out
+                            this.camera.position.y = Math.round(this.camera.position.y); 
+                        } else {
+                            this.velocity[axis] = 0;
+                            this.camera.position[axis] = Math.round(this.camera.position[axis]);
+                        }
+                        return;
+                    }
+                }
             }
         }
-        return false;
     }
 
-    // --- Input Handlers ---
+    // --- EVENTS ---
     private onKeyDown = (e: KeyboardEvent) => {
-        if (!this.isRunning) return;
         switch (e.code) {
             case 'KeyW': this.moveState.fwd = true; break;
             case 'KeyS': this.moveState.bwd = true; break;
             case 'KeyA': this.moveState.left = true; break;
             case 'KeyD': this.moveState.right = true; break;
-            case 'Space': if (this.canJump) { this.velocity.y = 160; this.canJump = false; } break;
+            case 'Space': if (this.canJump) { this.velocity.y = 130; this.canJump = false; } break;
         }
     }
-
     private onKeyUp = (e: KeyboardEvent) => {
         switch (e.code) {
             case 'KeyW': this.moveState.fwd = false; break;
@@ -399,52 +494,66 @@ export class VoxelEngine {
             case 'KeyD': this.moveState.right = false; break;
         }
     }
-
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isRunning || this.isPaused) return;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
         euler.y -= e.movementX * this.sensitivity;
         euler.x -= e.movementY * this.sensitivity;
-        euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+        euler.x = Math.max(-1.5, Math.min(1.5, euler.x));
         this.camera.quaternion.setFromEuler(euler);
     }
-
     private onMouseDown = (e: MouseEvent) => {
         if (!this.isRunning || this.isPaused) return;
-        this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
-        const hits = this.raycaster.intersectObjects(this.objects);
-        if (hits.length === 0 || hits[0].distance > 60) return;
+        this.raycaster.setFromCamera(new THREE.Vector2(0,0), this.camera);
+        // Intersect against chunk meshes
+        const meshes = Array.from(this.chunks.values()).map(c => c.mesh).filter((m): m is THREE.Mesh => m !== null);
+        const hits = this.raycaster.intersectObjects(meshes);
+        if(hits.length === 0 || hits[0].distance > 60) return;
 
-        const hit = hits[0];
-        const pos = hit.object.position;
-        const userData = hit.object.userData;
+        const p = hits[0].point;
+        const n = hits[0].face!.normal;
+        
+        // Calculate block coord
+        const hitX = Math.floor((p.x - n.x * 0.1) / BLOCK_SIZE);
+        const hitY = Math.floor((p.y - n.y * 0.1) / BLOCK_SIZE);
+        const hitZ = Math.floor((p.z - n.z * 0.1) / BLOCK_SIZE);
 
-        if (e.button === 0) { // Break
-            if (userData.natural) {
-                // Natural block: Create an 'air' record to mask it
-                const bid = `${pos.x}_${pos.y}_${pos.z}`;
-                setDoc(doc(db, `${this.worldPath}/blocks`, bid), { 
-                    x: pos.x, y: pos.y, z: pos.z, type: 'air' 
-                });
-            } else if (userData.id) {
-                // User block: Delete the record
-                deleteDoc(doc(db, `${this.worldPath}/blocks`, userData.id));
-            }
-        } else if (e.button === 2) { // Place
-            const n = hit.face!.normal;
-            const bx = pos.x + n.x * BLOCK_SIZE;
-            const by = pos.y + n.y * BLOCK_SIZE;
-            const bz = pos.z + n.z * BLOCK_SIZE;
-
+        if(e.button === 0) { // Break
+            this.modifyBlock(hitX, hitY, hitZ, 'air');
+        } else if(e.button === 2) { // Place
+            const placeX = Math.floor((p.x + n.x * 0.1) / BLOCK_SIZE);
+            const placeY = Math.floor((p.y + n.y * 0.1) / BLOCK_SIZE);
+            const placeZ = Math.floor((p.z + n.z * 0.1) / BLOCK_SIZE);
+            
             // Player collision check
-            if (Math.abs(bx - this.camera.position.x) < 5 && Math.abs(bz - this.camera.position.z) < 5 && by > this.camera.position.y - 20 && by < this.camera.position.y + 5) return;
+            const px = this.camera.position.x / BLOCK_SIZE;
+            const pz = this.camera.position.z / BLOCK_SIZE;
+            if(Math.abs(placeX - px) < 1 && Math.abs(placeZ - pz) < 1 && placeY < (this.camera.position.y/BLOCK_SIZE)+1 && placeY > (this.camera.position.y/BLOCK_SIZE)-2) return;
 
-            const newKey = `${bx}_${by}_${bz}`;
-            const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass'; 
-            setDoc(doc(db, `${this.worldPath}/blocks`, newKey), {
-                x: bx, y: by, z: bz, type: selectedBlock
-            });
+            const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass';
+            this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
+        }
+    }
+
+    private modifyBlock(x: number, y: number, z: number, type: string) {
+        // Save to DB
+        const bid = `${x*BLOCK_SIZE}_${y*BLOCK_SIZE}_${z*BLOCK_SIZE}`;
+        setDoc(doc(db, `${this.worldPath}/blocks`, bid), { 
+            x: x*BLOCK_SIZE, y: y*BLOCK_SIZE, z: z*BLOCK_SIZE, type 
+        });
+
+        // Update local chunk immediately for responsiveness
+        const cx = Math.floor(x / CHUNK_SIZE);
+        const cz = Math.floor(z / CHUNK_SIZE);
+        const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+        const key = this.getChunkKey(cx, cz);
+        const chunk = this.chunks.get(key);
+        if(chunk) {
+            chunk.setBlock(lx, y, lz, type);
+            // Also update neighbor chunks if on border? (Skipped for brevity)
         }
     }
 
@@ -454,16 +563,19 @@ export class VoxelEngine {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
+    public setSensitivity(val: number) { this.sensitivity = val; }
+
     public dispose() {
-        if (this.unsubscribeWorld) this.unsubscribeWorld();
+        // Cleanup
+        this.chunks.forEach(c => {
+            if(c.mesh) { this.scene.remove(c.mesh); c.mesh.geometry.dispose(); }
+        });
         window.removeEventListener('resize', this.onResize);
         document.removeEventListener('keydown', this.onKeyDown);
         document.removeEventListener('keyup', this.onKeyUp);
         document.body.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mousedown', this.onMouseDown);
-        if (this.container && this.renderer.domElement) {
-            this.container.removeChild(this.renderer.domElement);
-        }
+        if(this.renderer.domElement.parentNode) this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
         this.renderer.dispose();
     }
 }
