@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, orderBy, getDocs, setDoc, doc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, setDoc, getDoc, doc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
 import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
@@ -43,28 +43,91 @@ export default function Home() {
   const [paused, setPaused] = useState(false);
   const [coords, setCoords] = useState("0, 0, 0");
   const [selectedSlot, setSelectedSlot] = useState(0);
-  const [sensitivity, setSensitivity] = useState(20);
   
-  // Nested Menu State: 'main' or 'options'
   const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
+  
+  // SETTINGS STATE
+  const [options, setOptions] = useState({
+    splitScreen: false,
+    autoJump: false,
+    viewBobbing: true,
+    viewRolling: true,
+    hints: true,
+    deathMessages: true,
+    sensitivity: 100, // 100%
+    difficulty: 1 // 0: Peaceful, 1: Easy, 2: Normal, 3: Hard
+  });
+  
+  const [selectedOptionRow, setSelectedOptionRow] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 1. Auth & Initial Load
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (u) setUser(u);
-      else signInAnonymously(auth);
+      if (u) {
+        setUser(u);
+        loadSettings(u.uid); // Load settings when user connects
+      } else {
+        signInAnonymously(auth);
+      }
     });
     return () => unsub();
   }, []);
 
-  // Update Sensitivity Live
+  // 2. Load Settings from Firebase
+  const loadSettings = async (uid: string) => {
+    try {
+      const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+      const docRef = doc(db, `artifacts/${appId}/users/${uid}/settings/game`);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        // Merge saved data with default state to ensure all keys exist
+        setOptions(prev => ({ ...prev, ...data }));
+        console.log("Settings loaded:", data);
+      }
+    } catch (e) {
+      console.error("Failed to load settings:", e);
+    }
+  };
+
+  // 3. Auto-Save Settings (Debounced)
+  useEffect(() => {
+    if (!user) return;
+
+    // Clear previous timer if options change quickly (e.g. sliding slider)
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+        try {
+            const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+            const docRef = doc(db, `artifacts/${appId}/users/${user.uid}/settings/game`);
+            await setDoc(docRef, options, { merge: true });
+            console.log("Settings saved.");
+        } catch (e) {
+            console.error("Failed to save settings:", e);
+        }
+    }, 1000); // Wait 1 second after last change before saving
+
+    return () => {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [options, user]);
+
+  // 4. Sync Sensitivity with Engine
   useEffect(() => {
     if (engineRef.current) {
-        engineRef.current.setSensitivity(sensitivity / 10000);
+        // Map 0-200% to 0.000-0.004 (approx)
+        engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
     }
-  }, [sensitivity]);
+  }, [options.sensitivity]);
+
+  const toggleSetting = (key: keyof typeof options) => {
+    setOptions(prev => ({ ...prev, [key]: !prev[key as keyof typeof options] }));
+  };
 
   const startLoadingSequence = (callback: () => void) => {
     setView('loading');
@@ -122,12 +185,12 @@ export default function Home() {
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); });
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-            // Initialize sensitivity
-            engineRef.current.setSensitivity(sensitivity / 10000);
+            // Apply loaded settings immediately
+            engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
             setView('game');
             setShowPreGame(true);
             setPaused(false);
-            setPauseMenuState('main'); // Reset menu
+            setPauseMenuState('main');
         }
     };
     if (skipLoading) initEngine(); else startLoadingSequence(initEngine);
@@ -152,7 +215,7 @@ export default function Home() {
       } else {
         if (view === 'game' && !showPreGame) {
           setPaused(true);
-          setPauseMenuState('main'); // Always reset to main menu on pause
+          setPauseMenuState('main'); 
           if (engineRef.current) engineRef.current.isPaused = true;
         }
       }
@@ -174,6 +237,7 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  const getDiffText = (v: number) => ['Peaceful', 'Easy', 'Normal', 'Hard'][v];
 
   return (
     <main className={styles.fullScreen}>
@@ -283,41 +347,146 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- PAUSE MENU (LAYERED) --- */}
+      {/* --- PAUSE / OPTIONS MENU --- */}
       {view === 'game' && paused && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           
-          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>
-            {pauseMenuState === 'main' ? 'GAME PAUSED' : 'OPTIONS'}
-          </h1>
-
-          <div className={styles.menuContainer}>
-            
-            {/* LAYER 1: MAIN MENU */}
-            {pauseMenuState === 'main' && (
-                <>
-                    <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Resume Game</button>
-                    <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Options</button>
-                    <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
-                </>
-            )}
-
-            {/* LAYER 2: OPTIONS MENU */}
-            {pauseMenuState === 'options' && (
-                <>
-                    {/* CUSTOM MINECRAFT STYLE SLIDER */}
-                    <div className={styles.sliderContainer}>
-                        <input type="range" min="1" max="200" value={sensitivity} 
-                            onChange={(e) => setSensitivity(parseInt(e.target.value))} 
-                            className={styles.sliderInput} />
-                        <div className={styles.sliderLabel}>Sensitivity: {sensitivity}%</div>
-                    </div>
-
-                    <button onClick={() => setPauseMenuState('main')} className={styles.switchBtn}>Back</button>
-                </>
-            )}
-
+          <div className={styles.logoContainer} style={{marginTop:0, marginBottom:10}}>
+            <h1 className={styles.logoMain} style={{fontSize:'5rem'}}>MINECRAFT</h1>
+            <div className={styles.logoSub} style={{fontSize:'1.5rem'}}>NINTENDO SWITCH EDITION</div>
           </div>
+
+          {/* MAIN PAUSE MENU */}
+          {pauseMenuState === 'main' && (
+            <div className={styles.menuContainer}>
+              <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Play Game</button>
+              <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Help & Options</button>
+              <button onClick={quitGame} className={styles.switchBtn}>Exit Game</button>
+            </div>
+          )}
+
+          {/* OPTIONS MENU */}
+          {pauseMenuState === 'options' && (
+            <div className={styles.optionsBox}>
+                
+                {/* 1. Vertical Splitscreen */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 0 ? styles.selected : ''} ${options.splitScreen ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(0)}
+                    onClick={() => toggleSetting('splitScreen')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>Vertical Splitscreen</span>
+                </div>
+
+                {/* 2. Auto Jump */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 1 ? styles.selected : ''} ${options.autoJump ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(1)}
+                    onClick={() => toggleSetting('autoJump')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>Auto Jump</span>
+                </div>
+
+                {/* 3. View Bobbing */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 2 ? styles.selected : ''} ${options.viewBobbing ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(2)}
+                    onClick={() => toggleSetting('viewBobbing')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>View Bobbing</span>
+                </div>
+
+                {/* 4. Flying View Rolling */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 3 ? styles.selected : ''} ${options.viewRolling ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(3)}
+                    onClick={() => toggleSetting('viewRolling')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>Flying View Rolling</span>
+                </div>
+
+                {/* 5. Hints */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 4 ? styles.selected : ''} ${options.hints ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(4)}
+                    onClick={() => toggleSetting('hints')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>Hints</span>
+                </div>
+
+                {/* 6. Death Messages */}
+                <div 
+                    className={`${styles.optionRow} ${selectedOptionRow === 5 ? styles.selected : ''} ${options.deathMessages ? styles.checked : ''}`}
+                    onMouseEnter={() => setSelectedOptionRow(5)}
+                    onClick={() => toggleSetting('deathMessages')}
+                >
+                    <div className={styles.checkbox}>
+                        <span className={styles.checkmark}>✓</span>
+                    </div>
+                    <span>Death Messages</span>
+                </div>
+
+                {/* 7. Sensitivity Slider */}
+                <div className={styles.consoleSliderContainer} onMouseEnter={() => setSelectedOptionRow(null)}>
+                    <input 
+                        type="range" min="1" max="200" value={options.sensitivity}
+                        onChange={(e) => setOptions({...options, sensitivity: parseInt(e.target.value)})}
+                        className={styles.consoleSliderInput}
+                    />
+                    <div className={styles.sliderText}>Game Sensitivity: {options.sensitivity}%</div>
+                </div>
+
+                {/* 8. Difficulty Slider */}
+                <div className={styles.consoleSliderContainer} onMouseEnter={() => setSelectedOptionRow(null)}>
+                    <input 
+                        type="range" min="0" max="3" value={options.difficulty}
+                        onChange={(e) => {
+                           const val = parseInt(e.target.value);
+                           setOptions({...options, difficulty: val});
+                       }}
+                       className={styles.consoleSliderInput}
+                    />
+                    <div className={styles.sliderText}>Difficulty: {getDiffText(options.difficulty)}</div>
+                </div>
+
+            </div>
+          )}
+
+          <div className={styles.footerBar}>
+            {pauseMenuState === 'main' ? (
+                <div className={styles.footerItem}>
+                    <div className={styles.btnIcon} onClick={() => document.body.requestPointerLock()}>A</div>
+                    <span>Select</span>
+                </div>
+            ) : (
+                <>
+                    <div className={styles.footerItem}>
+                        <div className={styles.btnIcon} onClick={() => {}}>A</div>
+                        <span>Select</span>
+                    </div>
+                    <div className={styles.footerItem}>
+                        <div className={styles.btnIcon} onClick={() => setPauseMenuState('main')}>B</div>
+                        <span>Back</span>
+                    </div>
+                </>
+            )}
+          </div>
+
         </div>
       )}
 
