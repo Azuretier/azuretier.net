@@ -163,42 +163,35 @@ export default function Home() {
   return (
     <main className={styles.fullScreen}>
       {/* 
-          1. PERSISTENT BACKGROUND LAYER 
-          We use CSS class 'hidden' instead of conditional rendering ({ view === ... })
-          This keeps the Three.js instance alive and rotating even when navigating screens.
+          UPDATED: 'view === loading' is now included in the condition.
+          This ensures the panorama stays visible behind the semi-transparent loading screen.
       */}
-      <div className={(view === 'title' || view === 'worlds') ? '' : styles.hidden}>
+      <div className={(view === 'title' || view === 'worlds' || view === 'loading') ? '' : styles.hidden}>
         <PanoramaBackground /> 
         <div className={styles.vignette}></div>
       </div>
 
-      {/* 2. GAME CONTAINER (Always mounted, controlled by engine) */}
       <div ref={containerRef} className={styles.fullScreen} style={{ zIndex: 0 }} />
 
       {/* --- TITLE SCREEN UI --- */}
       {view === 'title' && (
         <div className={styles.fullScreen}>
-          {/* No background here, it's provided by the persistent layer above */}
           <div className={styles.menuLayer}>
-            
             <div className={styles.logoContainer}>
               <h1 className={styles.logoMain}>MINECRAFT</h1>
               <div className={styles.logoSub}>NINTENDO SWITCH EDITION</div>
               <div className={styles.splashText}>{FIXED_SPLASH}</div>
             </div>
-
             <div className={styles.menuContainer}>
               <button disabled={!user} onClick={fetchWorlds} className={styles.switchBtn}>Play Game</button>
               <button className={styles.switchBtn}>Mini Games</button>
               <button className={styles.switchBtn}>Achievements</button>
               <button className={styles.switchBtn}>Help & Options</button>
               <button className={styles.switchBtn}>Minecraft Store</button>
-              
               <button className={`${styles.switchBtn} ${styles.downloadBtn}`}>
                   Download the latest version of Minecraft<br/>for FREE!
               </button>
             </div>
-
             <div className={styles.footerBar}>
               <div className={styles.footerItem}>
                 <div className={styles.btnIcon} style={{background:'#444', color:'#fff'}}>A</div>
@@ -209,7 +202,6 @@ export default function Home() {
                 <span>Change Network Mode</span>
               </div>
             </div>
-
           </div>
         </div>
       )}
@@ -234,8 +226,6 @@ export default function Home() {
       {/* --- WORLD SELECT UI --- */}
       {view === 'worlds' && (
         <div className={styles.fullScreen}>
-          {/* Background provided by persistent layer */}
-          
           <div className={styles.menuLayer}>
             <h1 className={styles.logoMain} style={{fontSize: '4rem', marginTop: 20}}>SELECT WORLD</h1>
             <div className={styles.listContainer}>

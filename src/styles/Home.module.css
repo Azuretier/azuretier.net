@@ -228,11 +228,26 @@
 /* --- LOADING --- */
 .loadingScreen {
   z-index: 100;
-  /* CHANGED HERE: Pointing to your local file */
-  background: url('/media/panorama.png') no-repeat center center fixed;
-  background-size: cover;
+  /* REMOVED background url property here to let 3D panorama show through */
 }
-.loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-shadow: 2px 2px 0 #000; font-family: var(--font-pixel); }
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Dim the background */
+  backdrop-filter: blur(5px);     /* Blur the 3D background */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-shadow: 2px 2px 0 #000;
+  font-family: var(--font-pixel);
+}
+
 .loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
 .loadingCenter { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
 .loadingStatus { font-family: var(--font-pixel); font-size: 2rem; text-shadow: 2px 2px 0 #000; margin-bottom: 15px; }
