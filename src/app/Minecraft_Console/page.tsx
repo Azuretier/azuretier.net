@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { auth, db } from "../lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc } from "firebase/firestore";
-import { VoxelEngine, BlockType } from "../lib/VoxelEngine";
-import styles from "./Home.module.css";
+import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
+import styles from "@/styles/Home.module.css";
 
 const BLOCK_SIZE = 10;
 const COLORS: Record<string, string> = {
