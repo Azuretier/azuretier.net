@@ -6,7 +6,6 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #1a1a1a; /* Fallback color */
 }
 
 .flexCenter {
@@ -20,43 +19,35 @@
 
 /* --- BACKGROUND SYSTEM --- */
 
-/* 1. The Moving Panorama */
+/* 1. The Moving Image (Updated to local file) */
 .panorama {
   position: absolute;
   top: -10%;
   left: -10%;
   width: 120%;
   height: 120%;
-  
-  /* UPDATED PATH: Points to public/media/panorama.png */
-  background-image: url('/media/panorama.png');
-  
-  /* Fallback to external if local fails, then color */
-  background-image: url('/media/panorama.png'), url('https://assets.codepen.io/104338/minecraft-panorama.jpg');
-  
-  background-repeat: no-repeat;
-  background-position: center center;
+  /* CHANGED HERE: Pointing to your local file */
+  background: url('/media/panorama.png') no-repeat center center;
   background-size: cover;
   
-  /* Console Edition Blur Effect */
+  /* The Console Style Look */
   filter: blur(6px); 
-  animation: panoramaMove 120s linear infinite alternate;
+  animation: panoramaMove 120s linear infinite alternate; 
   z-index: 0;
 }
 
-/* 2. The Vignette (Dark Edges) */
+/* 2. The Dark Edges (Vignette) */
 .vignette {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  /* Darken edges to make text pop */
-  background: radial-gradient(circle, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.7) 100%);
-  z-index: 1; 
+  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
+  z-index: 1;
 }
 
-/* 3. Content Container */
+/* 3. The Content Container */
 .menuLayer {
   position: relative;
   z-index: 10;
@@ -71,14 +62,6 @@
 @keyframes panoramaMove {
   0% { transform: translate(0, 0) scale(1); }
   100% { transform: translate(-5%, -2%) scale(1.1); }
-}
-
-/* --- DIRT BACKGROUND (Fallback / Title) --- */
-.bgDirt {
-  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-              url('https://www.transparenttextures.com/patterns/cubes.png'), 
-              #2e2e2e;
-  z-index: 50;
 }
 
 /* --- LOGO SECTION --- */
@@ -135,12 +118,6 @@
   text-align: center;
   animation: splashAnim 0.6s infinite alternate;
   z-index: 70;
-}
-
-@keyframes splashAnim {
-  0% { transform: scale(1) rotate(-20deg); }
-  50% { transform: scale(1.05) rotate(-20deg); }
-  100% { transform: scale(1) rotate(-20deg); }
 }
 
 /* --- MENU BUTTONS --- */
@@ -249,11 +226,11 @@
 .row { display: flex; gap: 10px; justify-content: center; }
 
 /* --- LOADING --- */
-.loadingScreen { 
-  z-index: 100; 
-  /* UPDATED PATH HERE TOO */
-  background: url('/media/panorama.png') no-repeat center center fixed; 
-  background-size: cover; 
+.loadingScreen {
+  z-index: 100;
+  /* CHANGED HERE: Pointing to your local file */
+  background: url('/media/panorama.png') no-repeat center center fixed;
+  background-size: cover;
 }
 .loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-shadow: 2px 2px 0 #000; font-family: var(--font-pixel); }
 .loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
