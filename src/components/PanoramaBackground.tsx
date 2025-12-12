@@ -12,7 +12,7 @@ export default function PanoramaBackground() {
     // 1. Setup Scene
     const scene = new THREE.Scene();
     // Adjusted FOV to 80 for a better wide-angle look
-    const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
     
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -50,7 +50,7 @@ export default function PanoramaBackground() {
     // 4. Animation
     const animate = () => {
       requestAnimationFrame(animate);
-      mesh.rotation.y += 0.0006; // Rotate cylinder
+      mesh.rotation.y += 0.00006; // Rotate cylinder
       renderer.render(scene, camera);
     };
     animate();
