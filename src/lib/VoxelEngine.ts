@@ -93,6 +93,7 @@ export class VoxelEngine {
     private frameCount = 0;
     public isRunning = false;
     public isPaused = false;
+    public isInventoryOpen = false;
     public sensitivity = 0.002;
     private container: HTMLElement;
     private worldPath: string;
@@ -430,6 +431,7 @@ export class VoxelEngine {
     }
 
     private onKeyDown = (e: KeyboardEvent) => {
+        if (this.isInventoryOpen) return;
         switch (e.code) {
             case 'KeyW': this.moveState.fwd = true; break;
             case 'KeyS': this.moveState.bwd = true; break;
@@ -447,7 +449,7 @@ export class VoxelEngine {
         }
     }
     private onMouseMove = (e: MouseEvent) => {
-        if (!this.isRunning || this.isPaused) return;
+        if (!this.isRunning || this.isPaused || this.isInventoryOpen) return; // Added isInventoryOpen check
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
         euler.y -= e.movementX * this.sensitivity;
@@ -456,7 +458,7 @@ export class VoxelEngine {
         this.camera.quaternion.setFromEuler(euler);
     }
     private onMouseDown = (e: MouseEvent) => {
-        if (!this.isRunning || this.isPaused) return;
+        if (!this.isRunning || this.isPaused || this.isInventoryOpen) return;
         this.raycaster.setFromCamera(new THREE.Vector2(0,0), this.camera);
         const meshes = Array.from(this.chunks.values()).map(c => c.mesh).filter((m): m is THREE.Mesh => m !== null);
         const hits = this.raycaster.intersectObjects(meshes);

@@ -47,11 +47,13 @@ export default function Home() {
 
    // Inventory System
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [hotbar, setHotbar] = useState<BlockType[]>(['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand']);
-  const [inventory, setInventory] = useState<BlockType[]>(new Array(27).fill('grass')); // Pre-fill with items for creative feel
   const [selectedSlot, setSelectedSlot] = useState(0);
-  const [dragItem, setDragItem] = useState<{item: BlockType, index: number, source: 'hotbar' | 'inv'} | null>(null);
   const [cursorPos, setCursorPos] = useState({x:0, y:0});
+  const [hotbar, setHotbar] = useState<(BlockType | null)[]>([
+      'grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'
+  ]);
+  const [inventory, setInventory] = useState<(BlockType | null)[]>(new Array(27).fill(null)); 
+  const [dragItem, setDragItem] = useState<{item: BlockType, index: number, source: 'hotbar' | 'inv'} | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
@@ -161,20 +163,34 @@ export default function Home() {
   useEffect(() => {
     const handleLock = () => {
       if (document.pointerLockElement === document.body) {
+        // LOCKED: Playing Game
         setPaused(false);
-        if (engineRef.current) engineRef.current.isPaused = false;
+        setInventoryOpen(false);
+        if (engineRef.current) {
+            engineRef.current.isPaused = false;
+            engineRef.current.isInventoryOpen = false; // Allow input
+        }
       } else {
-        // Only pause if we are actually in the game and not just starting
-        if (view === 'game' && !showPreGame) {
-          setPaused(true);
-          setPauseMenuState('main');
-          if (engineRef.current) engineRef.current.isPaused = true;
+        // UNLOCKED: Either Inventory OR Esc Menu
+        if (inventoryOpen) {
+            // Inventory Open: Don't pause physics, just lock input
+            if (engineRef.current) {
+                engineRef.current.isPaused = false; // Keep physics running
+                engineRef.current.isInventoryOpen = true; // Stop mouse look/breaking
+            }
+        } else {
+            // Actually Paused (ESC menu or tab out)
+            if (view === 'game' && !showPreGame) {
+                setPaused(true);
+                setPauseMenuState('main');
+                if (engineRef.current) engineRef.current.isPaused = true;
+            }
         }
       }
     };
     document.addEventListener('pointerlockchange', handleLock);
     return () => document.removeEventListener('pointerlockchange', handleLock);
-  }, [view, showPreGame]);
+  }, [view, showPreGame, inventoryOpen]); // inventoryOpen dependency is crucial here
 
   useEffect(() => { (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot]; }, [selectedSlot]);
 
@@ -216,36 +232,65 @@ export default function Home() {
 
   // --- INVENTORY LOGIC ---
   const handleSlotClick = (index: number, source: 'hotbar' | 'inv') => {
-    if(!dragItem) {
-      // Pick up
-      const item = source === 'hotbar' ? hotbar[index] : inventory[index];
-      if(item) setDragItem({ item, index, source });
+    // Current item at the clicked slot
+    const currentItem = source === 'hotbar' ? hotbar[index] : inventory[index];
+
+    if (!dragItem) {
+      // PICK UP: Only if there is actually an item there
+      if (currentItem) {
+        setDragItem({ item: currentItem, index, source });
+        
+        // Remove item from source immediately (visual feedback)
+        if (source === 'hotbar') {
+            const newHB = [...hotbar]; newHB[index] = null; setHotbar(newHB);
+        } else {
+            const newInv = [...inventory]; newInv[index] = null; setInventory(newInv);
+        }
+      }
     } else {
-      // Drop / Swap
-      const targetItem = source === 'hotbar' ? hotbar[index] : inventory[index];
-      
-      // Update State
-      if(source === 'hotbar') {
-         const newHB = [...hotbar]; newHB[index] = dragItem.item; setHotbar(newHB);
-      } else {
-         const newInv = [...inventory]; newInv[index] = dragItem.item; setInventory(newInv);
+      // PLACE / SWAP
+      const itemToDrop = dragItem.item;
+      const prevSource = dragItem.source;
+      const prevIndex = dragItem.index;
+
+      // If we clicked the exact same slot we dragged from, just put it back
+      if (prevSource === source && prevIndex === index) {
+          if (source === 'hotbar') {
+              const newHB = [...hotbar]; newHB[index] = itemToDrop; setHotbar(newHB);
+          } else {
+              const newInv = [...inventory]; newInv[index] = itemToDrop; setInventory(newInv);
+          }
+          setDragItem(null);
+          return;
       }
-      
-      if(dragItem.source === 'hotbar') {
-         const newHB = [...hotbar]; 
-         // If placing in same slot, do nothing. If different, we already set target.
-         // But we need to handle the swap (put targetItem in old source)
-         if(dragItem.index !== index || source !== 'hotbar') {
-             newHB[dragItem.index] = targetItem;
-             setHotbar(newHB);
-         }
+
+      // 1. Update the TARGET slot (Where we dropped)
+      if (source === 'hotbar') {
+          const newHB = [...hotbar]; newHB[index] = itemToDrop; setHotbar(newHB);
       } else {
-         const newInv = [...inventory];
-         if(dragItem.index !== index || source !== 'inv') {
-             newInv[dragItem.index] = targetItem;
-             setInventory(newInv);
-         }
+          const newInv = [...inventory]; newInv[index] = itemToDrop; setInventory(newInv);
       }
+
+      // 2. Handle the SWAP (Put the item that was in the target back to the start)
+      // If the target slot was empty (null), we put null back in the start (which is already done in Pick Up step)
+      // If the target had an item, we move that item to the start
+      if (currentItem) {
+          if (prevSource === 'hotbar') {
+              const newHB = [...hotbar]; 
+              // Note: We need to re-read state carefully or use functional updates, 
+              // but since we updated 'target' above in a separate state call, 
+              // simplistic React batching might conflict. 
+              // Ideally use functional state updates. For simplicity here:
+              setHotbar(prev => {
+                  const copy = [...prev]; copy[prevIndex] = currentItem; return copy;
+              });
+          } else {
+              setInventory(prev => {
+                  const copy = [...prev]; copy[prevIndex] = currentItem; return copy;
+              });
+          }
+      }
+
       setDragItem(null);
     }
   };
@@ -278,6 +323,7 @@ export default function Home() {
                       <div className={styles.invGrid}>
                           {inventory.map((item, idx) => (
                               <div key={idx} className={styles.invSlot} onClick={() => handleSlotClick(idx, 'inv')}>
+                                  {/* Only render the colored box if item exists */}
                                   {item && <div className={styles.itemIcon} style={{backgroundColor: COLORS[item]}} />}
                               </div>
                           ))}
@@ -289,7 +335,7 @@ export default function Home() {
                       <div className={styles.invGrid}>
                           {hotbar.map((item, idx) => (
                               <div key={idx} className={styles.invSlot} onClick={() => handleSlotClick(idx, 'hotbar')}>
-                                   {item && <div className={styles.itemIcon} style={{backgroundColor: COLORS[item]}} />}
+                                  {item && <div className={styles.itemIcon} style={{backgroundColor: COLORS[item]}} />}
                               </div>
                           ))}
                       </div>
@@ -425,8 +471,13 @@ export default function Home() {
           <div className={styles.crosshair}></div>
           <div className={styles.coords}>{coords}</div>
           <div className={styles.hotbar}>
-            {HOTBAR_ITEMS.map((item, idx) => (
-              <div key={item} onClick={() => setSelectedSlot(idx)} className={`${styles.slot} ${selectedSlot === idx ? styles.slotActive : ''}`} style={{ backgroundColor: COLORS[item] }} />
+            {hotbar.map((item, idx) => (
+              <div key={idx} 
+                  onClick={() => setSelectedSlot(idx)} 
+                  className={`${styles.slot} ${selectedSlot === idx ? styles.slotActive : ''}`}>
+                  {/* Only show color if item exists */}
+                  {item && <div style={{width:'100%', height:'100%', backgroundColor: COLORS[item]}}></div>}
+              </div>
             ))}
           </div>
         </div>
