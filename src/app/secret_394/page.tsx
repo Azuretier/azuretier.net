@@ -202,6 +202,14 @@ export default function Home() {
             <div className={styles.menuContainer}>
               <button disabled={!user} onClick={fetchWorlds} className={styles.switchBtn}>Play Game</button>
               <button className={styles.switchBtn}>Mini Games</button>
+              <button className={styles.switchBtn}>Achievements</button>
+              <button className={styles.switchBtn}>Help & Options</button>
+              <button className={styles.switchBtn}>Minecraft Store</button>
+            </div>
+            <div className={styles.footerBar}>
+              <div className={styles.footerItem}>
+                <div className={styles.btnIcon}>A</div><span>Select</span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,8 +222,10 @@ export default function Home() {
             <h1 className={styles.loadingLogo}>MINECRAFT</h1>
             <div className={styles.loadingCenter}>
                 <div className={styles.loadingStatus}>{loadingStatus}</div>
+                <div className={styles.loadingSubText}>{loadingSub}</div>
                 <div className={styles.progressTrack}><div className={styles.progressFill} style={{width:`${progress}%`}}></div></div>
             </div>
+            <div className={styles.tipBox}>{currentTip}</div>
           </div>
         </div>
       )}
@@ -233,8 +243,8 @@ export default function Home() {
               ))}
             </div>
             <div className={styles.row}>
-                <button onClick={() => setModalCreate(true)} className={styles.switchBtn} style={{width:'200px'}}>Create New</button>
-                <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.switchBtn} style={{width:'200px'}}>Load</button>
+              <button onClick={() => setModalCreate(true)} className={styles.switchBtn} style={{width:'200px'}}>Create New</button>
+              <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.switchBtn} style={{width:'200px'}}>Load</button>
             </div>
             <button onClick={() => setView('title')} className={styles.switchBtn} style={{width:'200px', marginTop:20}}>Back</button>
           </div>
