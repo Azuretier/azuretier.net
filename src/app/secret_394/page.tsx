@@ -42,9 +42,16 @@ export default function Home() {
   const [showPreGame, setShowPreGame] = useState(false);
   const [paused, setPaused] = useState(false);
   const [coords, setCoords] = useState("0, 0, 0");
-  const [selectedSlot, setSelectedSlot] = useState(0);
   const [sensitivity, setSensitivity] = useState(20);
   const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
+
+   // Inventory System
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [hotbar, setHotbar] = useState<BlockType[]>(['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand']);
+  const [inventory, setInventory] = useState<BlockType[]>(new Array(27).fill('grass')); // Pre-fill with items for creative feel
+  const [selectedSlot, setSelectedSlot] = useState(0);
+  const [dragItem, setDragItem] = useState<{item: BlockType, index: number, source: 'hotbar' | 'inv'} | null>(null);
+  const [cursorPos, setCursorPos] = useState({x:0, y:0});
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
@@ -173,14 +180,75 @@ export default function Home() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if (view !== 'game') return;
+
+      // Hotbar
       if(e.code.startsWith("Digit")) {
         const idx = parseInt(e.key) - 1;
-        if(idx >= 0 && idx < HOTBAR_ITEMS.length) setSelectedSlot(idx);
+        if(idx >= 0 && idx < 9) setSelectedSlot(idx);
+      }
+      
+      // Inventory Toggle
+      if(e.code === 'KeyE') {
+        if(inventoryOpen) {
+           setInventoryOpen(false);
+           document.body.requestPointerLock();
+           if(engineRef.current) engineRef.current.isPaused = false;
+        } else {
+           setInventoryOpen(true);
+           document.exitPointerLock();
+           if(engineRef.current) engineRef.current.isPaused = true;
+        }
       }
     };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+        setCursorPos({x: e.clientX, y: e.clientY});
+    };
+
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+        window.removeEventListener('keydown', handleKey);
+        window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [view, inventoryOpen]);
+
+  // --- INVENTORY LOGIC ---
+  const handleSlotClick = (index: number, source: 'hotbar' | 'inv') => {
+    if(!dragItem) {
+      // Pick up
+      const item = source === 'hotbar' ? hotbar[index] : inventory[index];
+      if(item) setDragItem({ item, index, source });
+    } else {
+      // Drop / Swap
+      const targetItem = source === 'hotbar' ? hotbar[index] : inventory[index];
+      
+      // Update State
+      if(source === 'hotbar') {
+         const newHB = [...hotbar]; newHB[index] = dragItem.item; setHotbar(newHB);
+      } else {
+         const newInv = [...inventory]; newInv[index] = dragItem.item; setInventory(newInv);
+      }
+      
+      if(dragItem.source === 'hotbar') {
+         const newHB = [...hotbar]; 
+         // If placing in same slot, do nothing. If different, we already set target.
+         // But we need to handle the swap (put targetItem in old source)
+         if(dragItem.index !== index || source !== 'hotbar') {
+             newHB[dragItem.index] = targetItem;
+             setHotbar(newHB);
+         }
+      } else {
+         const newInv = [...inventory];
+         if(dragItem.index !== index || source !== 'inv') {
+             newInv[dragItem.index] = targetItem;
+             setInventory(newInv);
+         }
+      }
+      setDragItem(null);
+    }
+  };
 
   return (
     <main className={styles.fullScreen}>
@@ -189,6 +257,53 @@ export default function Home() {
         <div className={styles.vignette}></div>
       </div>
       <div ref={containerRef} className={styles.fullScreen} style={{ zIndex: 0 }} />
+
+      {/* --- INVENTORY OVERLAY --- */ }
+      {view === 'game' && inventoryOpen && (
+          <div className={styles.inventoryOverlay}>
+              <div className={styles.inventoryWindow}>
+                  <h2 className={styles.invTitle}>Crafting</h2>
+                  
+                  {/* Crafting Area Placeholder */}
+                  <div style={{display:'flex', gap:20, padding: 10, background: '#8b8b8b', border:'2px solid #373737', borderBottomColor:'#fff', borderRightColor:'#fff'}}>
+                      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:2}}>
+                          {[0,1,2,3].map(i => <div key={i} className={styles.invSlot} style={{width:30, height:30}}></div>)}
+                      </div>
+                      <div style={{display:'flex', alignItems:'center'}}>➔</div>
+                      <div className={styles.invSlot} style={{width:40, height:40}}></div>
+                  </div>
+
+                  <div className={styles.invSection}>
+                      <span className={styles.invLabel}>Inventory</span>
+                      <div className={styles.invGrid}>
+                          {inventory.map((item, idx) => (
+                              <div key={idx} className={styles.invSlot} onClick={() => handleSlotClick(idx, 'inv')}>
+                                  {item && <div className={styles.itemIcon} style={{backgroundColor: COLORS[item]}} />}
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+
+                  <div className={styles.invSection}>
+                      <span className={styles.invLabel}>Hotbar</span>
+                      <div className={styles.invGrid}>
+                          {hotbar.map((item, idx) => (
+                              <div key={idx} className={styles.invSlot} onClick={() => handleSlotClick(idx, 'hotbar')}>
+                                   {item && <div className={styles.itemIcon} style={{backgroundColor: COLORS[item]}} />}
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* DRAG ITEM GHOST */}
+      {dragItem && (
+          <div className={styles.dragItem} style={{top: cursorPos.y - 20, left: cursorPos.x - 20}}>
+             <div className={styles.itemIcon} style={{backgroundColor: COLORS[dragItem.item], width:40, height:40}} />
+          </div>
+      )}
 
       {/* TITLES */}
       {view === 'title' && (
