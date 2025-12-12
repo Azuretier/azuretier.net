@@ -44,6 +44,9 @@ export default function Home() {
   const [coords, setCoords] = useState("0, 0, 0");
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [sensitivity, setSensitivity] = useState(20);
+  
+  // Nested Menu State: 'main' or 'options'
+  const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
@@ -124,6 +127,7 @@ export default function Home() {
             setView('game');
             setShowPreGame(true);
             setPaused(false);
+            setPauseMenuState('main'); // Reset menu
         }
     };
     if (skipLoading) initEngine(); else startLoadingSequence(initEngine);
@@ -148,6 +152,7 @@ export default function Home() {
       } else {
         if (view === 'game' && !showPreGame) {
           setPaused(true);
+          setPauseMenuState('main'); // Always reset to main menu on pause
           if (engineRef.current) engineRef.current.isPaused = true;
         }
       }
@@ -278,28 +283,40 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- PAUSE MENU (RESTORED SIMPLE STYLE) --- */}
+      {/* --- PAUSE MENU (LAYERED) --- */}
       {view === 'game' && paused && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          <div className={styles.modalBox} style={{width: 500}}>
-            <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '3rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>GAME PAUSED</h1>
-            
-            <div style={{marginBottom: 30, width:'100%'}}>
-                <label style={{fontFamily: 'var(--font-pixel)', fontSize:'1.5rem', display:'block', marginBottom:10}}>
-                    Sensitivity: {sensitivity}%
-                </label>
-                <input 
-                    type="range" 
-                    min="1" 
-                    max="100" 
-                    value={sensitivity} 
-                    onChange={(e) => setSensitivity(parseInt(e.target.value))}
-                    style={{width: '90%', cursor:'pointer'}}
-                />
-            </div>
+          
+          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>
+            {pauseMenuState === 'main' ? 'GAME PAUSED' : 'OPTIONS'}
+          </h1>
 
-            <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn} style={{marginBottom:10}}>Resume Game</button>
-            <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
+          <div className={styles.menuContainer}>
+            
+            {/* LAYER 1: MAIN MENU */}
+            {pauseMenuState === 'main' && (
+                <>
+                    <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Resume Game</button>
+                    <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Options</button>
+                    <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
+                </>
+            )}
+
+            {/* LAYER 2: OPTIONS MENU */}
+            {pauseMenuState === 'options' && (
+                <>
+                    {/* CUSTOM MINECRAFT STYLE SLIDER */}
+                    <div className={styles.sliderContainer}>
+                        <input type="range" min="1" max="200" value={sensitivity} 
+                            onChange={(e) => setSensitivity(parseInt(e.target.value))} 
+                            className={styles.sliderInput} />
+                        <div className={styles.sliderLabel}>Sensitivity: {sensitivity}%</div>
+                    </div>
+
+                    <button onClick={() => setPauseMenuState('main')} className={styles.switchBtn}>Back</button>
+                </>
+            )}
+
           </div>
         </div>
       )}
