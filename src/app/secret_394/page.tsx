@@ -73,6 +73,21 @@ export default function Home() {
   }, [user]);
 
   useEffect(() => {
+    if (!user || !selectedWorldId || view !== 'game') return;
+
+    // Debounce save to avoid spamming Firestore on every item drag
+    const timeout = setTimeout(() => {
+        setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}`), { 
+            inventory, 
+            hotbar, 
+            updatedAt: Date.now() 
+        }, { merge: true }).catch(e => console.error("Auto-save failed", e));
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [inventory, hotbar, user, selectedWorldId, view]);
+
+  useEffect(() => {
     if (!user) return;
     const t = setTimeout(() => {
       setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`), 
@@ -122,6 +137,7 @@ export default function Home() {
 
   const loadGame = async (worldId: string, skipLoading = false, directParams?: any) => {
     if (!user) return;
+    setSelectedWorldId(worldId);
     const init = (params: any) => {
         if (engineRef.current) engineRef.current.dispose();
         if (containerRef.current) {
