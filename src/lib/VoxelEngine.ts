@@ -522,7 +522,7 @@ export class VoxelEngine {
             this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
         }
     }
-
+    
     private modifyBlock(x: number, y: number, z: number, type: string) {
         const bid = `${x*BLOCK_SIZE}_${y*BLOCK_SIZE}_${z*BLOCK_SIZE}`;
         setDoc(doc(db, `${this.worldPath}/blocks`, bid), { x: x*BLOCK_SIZE, y: y*BLOCK_SIZE, z: z*BLOCK_SIZE, type });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
@@ -11,9 +11,9 @@ import styles from "@/styles/Home.module.css";
 const COLORS: Record<string, string> = {
   grass: '#567d46', dirt: '#5d4037', stone: '#757575',
   wood: '#4e342e', brick: '#8d6e63', leaves: '#2e7d32',
-  water: '#40a4df', obsidian: '#1a1a1a'
+  water: '#40a4df', obsidian: '#1a1a1a', sand: '#c2b280'
 };
-const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian'];
+const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'];
 
 const FIXED_SPLASH = "Music by C418!";
 const TIPS = [
@@ -22,6 +22,8 @@ const TIPS = [
   "Water and lava are dangerous.", "Crops grow faster near water.",
   "Wolves can be tamed with bones.", "Shift-click to move items quickly."
 ];
+
+const isDirty = useRef(false);
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -72,20 +74,47 @@ export default function Home() {
       .then(snap => { if(snap.exists()) setSensitivity(snap.data().sensitivity); });
   }, [user]);
 
-  useEffect(() => {
-    if (!user || !selectedWorldId || view !== 'game') return;
-
-    // Debounce save to avoid spamming Firestore on every item drag
-    const timeout = setTimeout(() => {
-        setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}`), { 
+  const saveWorldData = useCallback(async () => {
+    if (!user || !selectedWorldId) return;
+    
+    try {
+        await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}`), { 
             inventory, 
             hotbar, 
             updatedAt: Date.now() 
-        }, { merge: true }).catch(e => console.error("Auto-save failed", e));
-    }, 2000);
+        }, { merge: true });
+        isDirty.current = false;
+    } catch (e) {
+        console.error("Save failed", e);
+    }
+  }, [inventory, hotbar, user, selectedWorldId]);
+
+  // --- AUTO SAVE EFFECT ---
+  useEffect(() => {
+    if (!user || !selectedWorldId || view !== 'game') return;
+
+    // Mark as dirty whenever inventory changes
+    isDirty.current = true;
+
+    // Debounce save (1 second)
+    const timeout = setTimeout(() => {
+        saveWorldData();
+    }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [inventory, hotbar, user, selectedWorldId, view]);
+  }, [inventory, hotbar, user, selectedWorldId, view, saveWorldData]);
+
+  // --- UNLOAD WARNING ---
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (isDirty.current) {
+            e.preventDefault();
+            e.returnValue = ''; // Trigger browser warning
+        }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -170,9 +199,10 @@ export default function Home() {
     if (engineRef.current) { engineRef.current.isRunning = true; document.body.requestPointerLock(); }
   };
 
-  const quitGame = () => {
+  const quitGame = async () => {
     if (engineRef.current) { engineRef.current.dispose(); engineRef.current = null; }
     document.exitPointerLock();
+    await saveWorldData();
     setView('title');
   };
 
