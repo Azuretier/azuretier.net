@@ -23,7 +23,7 @@ const TIPS = [
   "Wolves can be tamed with bones.", "Shift-click to move items quickly."
 ];
 
-const isDirty = useRef(false);
+const isDirty = { current: false };
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
