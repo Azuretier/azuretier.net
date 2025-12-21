@@ -58,10 +58,8 @@ export default function Home() {
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [cursorPos, setCursorPos] = useState({x:0, y:0});
-  const [hotbar, setHotbar] = useState<(BlockType | null)[]>([
-      'grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'
-  ]);
-  const [inventory, setInventory] = useState<(BlockType | null)[]>(new Array(27).fill(null)); 
+  const [inventory, setInventory] = useState<(BlockType | null)[]>(new Array(27).fill(null));
+  const [hotbar, setHotbar] = useState<(BlockType | null)[]>(DEFAULT_HOTBAR);
   const [dragItem, setDragItem] = useState<{item: BlockType, index: number, source: 'hotbar' | 'inv'} | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -192,8 +190,10 @@ export default function Home() {
             
             if (playerSnap.exists() && playerSnap.data().hotbar) {
                 setHotbar(playerSnap.data().hotbar); // <--- Restore saved inventory
+                setInventory(playerSnap.data().inventory);
             } else {
                 setHotbar(DEFAULT_HOTBAR); // <--- Use default for new/broken worlds
+                setInventory(new Array(27).fill(null));
             }
             // ----------------------------------------------------
             
