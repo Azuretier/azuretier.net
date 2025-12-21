@@ -10,8 +10,8 @@ const USER_DATA = {
   socials: [
     { name: "GitHub", href: "https://github.com/Azuretier", type: "link" },
     { name: "YouTube", href: "https://www.youtube.com/@azuchan_a", type: "link" },
-    { name: "Instagram", href: "https://instagram.com/yourhandle", type: "link" },
-    { name: "Discord: @yourusername", href: "#", type: "static" }, // Non-interactable
+    { name: "Instagram", href: "https://www.instagram.com/rrrrrrrrrrvq/", type: "link" },
+    { name: "Discord: @daichi_a", href: "#", type: "static" }, // Non-interactable
   ],
   projects: [
     {
