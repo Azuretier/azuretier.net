@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
-import { createProceduralTexture } from './TextureUtils';
 
-// Import Post Processing
+// Post Processing Imports
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -16,11 +15,11 @@ const HALF_BLOCK = BLOCK_SIZE / 2;
 const CHUNK_SIZE = 16;
 const RENDER_DISTANCE = 4; 
 
-// Player Dimensions (1x2x1 approx)
-const PLAYER_WIDTH = 0.6 * BLOCK_SIZE; // 0.6 blocks wide (standard MC is 0.6)
-const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; // 1.8 blocks high
+// Player Dimensions
+const PLAYER_WIDTH = 0.6 * BLOCK_SIZE; 
+const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; 
 const PLAYER_HALF_W = PLAYER_WIDTH / 2;
-const EYE_HEIGHT = 1.6 * BLOCK_SIZE; // Eyes are near top
+const EYE_HEIGHT = 1.6 * BLOCK_SIZE; 
 
 const COLORS: Record<string, { r: number, g: number, b: number }> = {
     grass: { r: 0.2, g: 0.5, b: 0.2 },
@@ -33,39 +32,6 @@ const COLORS: Record<string, { r: number, g: number, b: number }> = {
     obsidian: { r: 0.1, g: 0.0, b: 0.2 },
     sand: { r: 0.8, g: 0.8, b: 0.5 },
     air: { r: 0, g: 0, b: 0 }
-};
-
-const MATERIALS: Record<string, THREE.MeshStandardMaterial> = {};
-
-// Helper to init materials
-const initMaterials = () => {
-    const setupMat = (color: string, roughness: number = 0.9) => {
-        return new THREE.MeshStandardMaterial({
-            map: createProceduralTexture(color),
-            roughness: roughness,
-            metalness: 0.1,
-        });
-    };
-
-    MATERIALS['grass'] = setupMat('#567d46');
-    MATERIALS['dirt'] = setupMat('#5d4037');
-    MATERIALS['stone'] = setupMat('#757575');
-    MATERIALS['wood'] = setupMat('#4e342e');
-    MATERIALS['brick'] = setupMat('#8d6e63');
-    MATERIALS['sand'] = setupMat('#c2b280');
-    MATERIALS['obsidian'] = setupMat('#121212', 0.2); // Shiny
-    
-    // Transparent / Special blocks
-    MATERIALS['leaves'] = setupMat('#2e7d32');
-    MATERIALS['leaves'].transparent = true;
-    
-    MATERIALS['water'] = new THREE.MeshStandardMaterial({
-        color: 0x40a4df,
-        transparent: true,
-        opacity: 0.7,
-        roughness: 0.0,
-        metalness: 0.1
-    });
 };
 
 class Perlin {
@@ -123,21 +89,25 @@ export class VoxelEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
-    private composer: EffectComposer; // For Post-Processing
+    private composer: EffectComposer; 
     private raycaster: THREE.Raycaster;
     private chunks: Map<string, Chunk> = new Map();
+    
     private velocity = new THREE.Vector3();
     private moveState = { fwd: false, bwd: false, left: false, right: false };
     private canJump = false;
     private onGround = false;
     private prevTime = performance.now();
     private frameCount = 0;
+    
     public isRunning = false;
     public isPaused = false;
     public isInventoryOpen = false;
     public sensitivity = 0.002;
-    private objects: THREE.Object3D[] = [];
-    private blockMeshes: Map<string, THREE.Mesh> = new Map();
+    
+    private inventory: BlockType[] = [];
+
+    private container: HTMLElement;
     private worldPath: string;
     private updateHUD: (x: number, y: number, z: number) => void;
     private perlin: Perlin;
@@ -148,106 +118,104 @@ export class VoxelEngine {
         container: HTMLElement, 
         worldPath: string, 
         updateHUD: (x:number, y:number, z:number) => void,
-        settings: { seed: number, type: 'default' | 'superflat' }
+        settings: { seed: number, type: 'default' | 'superflat' } = { seed: 12345, type: 'default' }
     ) {
+        this.container = container;
         this.worldPath = worldPath;
         this.updateHUD = updateHUD;
         this.worldType = settings.type;
         this.perlin = new Perlin(settings.seed);
 
-        if (Object.keys(MATERIALS).length === 0) initMaterials();
-
         // 1. Scene Setup
         this.scene = new THREE.Scene();
-        // Light Blue Sky (Fog matches sky color)
-        const skyColor = new THREE.Color(0x87CEEB);
-        this.scene.background = skyColor;
-        this.scene.fog = new THREE.Fog(skyColor, 20, 300);
-
-        // 2. Camera
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 50, 0);
-
-        // 3. Renderer (High Quality)
-        this.renderer = new THREE.WebGLRenderer({ antialias: false }); // Antialias off for Post-Processing efficiency
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
-        this.renderer.shadowMap.enabled = true; // ENABLE SHADOWS
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic Colors
-        this.renderer.toneMappingExposure = 1.1;
-        container.appendChild(this.renderer.domElement);
-
-        // 4. Post-Processing (The SEUS Look)
-        this.composer = new EffectComposer(this.renderer);
-        
-        // Pass 1: Render the scene
-        const renderPass = new RenderPass(this.scene, this.camera);
-        this.composer.addPass(renderPass);
-
-        // Pass 2: Bloom (Glow)
-        // resolution, strength, radius, threshold
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.4, 0.85);
-        this.composer.addPass(bloomPass);
-
-        // Pass 3: Color Correction
-        const outputPass = new OutputPass();
-        this.composer.addPass(outputPass);
-
         this.scene.background = new THREE.Color(0x87CEEB);
         this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400);
 
+        // 2. Camera Setup (Init only once!)
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // Start high up to avoid spawning in ground
-        this.camera.position.set(0, 100, 0);
+        this.camera.position.set(0, 100, 0); // Start high to avoid floor collision
 
-        this.matOpaque = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
+        // 3. Renderer Setup
+        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(this.renderer.domElement);
+
+        // 4. Post-Processing
+        this.composer = new EffectComposer(this.renderer);
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+        
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.4, 0.85);
+        this.composer.addPass(bloomPass);
+        
+        const outputPass = new OutputPass();
+        this.composer.addPass(outputPass);
+
+        // 5. Materials & Lights
+        this.matOpaque = new THREE.MeshStandardMaterial({ 
+            vertexColors: true, 
+            roughness: 0.9, 
+            metalness: 0.1 
+        });
 
         this.setupLights();
+        this.setupReferenceObject();
+        
         this.raycaster = new THREE.Raycaster();
-        this.updateChunks();
+        
+        // 6. Initial Generation
+        this.updateChunks(true); 
 
+        // 7. Event Listeners
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
         document.body.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
+        
         this.connectToFirebase();
         this.animate();
     }
 
+    public setInventory(newInventory: BlockType[]) {
+        this.inventory = newInventory;
+    }
+
+    public setSensitivity(val: number) { 
+        this.sensitivity = val; 
+    }
+
+    private setupReferenceObject() {
+        // Bedrock block at 0, -10, 0 so you have something to stand on if chunks lag
+        const geo = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(0, -BLOCK_SIZE, 0); 
+        this.scene.add(mesh);
+    }
+
     private setupLights() {
-        // Hemisphere Light (Sky Color + Ground Bounce)
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-        hemiLight.position.set(0, 200, 0);
-        this.scene.add(hemiLight);
-
-        // Sun Light (Directional + Shadows)
-        const dirLight = new THREE.DirectionalLight(0xffffee, 1.2);
-        dirLight.position.set(100, 200, 50);
-        dirLight.castShadow = true;
-        
-        // Shadow High Quality Settings
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 500;
-        
-        // Make shadow area large enough to cover the player
-        const d = 150;
-        dirLight.shadow.camera.left = -d;
-        dirLight.shadow.camera.right = d;
-        dirLight.shadow.camera.top = d;
-        dirLight.shadow.camera.bottom = -d;
-        // Fix shadow acne
-        dirLight.shadow.bias = -0.0001; 
-
-        this.scene.add(dirLight);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        this.scene.add(ambient);
+        const sun = new THREE.DirectionalLight(0xffffee, 1.2);
+        sun.position.set(50, 200, 100);
+        sun.castShadow = true;
+        sun.shadow.mapSize.width = 2048;
+        sun.shadow.mapSize.height = 2048;
+        const d = 200;
+        sun.shadow.camera.left = -d;
+        sun.shadow.camera.right = d;
+        sun.shadow.camera.top = d;
+        sun.shadow.camera.bottom = -d;
+        this.scene.add(sun);
     }
 
     private getChunkKey(cx: number, cz: number) { return `${cx},${cz}`; }
 
-    private updateChunks() {
+    private updateChunks(forceImmediate = false) {
         const playerCX = Math.floor(this.camera.position.x / (CHUNK_SIZE * BLOCK_SIZE));
         const playerCZ = Math.floor(this.camera.position.z / (CHUNK_SIZE * BLOCK_SIZE));
         const neededChunks = new Set<string>();
@@ -271,9 +239,14 @@ export class VoxelEngine {
                 this.chunks.set(key, chunk);
             }
         });
+        
         let updates = 0;
+        const maxUpdates = forceImmediate ? 100 : 8; 
         for (const chunk of this.chunks.values()) {
-            if (chunk.isDirty && updates < 2) { this.buildChunkMesh(chunk); updates++; }
+            if (chunk.isDirty && updates < maxUpdates) { 
+                this.buildChunkMesh(chunk); 
+                updates++; 
+            }
         }
     }
 
@@ -288,19 +261,13 @@ export class VoxelEngine {
                 if (this.worldType === 'superflat') {
                     chunk.setBlock(x, 0, z, 'grass');
                     chunk.setBlock(x, -1, z, 'dirt');
-                    chunk.setBlock(x, -2, z, 'dirt');
-                    chunk.setBlock(x, -3, z, 'obsidian');
+                    chunk.setBlock(x, -2, z, 'obsidian');
                 } else {
                     const n = this.perlin.noise(wx * 0.01, 0, wz * 0.01);
                     h = Math.floor(n * 20); 
                     chunk.setBlock(x, h, z, 'grass');
                     for (let d = 1; d <= 3; d++) chunk.setBlock(x, h - d, z, 'dirt');
                     chunk.setBlock(x, h - 4, z, 'stone');
-                    if (Math.random() < 0.01 && x > 2 && x < 13 && z > 2 && z < 13) {
-                        const th = 4;
-                        for(let i=1; i<=th; i++) chunk.setBlock(x, h+i, z, 'wood');
-                        chunk.setBlock(x, h+th+1, z, 'leaves');
-                    }
                 }
             }
         }
@@ -313,19 +280,19 @@ export class VoxelEngine {
         const normals: number[] = [];
         const indices: number[] = [];
         let vertCount = 0;
+        
         const isSolid = (x: number, y: number, z: number) => {
             const b = chunk.getBlock(x, y, z);
             return b !== undefined && b !== 'water' && b !== 'leaves';
         };
+
         chunk.data.forEach((type, key) => {
             const [x, y, z] = key.split(',').map(Number);
             const wx = x * BLOCK_SIZE + chunk.cx * CHUNK_SIZE * BLOCK_SIZE;
             const wy = y * BLOCK_SIZE;
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
             
-            // --- FIX: Use simple COLORS object ---
             const col = COLORS[type] || COLORS.dirt;
-            
             const s = HALF_BLOCK;
             const faces = [
                 { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
@@ -347,7 +314,9 @@ export class VoxelEngine {
                 vertCount += 4;
             }
         });
+        
         if (vertices.length === 0) return;
+        
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -367,32 +336,22 @@ export class VoxelEngine {
         onSnapshot(q, (snap) => {
             snap.docChanges().forEach(change => {
                 const d = change.doc.data();
-                const key = `${d.x}_${d.y}_${d.z}`;
+                const x = d.x / BLOCK_SIZE;
+                const y = d.y / BLOCK_SIZE;
+                const z = d.z / BLOCK_SIZE;
                 
-                if (change.type === 'removed') {
-                    const m = this.blockMeshes.get(key);
-                    if (m) {
-                        this.scene.remove(m);
-                        this.objects.splice(this.objects.indexOf(m), 1);
-                        this.blockMeshes.delete(key);
-                    }
-                } else {
-                    if (!this.blockMeshes.has(key)) {
-                        // Use the Cached Materials
-                        const material = MATERIALS[d.type] || MATERIALS['dirt'];
-                        const mesh = new THREE.Mesh(new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), material);
-                        
-                        mesh.position.set(d.x, d.y, d.z);
-                        mesh.userData = { id: change.doc.id };
-                        
-                        // ENABLE SHADOWS
-                        mesh.castShadow = true;
-                        mesh.receiveShadow = true;
-
-                        this.scene.add(mesh);
-                        this.objects.push(mesh);
-                        this.blockMeshes.set(key, mesh);
-                    }
+                const cx = Math.floor(x / CHUNK_SIZE);
+                const cz = Math.floor(z / CHUNK_SIZE);
+                const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                const key = this.getChunkKey(cx, cz);
+                let chunk = this.chunks.get(key);
+                
+                if (chunk) {
+                    if (change.type === 'removed') { 
+                        chunk.setBlock(lx, y, lz, 'air'); 
+                    } 
+                    else { chunk.setBlock(lx, y, lz, d.type); }
                 }
             });
         });
@@ -418,14 +377,11 @@ export class VoxelEngine {
         this.composer.render();
     };
 
-    // --- PHYSICS ENGINE ---
     private physics(delta: number) {
-        // Friction and Gravity
         this.velocity.x *= 0.9;
         this.velocity.z *= 0.9;
         this.velocity.y -= 400 * delta;
 
-        // Input
         const direction = new THREE.Vector3();
         direction.set(Number(this.moveState.right) - Number(this.moveState.left), 0, Number(this.moveState.bwd) - Number(this.moveState.fwd));
         direction.normalize();
@@ -437,11 +393,10 @@ export class VoxelEngine {
 
         if (direction.length() > 0) {
             const moveVec = new THREE.Vector3().addScaledVector(camDir, -direction.z).addScaledVector(camRight, direction.x);
-            const speed = this.onGround ? 1500 : 500; // Slower in air
+            const speed = this.onGround ? 1500 : 500; 
             this.velocity.addScaledVector(moveVec, speed * delta);
         }
 
-        // Apply Velocity with Separate Axis Resolution
         this.camera.position.x += this.velocity.x * delta;
         this.checkCol('x');
         
@@ -452,7 +407,6 @@ export class VoxelEngine {
         this.camera.position.y += this.velocity.y * delta;
         this.checkCol('y');
 
-        // Void Respawn
         if(this.camera.position.y < -200) {
             this.camera.position.set(0, 150, 0);
             this.velocity.set(0,0,0);
@@ -495,9 +449,6 @@ export class VoxelEngine {
                             const bMinZ = z * BLOCK_SIZE;
                             const bMaxZ = bMinZ + BLOCK_SIZE;
 
-                            // -- FIX: Explicit AABB Check --
-                            // Only resolve collision if we are ACTUALLY overlapping.
-                            // The loops just give us "nearby" blocks, not necessarily touching ones.
                             const overlap = 
                                 pMinX < bMaxX && pMaxX > bMinX &&
                                 pMinY < bMaxY && pMaxY > bMinY &&
@@ -531,7 +482,7 @@ export class VoxelEngine {
                                         this.velocity.z = 0;
                                     }
                                 }
-                                return; // Collision resolved for this axis
+                                return; 
                             }
                         }
                     }
@@ -559,7 +510,7 @@ export class VoxelEngine {
         }
     }
     private onMouseMove = (e: MouseEvent) => {
-        if (!this.isRunning || this.isPaused || this.isInventoryOpen) return; // Added isInventoryOpen check
+        if (!this.isRunning || this.isPaused || this.isInventoryOpen) return;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
         euler.y -= e.movementX * this.sensitivity;
@@ -571,7 +522,6 @@ export class VoxelEngine {
         if (!this.isRunning || this.isPaused || this.isInventoryOpen) return;
         this.raycaster.setFromCamera(new THREE.Vector2(0,0), this.camera);
         
-        // 1. Get meshes from chunks
         const meshes = Array.from(this.chunks.values())
                             .map(c => c.mesh)
                             .filter((m): m is THREE.Mesh => m !== null);
@@ -587,46 +537,29 @@ export class VoxelEngine {
         const hitZ = Math.floor((p.z - n.z * 0.1) / BLOCK_SIZE);
 
         if(e.button === 0) { 
-            // BREAK BLOCK
             this.modifyBlock(hitX, hitY, hitZ, 'air');
         } else if(e.button === 2) { 
-            // PLACE BLOCK
-            
-            // --- FIX START ---
-            // Get the block from the global variable synced by React
             const selectedBlock = (window as any).__SELECTED_BLOCK__;
-
-            // If nothing is selected (empty hand), DO NOT place anything.
-            // Previously: || 'grass' caused the bug.
             if (!selectedBlock) return; 
-            // --- FIX END ---
 
             const placeX = Math.floor((p.x + n.x * 0.1) / BLOCK_SIZE);
             const placeY = Math.floor((p.y + n.y * 0.1) / BLOCK_SIZE);
             const placeZ = Math.floor((p.z + n.z * 0.1) / BLOCK_SIZE);
             
-            // Player Collision Check
             const px = this.camera.position.x;
             const py = this.camera.position.y;
             const pz = this.camera.position.z;
             
-            // AABB Check (Block vs Player)
             const bMinX = placeX * BLOCK_SIZE; const bMaxX = bMinX + BLOCK_SIZE;
             const bMinY = placeY * BLOCK_SIZE; const bMaxY = bMinY + BLOCK_SIZE;
             const bMinZ = placeZ * BLOCK_SIZE; const bMaxZ = bMinZ + BLOCK_SIZE;
-
-            // Player size definitions (must match those at top of file)
-            const PLAYER_WIDTH = 0.6 * BLOCK_SIZE; 
-            const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; 
-            const PLAYER_HALF_W = PLAYER_WIDTH / 2;
-            const EYE_HEIGHT = 1.6 * BLOCK_SIZE; 
 
             const pMinX = px - PLAYER_HALF_W; const pMaxX = px + PLAYER_HALF_W;
             const pMinY = py - EYE_HEIGHT; const pMaxY = py + (PLAYER_HEIGHT - EYE_HEIGHT);
             const pMinZ = pz - PLAYER_HALF_W; const pMaxZ = pz + PLAYER_HALF_W;
 
             if (pMinX < bMaxX && pMaxX > bMinX && pMinY < bMaxY && pMaxY > bMinY && pMinZ < bMaxZ && pMaxZ > bMinZ) {
-                return; // Trying to place inside player
+                return; 
             }
 
             this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
@@ -651,7 +584,6 @@ export class VoxelEngine {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.composer.setSize(window.innerWidth, window.innerHeight);
     }
-    public setSensitivity(val: number) { this.sensitivity = val; }
     public dispose() {
         this.chunks.forEach(c => { if(c.mesh) { this.scene.remove(c.mesh); c.mesh.geometry.dispose(); } });
         window.removeEventListener('resize', this.onResize);
