@@ -125,7 +125,6 @@ export class VoxelEngine {
     public sensitivity = 0.002;
     private objects: THREE.Object3D[] = [];
     private blockMeshes: Map<string, THREE.Mesh> = new Map();
-    private unsubscribeWorld: (() => void) | null = null;
     private worldPath: string;
     private updateHUD: (x: number, y: number, z: number) => void;
     private perlin: Perlin;
@@ -345,7 +344,7 @@ export class VoxelEngine {
 
     private connectToFirebase() {
         const q = collection(db, `${this.worldPath}/blocks`);
-        this.unsubscribeWorld = onSnapshot(q, (snap) => {
+        onSnapshot(q, (snap) => {
             snap.docChanges().forEach(change => {
                 const d = change.doc.data();
                 const key = `${d.x}_${d.y}_${d.z}`;
@@ -442,7 +441,6 @@ export class VoxelEngine {
 
     private checkCol(axis: 'x' | 'y' | 'z') {
         const pos = this.camera.position;
-        // Player Bounding Box (Feet at y - EYE_HEIGHT, Head at y + (PLAYER_HEIGHT - EYE_HEIGHT))
         const pMinX = pos.x - PLAYER_HALF_W;
         const pMaxX = pos.x + PLAYER_HALF_W;
         const pMinZ = pos.z - PLAYER_HALF_W;
@@ -450,7 +448,6 @@ export class VoxelEngine {
         const pMinY = pos.y - EYE_HEIGHT;
         const pMaxY = pos.y + (PLAYER_HEIGHT - EYE_HEIGHT);
 
-        // Blocks to check around player (padded)
         const startX = Math.floor(pMinX / BLOCK_SIZE);
         const endX = Math.floor(pMaxX / BLOCK_SIZE);
         const startY = Math.floor(pMinY / BLOCK_SIZE);
@@ -471,7 +468,6 @@ export class VoxelEngine {
                         const blockType = chunk.getBlock(lx, y, lz);
 
                         if (blockType && blockType !== 'air' && blockType !== 'water') {
-                            // Collision detected
                             const bMinX = x * BLOCK_SIZE;
                             const bMaxX = bMinX + BLOCK_SIZE;
                             const bMinY = y * BLOCK_SIZE;
@@ -479,48 +475,44 @@ export class VoxelEngine {
                             const bMinZ = z * BLOCK_SIZE;
                             const bMaxZ = bMinZ + BLOCK_SIZE;
 
-                            if (axis === 'y') {
-                                if (this.velocity.y < 0) {
-                                    // Falling down
-                                    if (pos.y > bMaxY && pMinY < bMaxY) {
+                            // -- FIX: Explicit AABB Check --
+                            // Only resolve collision if we are ACTUALLY overlapping.
+                            // The loops just give us "nearby" blocks, not necessarily touching ones.
+                            const overlap = 
+                                pMinX < bMaxX && pMaxX > bMinX &&
+                                pMinY < bMaxY && pMaxY > bMinY &&
+                                pMinZ < bMaxZ && pMaxZ > bMinZ;
+
+                            if (overlap) {
+                                if (axis === 'y') {
+                                    if (this.velocity.y < 0) {
                                         this.camera.position.y = bMaxY + EYE_HEIGHT + 0.001;
                                         this.velocity.y = 0;
                                         this.onGround = true;
                                         this.canJump = true;
-                                    }
-                                } else if (this.velocity.y > 0) {
-                                    // Jumping up
-                                    if (pMaxY > bMinY && pos.y < bMinY) {
+                                    } else if (this.velocity.y > 0) {
                                         this.camera.position.y = bMinY - (PLAYER_HEIGHT - EYE_HEIGHT) - 0.001;
                                         this.velocity.y = 0;
                                     }
-                                }
-                            } else if (axis === 'x') {
-                                if (this.velocity.x > 0) {
-                                    if (pMaxX > bMinX) {
+                                } else if (axis === 'x') {
+                                    if (this.velocity.x > 0) {
                                         this.camera.position.x = bMinX - PLAYER_HALF_W - 0.001;
                                         this.velocity.x = 0;
-                                    }
-                                } else if (this.velocity.x < 0) {
-                                    if (pMinX < bMaxX) {
+                                    } else if (this.velocity.x < 0) {
                                         this.camera.position.x = bMaxX + PLAYER_HALF_W + 0.001;
                                         this.velocity.x = 0;
                                     }
-                                }
-                            } else if (axis === 'z') {
-                                if (this.velocity.z > 0) {
-                                    if (pMaxZ > bMinZ) {
+                                } else if (axis === 'z') {
+                                    if (this.velocity.z > 0) {
                                         this.camera.position.z = bMinZ - PLAYER_HALF_W - 0.001;
                                         this.velocity.z = 0;
-                                    }
-                                } else if (this.velocity.z < 0) {
-                                    if (pMinZ < bMaxZ) {
+                                    } else if (this.velocity.z < 0) {
                                         this.camera.position.z = bMaxZ + PLAYER_HALF_W + 0.001;
                                         this.velocity.z = 0;
                                     }
                                 }
+                                return; // Collision resolved for this axis
                             }
-                            return; // Resolved collision for this axis, stop checking
                         }
                     }
                 }
