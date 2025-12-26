@@ -75,7 +75,6 @@
   .dark {
     --background: #000000;
     --foreground: #ffffff;
-    --border: #27272a;
 
     /* macOS widget style (dark theme) */
     --widget-bg: rgba(0, 0, 0, 0.6);
