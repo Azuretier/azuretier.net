@@ -66,7 +66,8 @@
     /* macOS widget style (light theme) */
     --widget-bg: rgba(255, 255, 255, 0.7);
     --widget-border: rgba(255, 255, 255, 0.3);
-    --instagram-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    --instagram-bg-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    --instagram-icon-gradient: radial-gradient(circle at 30% 107%, rgba(253, 244, 151, 0.7) 0%, rgba(253, 244, 151, 0.7) 5%, rgba(253, 89, 73, 0.7) 45%, rgba(214, 36, 158, 0.7) 60%, rgba(40, 90, 235, 0.7) 90%);
 
     --font-pixel: 'VT323', monospace;
     --font-logo: 'Russo One', sans-serif; /* Thicker font for the logo base */
