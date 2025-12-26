@@ -7,14 +7,12 @@ interface GradientMotionLinkProps extends HTMLMotionProps<'a'> {
   children: React.ReactNode;
   gradient?: string;
   className?: string;
-  rounded?: string;
 }
 
 export default function GradientMotionLink({
   children,
   gradient = "from-blue-500 to-purple-600",
-  className = "",
-  rounded = "rounded-lg",
+  className,
   ...props
 }: GradientMotionLinkProps) {
   return (
