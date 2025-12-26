@@ -10,7 +10,8 @@ export interface SnsData {
   username: string;
   href: string;
   icon: any;
-  gradient: string;
+  gradientBg: string;
+  gradientIcon: string;
   isStatic?: boolean;
 }
 
@@ -49,7 +50,8 @@ export const SNS_LINKS: SnsData[] = [
     username: "@rrrrrrrrrrvq", 
     href: "https://instagram.com/rrrrrrrrrrvq", 
     icon: FaInstagram, 
-    gradient: "bg-instagram" 
+    gradientBg: "bg-instagram-bg",
+    gradientIcon: "bg-instagram-icon"
   },
   { 
     id: "github",
@@ -57,7 +59,8 @@ export const SNS_LINKS: SnsData[] = [
     username: "Azuretier", 
     href: "https://github.com/Azuretier", 
     icon: FaGithub, 
-    gradient: "bg-gradient-to-br from-gray-700 to-black" 
+    gradientBg: "bg-gradient-to-br from-gray-700/70 to-black/70" ,
+    gradientIcon: "bg-gradient-to-br from-gray-700 to-black"
   },
   { 
     id: "discord",
@@ -65,7 +68,8 @@ export const SNS_LINKS: SnsData[] = [
     username: "@daichi_a", 
     href: "#", 
     icon: FaDiscord, 
-    gradient: "bg-gradient-to-br from-indigo-500/50 to-blue-600/50",
+    gradientBg: "bg-gradient-to-br from-indigo-500/70 to-blue-600/70",
+    gradientIcon: "bg-gradient-to-br from-indigo-500 to-blue-600",
     isStatic: true 
   },
   { 
@@ -74,7 +78,8 @@ export const SNS_LINKS: SnsData[] = [
     username: "@azuchan_a", 
     href: "https://youtube.com/@azuchan_a", 
     icon: FaYoutube, 
-    gradient: "bg-gradient-to-br from-red-600/20 to-red-400/20" 
+    gradientBg: "bg-gradient-to-br from-red-600/70 to-red-400/70",
+    gradientIcon: "bg-gradient-to-br from-red-600 to-red-400"
   },
 ];
 
