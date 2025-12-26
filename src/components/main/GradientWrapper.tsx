@@ -19,26 +19,10 @@ export default function GradientMotionLink({
 }: GradientMotionLinkProps) {
   return (
     <motion.a
-      // Standard Link Props (href, target, etc.)
       {...props}
-      
-      // Framer Motion Gestures
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      
-      // Layout Classes
-      className={`group backdrop-blur-none relative cursor-pointer inline-block p-[2px] ${rounded}${className}`}
+      className={`absolute backdrop-blur-none inset-0 hover:bg-gradient-to-r ${gradient} ${rounded} transition-colors duration-300 ${className}`}
     >
-      {/* The Gradient Layer - Now also animated by Motion */}
-      <motion.div
-        className={`absolute backdrop-blur-none inset-0 bg-gradient-to-r ${gradient} ${rounded} opacity-0 group-hover:opacity-100`}
-        transition={{ duration: 0.3 }}
-      />
-      {/* The Content Layer */}
-      <div 
-        className="relative bg-white dark:bg-slate-900 h-full w-full rounded-[calc(var(--radius)-2px)]"
-        style={{ '--radius': '12px' } as React.CSSProperties}
-      >
+      <div className={`relative backdrop-blur-xl bg-white dark:bg-slate-900 h-full w-full ${rounded}`}>
         {children}
       </div>
     </motion.a>
