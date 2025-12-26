@@ -123,17 +123,3 @@
     100% { background-position: 100% 50%; }
   }
 }
-
-.clearText {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  /* Forces the GPU to treat the element as a 3D object to prevent half-pixel blur */
-  transform: translateZ(0); 
-  backface-visibility: hidden;
-}
-
-/* Fix for Framer Motion / Scale blur */
-.willChange {
-  will-change: transform, opacity;
-}
