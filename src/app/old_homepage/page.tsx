@@ -213,7 +213,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
 
   const content = (
     <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
-        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg ${activeBrand.icon}`}>
+        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ${activeBrand.iconBg} ${activeBrand.icon}`}>
           <Icon size={32} />
         </div>
         <div>
