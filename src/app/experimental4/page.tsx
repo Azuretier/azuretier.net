@@ -1130,8 +1130,8 @@ const WindowFrame = ({
       dragMomentum={false}
       onDragEnd={(e, info) => {
         onPositionChange({
-          x: position.x + info.offset.x,
-          y: position.y + info.offset.y,
+          x: position.x,
+          y: position.y,
         });
       }}
       onMouseDown={onFocus}
