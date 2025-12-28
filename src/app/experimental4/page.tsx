@@ -533,8 +533,7 @@ const Main = () => {
   }, []);
 
   const loadSettings = useCallback(async () => {
-    console.log("Load Settings called");
-    await delay(100);
+    console.log("Load Settings called 1");
     if (!user) return;
     console.log("Load Settings called 2");
     const { doc, getDoc } = await import('firebase/firestore');
@@ -552,7 +551,7 @@ const Main = () => {
       setNotifications(data.notifications || true);
       setLanguage(data.language || 'en');
     }
-  }, [isLoaded]);
+  }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language]);
 
   const saveSettings = useCallback(async () => {
     if (!user) return;
@@ -766,7 +765,7 @@ const Main = () => {
         className={`relative w-full h-screen overflow-hidden bg-gradient-to-br ${bgClass}`}
       >
         {/* Rain Effect Canvas - Pass intensity */}
-        <RainEffect onLoaded={async () => await loadSettings()} intensity={rainIntensity} />
+        <RainEffect onLoaded={() => setIsLoaded(true)} intensity={rainIntensity} />
 
         {/* Clock and News Overlay */}
         <div className="absolute top-96 left-16 z-10 space-y-4">
