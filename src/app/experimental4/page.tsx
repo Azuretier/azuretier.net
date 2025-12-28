@@ -493,6 +493,7 @@ interface WindowPosition {
 }
 
 const Main = () => {
+  console.log("const main rendered");
 
   const [user, setUser] = useState<User | null>(null);
   const [theme, setTheme] = useState('purple');
@@ -528,19 +529,19 @@ const Main = () => {
       if (u) setUser(u);
       else signInAnonymously(auth);
     });
+    console.log("authentication state changed");
     return () => unsub();
   }, []);
 
   const loadSettings = useCallback(async () => {
-    console.log("Loaded settings:1");
+    console.log("Load Settings called");
     if (!user) return;
-    console.log("Loaded settings:2");
     const { doc, getDoc } = await import('firebase/firestore');
     const { db } = await import('@/lib/portfolio/firebase');
     const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log("Loaded settings3:", data);
+      console.log("Snap data:", data);
       setTheme(data.theme || 'purple');
       setRainIntensity(data.rainIntensity || 150);
       setNewsSpeed(data.newsSpeed || 5);
@@ -762,7 +763,7 @@ const Main = () => {
         className={`relative w-full h-screen overflow-hidden bg-gradient-to-br ${bgClass}`}
       >
         {/* Rain Effect Canvas - Pass intensity */}
-        <RainEffect onLoaded={() => setIsLoaded(true)} intensity={rainIntensity} />
+        <RainEffect onLoaded={async () => await loadSettings()} intensity={rainIntensity} />
 
         {/* Clock and News Overlay */}
         <div className="absolute top-96 left-16 z-10 space-y-4">
