@@ -283,6 +283,8 @@ interface SettingsContextType {
   isLoading: boolean;
 }
 
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
 const SettingsContext = createContext<SettingsContextType | null>(null);
 
 const useSettings = () => {
