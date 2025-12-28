@@ -493,8 +493,6 @@ interface WindowPosition {
 }
 
 const Main = () => {
-  console.log("const main rendered");
-
   const [user, setUser] = useState<User | null>(null);
   const [theme, setTheme] = useState('purple');
   const [rainIntensity, setRainIntensity] = useState(150);
@@ -529,12 +527,12 @@ const Main = () => {
       if (u) setUser(u);
       else signInAnonymously(auth);
     });
-    console.log("authentication state changed");
     return () => unsub();
   }, []);
 
   const loadSettings = useCallback(async () => {
     console.log("Load Settings called");
+    await delay(100);
     if (!user) return;
     console.log("Load Settings called 2");
     const { doc, getDoc } = await import('firebase/firestore');
