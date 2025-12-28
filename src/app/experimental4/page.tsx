@@ -1,14 +1,11 @@
 "use client"
 
-import { useEffect, useState, createContext, useContext, useRef } from "react"
+import { useEffect, useState, createContext, useContext, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Cake, GraduationCap, Send, Folder, Share2, ChevronRight, Star, Github, Youtube, Instagram, MessageCircle, Sun, Moon, MapPin, Mail, Globe, Sparkles, TrendingUp, Clock, ExternalLink, User, BarChart3, Terminal, Settings, X, Minimize2, Maximize2, FolderOpen, Image as ImageIcon, Music, Film, BookOpen, Bot, Command, Zap, Shield, Heart, Code, HelpCircle, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, Layers, Server, Database, Cpu } from "lucide-react"
+import { auth } from "@/lib/portfolio/firebase";
+import { Cake, GraduationCap, Send, Folder, Share2, ChevronRight, Star, Github, Youtube, Instagram, MessageCircle, Sun, Moon, MapPin, Mail, Globe, Sparkles, TrendingUp, Clock, ExternalLink, UserIcon, BarChart3, Terminal, Settings, X, Minimize2, Maximize2, FolderOpen, Image as ImageIcon, Music, Film, BookOpen, Bot, Command, Zap, Shield, Heart, Code, HelpCircle, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, Layers, Server, Database, Cpu } from "lucide-react"
 import RainEffect from '@/components/main/realistic-rain';
-
-// --- FIREBASE IMPORTS ---
-import { initializeApp } from 'firebase/app';
-import { auth, db } from "@/lib/MNSW/firebase";
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 
 // --- TRANSLATIONS ---
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -495,35 +492,9 @@ interface WindowPosition {
   y: number;
 }
 
-// --- FIRESTORE SERVICE ---
-// Replace this mock with actual Firestore implementation
-const FirestoreService = {
-  // For actual implementation, uncomment and use:
-  async saveSettings(userId: string, settings: any) {
-    const { doc, setDoc } = await import('firebase/firestore');
-    const { db } = await import('@/lib/portfolio/firebase');
-    await setDoc(doc(db, 'userSettings', userId), {
-      ...settings,
-      updatedAt: new Date().toISOString(),
-    });
-  },
-
-  async loadSettings(userId: string) {
-    const { doc, getDoc } = await import('firebase/firestore');
-    const { db } = await import('@/lib/portfolio/firebase');
-    const docSnap = await getDoc(doc(db, 'userSettings', userId));
-    if (docSnap.exists()) {
-      return docSnap.data();
-    }
-    return null;
-  }
-};
-
-// User ID - in production, get this from authentication
-const USER_ID = 'default_user';
-
 const Main = () => {
-  // Settings state
+
+  const [user, setUser] = useState<User | null>(null);
   const [theme, setTheme] = useState('purple');
   const [rainIntensity, setRainIntensity] = useState(150);
   const [newsSpeed, setNewsSpeed] = useState(5);
@@ -552,64 +523,49 @@ const Main = () => {
     return TRANSLATIONS[language]?.[key] || TRANSLATIONS['en'][key] || key;
   };
 
-  // Load settings on mount
   useEffect(() => {
-    const loadSavedSettings = async () => {
-      try {
-        const savedSettings = await FirestoreService.loadSettings(USER_ID);
-        if (savedSettings) {
-          setTheme(savedSettings.theme || 'purple');
-          setRainIntensity(savedSettings.rainIntensity || 150);
-          setNewsSpeed(savedSettings.newsSpeed || 5);
-          setIsDarkMode(savedSettings.isDarkMode ?? true);
-          setNotifications(savedSettings.notifications ?? true);
-          setLanguage(savedSettings.language || 'en');
-        }
-      } catch (error) {
-        console.error('Failed to load settings:', error);
-      } finally {
-        setSettingsLoading(false);
-      }
-    };
-    loadSavedSettings();
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (u) setUser(u);
+      else signInAnonymously(auth);
+    });
+    return () => unsub();
   }, []);
 
-  // Save settings function
-  const saveSettings = async () => {
-    try {
-      await FirestoreService.saveSettings(USER_ID, {
-        theme,
-        rainIntensity,
-        newsSpeed,
-        isDarkMode,
-        notifications,
-        language,
-      });
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      throw error;
+  const loadSettings = useCallback(async () => {
+    if (!user) return;
+    const { doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('@/lib/portfolio/firebase');
+    const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setTheme(data.theme || 'purple');
+      setRainIntensity(data.rainIntensity || 150);
+      setNewsSpeed(data.newsSpeed || 5);
+      setIsDarkMode(data.isDarkMode || true);
+      setNotifications(data.notifications || true);
+      setLanguage(data.language || 'en');
     }
-  };
+  }, [user]);
 
-  // Load settings function
-  const loadSettings = async () => {
-    setSettingsLoading(true);
-    try {
-      const savedSettings = await FirestoreService.loadSettings(USER_ID);
-      if (savedSettings) {
-        setTheme(savedSettings.theme || 'purple');
-        setRainIntensity(savedSettings.rainIntensity || 150);
-        setNewsSpeed(savedSettings.newsSpeed || 5);
-        setIsDarkMode(savedSettings.isDarkMode ?? true);
-        setNotifications(savedSettings.notifications ?? true);
-        setLanguage(savedSettings.language || 'en');
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setSettingsLoading(false);
-    }
-  };
+  const saveSettings = useCallback(async () => {
+    if (!user) return;
+    const { doc, setDoc } = await import('firebase/firestore');
+    const { db } = await import('@/lib/portfolio/firebase');
+    await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`), { 
+            theme,
+            rainIntensity,
+            newsSpeed,
+            isDarkMode,
+            notifications,
+            language, 
+            updatedAt: Date.now() 
+        }, { merge: true });
+    }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language, user]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    loadSettings().finally(() => setSettingsLoading(false));
+  }, [isLoaded]);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -698,7 +654,7 @@ const Main = () => {
   };
 
   const desktopIcons = [
-    { id: 'profile', icon: User, label: t('profile'), color: `bg-${currentTheme.accent}` },
+    { id: 'profile', icon: UserIcon, label: t('profile'), color: `bg-${currentTheme.accent}` },
     { id: 'social', icon: Share2, label: t('social'), color: 'bg-purple-500' },
     { id: 'projects', icon: FolderOpen, label: t('projects'), color: 'bg-green-500' },
     { id: 'analytics', icon: BarChart3, label: t('analytics'), color: 'bg-orange-500' },
@@ -1300,7 +1256,7 @@ const AnalyticsWindow = ({ theme, isDarkMode, t }: { theme: any; isDarkMode: boo
     <div className="grid grid-cols-2 gap-4">
       <StatCard label={t('totalVisits')} value={VISITOR_DATA.totalVisits.toLocaleString()} icon={TrendingUp} color="bg-blue-500" isDarkMode={isDarkMode} />
       <StatCard label={t('todayVisits')} value={VISITOR_DATA.todayVisits.toLocaleString()} icon={Clock} color="bg-green-500" isDarkMode={isDarkMode} />
-      <StatCard label={t('uniqueVisitors')} value={VISITOR_DATA.uniqueVisitors.toLocaleString()} icon={User} color="bg-purple-500" isDarkMode={isDarkMode} />
+      <StatCard label={t('uniqueVisitors')} value={VISITOR_DATA.uniqueVisitors.toLocaleString()} icon={UserIcon} color="bg-purple-500" isDarkMode={isDarkMode} />
       <StatCard label={t('avgSession')} value={VISITOR_DATA.avgSessionTime} icon={Clock} color="bg-orange-500" isDarkMode={isDarkMode} />
     </div>
 

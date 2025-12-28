@@ -74,7 +74,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`))
+    getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/settings/options`))
       .then(snap => { if(snap.exists()) setSensitivity(snap.data().sensitivity); });
   }, [user]);
 
@@ -82,7 +82,7 @@ export default function Home() {
     if (!user || !selectedWorldId) return;
     
     try {
-        await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}/players/${user.uid}`), { 
+        await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}/players/${user.uid}`), { 
             inventory, 
             hotbar, 
             updatedAt: Date.now() 
@@ -123,7 +123,7 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     const t = setTimeout(() => {
-      setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`), 
+      setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/settings/options`), 
       { sensitivity, updatedAt: Date.now() }, { merge: true });
     }, 1000);
     return () => clearTimeout(t);
@@ -149,7 +149,7 @@ export default function Home() {
 
   const fetchWorlds = async () => {
     if (!user) return;
-    const q = query(collection(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds`), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
     setWorlds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     setView('worlds');
@@ -162,7 +162,7 @@ export default function Home() {
     const seed = Math.floor(Math.random() * 65536);
     const typeStr = newWorldType === 0 ? 'default' : 'superflat';
     
-    await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${newId}`), { 
+    await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds/${newId}`), { 
         name: newWorldName, createdBy: user.uid, createdAt: Date.now(), seed, type: typeStr 
     });
     loadGame(newId, false, { seed, type: typeStr as any });
@@ -176,13 +176,13 @@ export default function Home() {
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(
                 containerRef.current, 
-                `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`, 
+                `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`, 
                 (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); }, // This is throttled in Engine now
                 params
             );
             // [1] LOAD HAPPENS HERE ------------------------------
             // We construct the path to the specific world's player data
-            const playerDocRef = doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}/players/${user.uid}`);
+            const playerDocRef = doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}/players/${user.uid}`);
             
             // We await the data fetch BEFORE starting the game engine
             const playerSnap = await getDoc(playerDocRef);
@@ -204,7 +204,7 @@ export default function Home() {
     if(directParams) {
         skipLoading ? init(directParams) : startLoadingSequence(() => init(directParams));
     } else {
-        const snap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`));
+        const snap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`));
         if(snap.exists()) {
             const d = snap.data();
             const params = { seed: d.seed || 0, type: d.type || 'default' };
