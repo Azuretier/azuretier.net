@@ -634,21 +634,24 @@ const loadSettings = useCallback(async () => {
   };
 
   const openWindow = (windowId: string) => {
-    setOpenWindows(prev => {
-      // If already open, just move it to the end of the array (top of stack)
+    setOpenWindows((prev) => {
       if (prev.includes(windowId)) {
-        return [...prev.filter(id => id !== windowId), windowId];
+        // Bring to front if already open
+        return [...prev.filter((id) => id !== windowId), windowId];
       }
       
-      // If opening for the first time, set a default position
-      if (!windowPositions[windowId]) {
-        const offset = prev.length * 30;
-        setWindowPositions(pos => ({
-          ...pos,
+      // Assign a PERMANENT position immediately upon opening
+      setWindowPositions((prevPos) => {
+        if (prevPos[windowId]) return prevPos; // Already has a saved position
+        
+        // Calculate a unique offset once
+        const offset = Object.keys(prevPos).length * 30;
+        return {
+          ...prevPos,
           [windowId]: { x: 100 + offset, y: 50 + offset }
-        }));
-      }
-      
+        };
+      });
+
       return [...prev, windowId];
     });
     setActiveWindow(windowId);
@@ -890,7 +893,7 @@ const loadSettings = useCallback(async () => {
               onFocus={() => setActiveWindow('profile')}
               theme={currentTheme}
               isDarkMode={isDarkMode}
-              position={windowPositions['profile'] || getWindowPosition('profile')}
+              position={windowPositions['profile'] || { x: 100, y: 50 }} 
               onPositionChange={(pos) => updateWindowPosition('profile', pos)}
             >
               <ProfileWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
@@ -906,7 +909,7 @@ const loadSettings = useCallback(async () => {
               onFocus={() => setActiveWindow('social')}
               theme={currentTheme}
               isDarkMode={isDarkMode}
-              position={windowPositions['social'] || getWindowPosition('social')}
+              position={windowPositions['social'] || { x: 100, y: 50 }}
               onPositionChange={(pos) => updateWindowPosition('social', pos)}
             >
               <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleSnsScroll}>
@@ -945,7 +948,7 @@ const loadSettings = useCallback(async () => {
               onFocus={() => setActiveWindow('projects')}
               theme={currentTheme}
               isDarkMode={isDarkMode}
-              position={windowPositions['projects'] || getWindowPosition('projects')}
+              position={windowPositions['projects'] || { x: 100, y: 50 }}
               onPositionChange={(pos) => updateWindowPosition('projects', pos)}
             >
               <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleProjectScroll}>
@@ -984,7 +987,7 @@ const loadSettings = useCallback(async () => {
               onFocus={() => setActiveWindow('analytics')}
               theme={currentTheme}
               isDarkMode={isDarkMode}
-              position={windowPositions['analytics'] || getWindowPosition('analytics')}
+              position={windowPositions['analytics'] || { x: 100, y: 50 }}
               onPositionChange={(pos) => updateWindowPosition('analytics', pos)}
             >
               <AnalyticsWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
@@ -1017,7 +1020,7 @@ const loadSettings = useCallback(async () => {
               onFocus={() => setActiveWindow('terminal')}
               theme={currentTheme}
               isDarkMode={isDarkMode}
-              position={windowPositions['terminal'] || getWindowPosition('terminal')}
+              position={windowPositions['terminal'] || { x: 100, y: 50 }}
               onPositionChange={(pos) => updateWindowPosition('terminal', pos)}
             >
               <TerminalWindow />
@@ -1033,7 +1036,7 @@ const loadSettings = useCallback(async () => {
             onFocus={() => setActiveWindow('settings')}
             theme={currentTheme}
             isDarkMode={isDarkMode}
-            position={windowPositions['settings'] || getWindowPosition('settings')}
+            position={windowPositions['settings'] || { x: 100, y: 50 }}
             onPositionChange={(pos) => updateWindowPosition('settings', pos)}
             scrollable
           >
