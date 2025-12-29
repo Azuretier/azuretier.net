@@ -1094,7 +1094,7 @@ const WindowFrame = ({
       dragMomentum={false}
       // THE FIX: Calculate absolute position relative to where drag ended
       onDragEnd={(e, info) => {
-        onPositionChange(position.x + info.offset.x, position.y + info.offset.y);
+        onPositionChange(position.x, position.y);
       }}
       onPointerDown={onFocus}
       style={{
