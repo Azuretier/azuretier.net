@@ -326,22 +326,21 @@ export const THEMES = {
 };
 
 export const PROFILE_INFO = {
-  images: ["/api/placeholder/128/128"],
-  name: "Your Name",
+  images: ["/profile_image/doll.jpg"],
+  name: "Azurette",
   pronouns: "they/them",
-  birthday: "January 1st",
+  birthday: "February 18th",
   role: "Developer & Designer",
   location: "Tokyo, Japan",
-  email: "hello@example.com",
-  website: "yoursite.com",
+  email: "daichi@azuret.me",
+  website: "azuret.me",
   bio_texts: ["Building cool stuff", "Learning new things", "Creating experiences"]
 };
 
 export const PROJECTS = [
-  { id: 1, title: "Portfolio Website", status: "Completed", tech: "Next.js, TailwindCSS", description: "Modern portfolio with smooth animations", progress: 100, lastUpdate: "2 days ago" },
-  { id: 2, title: "Task Manager App", status: "In Progress", tech: "React, TypeScript", description: "Productivity app with kanban boards", progress: 65, lastUpdate: "5 hours ago" },
-  { id: 3, title: "Music Player", status: "Planning", tech: "React, Web Audio API", description: "Beautiful audio player interface", progress: 15, lastUpdate: "1 week ago" },
-  { id: 4, title: "Chat Application", status: "Completed", tech: "WebSocket, Node.js", description: "Real-time messaging platform", progress: 100, lastUpdate: "1 month ago" },
+  { id: 1, title: "Portfolio Website", status: "In Dev", tech: "Next.js, TailwindCSS", description: "Modern portfolio website powered by my ideas", progress: 20, lastUpdate: "1 min ago" },
+  { id: 2, title: "Azure Supporter", status: "In Progress", tech: "Node.js, discord.js", description: "A powerful Discord bot for server management", progress: 10, lastUpdate: "5 hours ago" },
+  { id: 3, title: "Web Service", status: "Planning", tech: "React, Next.js, TailwindCSS, Google Firestore Database", description: "Planning some web services such as blog, SNS, live-chat, games and more!", progress: 5, lastUpdate: "1 min ago" },
 ];
 
 

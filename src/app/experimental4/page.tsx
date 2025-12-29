@@ -1267,24 +1267,31 @@ const loadSettings = useCallback(async () => {
           </motion.div>
         </div>
 
-        {/* Desktop Icons */}
-        <div className="absolute top-6 right-6 grid grid-cols-1 gap-6">
-          {desktopIcons.map((icon) => (
-            <motion.button
-              key={icon.id}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => openWindow(icon.id)}
-              className="group flex flex-col items-center gap-2"
-            >
-              <div className={`${icon.color} p-4 rounded-lg shadow-lg border-2 border-white/20 group-hover:border-white/40 transition-all`}>
-                <icon.icon className="text-white" size={32} />
-              </div>
-              <span className={`${isDarkMode ? 'text-white bg-black/50' : 'text-slate-900 bg-white/70'} text-sm font-bold px-3 py-1 rounded backdrop-blur-sm`}>
-                {icon.label}
-              </span>
-            </motion.button>
-          ))}
+        {/* Desktop Icons - Windows-style Grid Layout */}
+        <div className="absolute inset-0 top-6 left-auto right-6 bottom-20 w-[200px] pointer-events-none">
+          <div className="grid grid-cols-2 gap-2 pointer-events-auto">
+            {desktopIcons.map((icon, index) => (
+              <motion.button
+                key={icon.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.08, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => openWindow(icon.id)}
+                className="group flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 transition-all"
+              >
+                <div className={`${icon.color} p-3 rounded-xl shadow-lg border border-white/20 group-hover:border-white/40 group-hover:shadow-2xl transition-all relative overflow-hidden`}>
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <icon.icon className="text-white relative z-10" size={24} />
+                </div>
+                <span className={`${isDarkMode ? 'text-white' : 'text-slate-900'} text-[11px] font-semibold text-center leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] max-w-[80px]`}>
+                  {icon.label}
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         {/* Dynamic Windows Rendering */}
