@@ -262,112 +262,278 @@ const loadSettings = useCallback(async () => {
   ];
 
   // Create a separate Clock component
-const Clock = memo(({ isDarkMode, textClass }: { isDarkMode: boolean; textClass: string }) => {
-  const [time, setTime] = useState(new Date());
+  const Clock = memo(({ isDarkMode, textClass }: { isDarkMode: boolean; textClass: string }) => {
+    const [time, setTime] = useState(new Date());
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    useEffect(() => {
+      const timer = setInterval(() => setTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }, []);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.3 }}
-      className={textClass}
-    >
-      <div className="text-8xl font-bold tracking-tighter leading-none drop-shadow-2xl">
-        {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+        className={textClass}
+      >
+        <div className="text-8xl font-bold tracking-tighter leading-none drop-shadow-2xl">
+          {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+        </div>
+        <div className="text-2xl font-medium mt-2 opacity-90">
+          {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit' })}
+        </div>
+      </motion.div>
+    );
+  });
+
+  Clock.displayName = 'Clock';
+
+  // Create a separate TaskbarClock component
+  const TaskbarClock = memo(({ isDarkMode }: { isDarkMode: boolean }) => {
+    const [time, setTime] = useState(new Date());
+
+    useEffect(() => {
+      const timer = setInterval(() => setTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }, []);
+
+    return (
+      <div className="flex items-center gap-4">
+        <div className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-mono`}>
+          {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className={`${isDarkMode ? 'text-white/60' : 'text-slate-500'} text-xs`}>
+          {time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </div>
       </div>
-      <div className="text-2xl font-medium mt-2 opacity-90">
-        {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit' })}
-      </div>
-    </motion.div>
-  );
-});
+    );
+  });
 
-Clock.displayName = 'Clock';
+  TaskbarClock.displayName = 'TaskbarClock';
 
-// Create a separate TaskbarClock component
-const TaskbarClock = memo(({ isDarkMode }: { isDarkMode: boolean }) => {
-  const [time, setTime] = useState(new Date());
+  const NewsTicker = memo(({ 
+    isDarkMode, 
+    newsSpeed, 
+    theme 
+  }: { 
+    isDarkMode: boolean; 
+    newsSpeed: number; 
+    theme: any;
+  }) => {
+    const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    useEffect(() => {
+      const newsInterval = setInterval(() => {
+        setCurrentNewsIndex((prev) => (prev + 1) % NEWS_HEADLINES.length);
+      }, newsSpeed * 1000);
+      return () => clearInterval(newsInterval);
+    }, [newsSpeed]);
 
-  return (
-    <div className="flex items-center gap-4">
-      <div className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-mono`}>
-        {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-      </div>
-      <div className={`${isDarkMode ? 'text-white/60' : 'text-slate-500'} text-xs`}>
-        {time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-      </div>
-    </div>
-  );
-});
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className={`${isDarkMode ? 'bg-black/30' : 'bg-white/70'} backdrop-blur-md border ${isDarkMode ? 'border-white/10' : 'border-slate-200'} rounded-xl p-4 w-[500px] h-[100px]`}
+      >
+        <div className="h-[52px] overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={currentNewsIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`${isDarkMode ? 'text-white/90' : 'text-slate-700'} text-sm leading-relaxed line-clamp-2`}
+            >
+              {NEWS_HEADLINES[currentNewsIndex]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+        
+        <div className="flex gap-2 mt-3">
+          {NEWS_HEADLINES.map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 rounded-full transition-all ${
+                i === currentNewsIndex 
+                  ? `bg-gradient-to-r ${theme.gradient} w-6` 
+                  : `${isDarkMode ? 'bg-white/30' : 'bg-slate-300'} w-2`
+              }`}
+            />
+          ))}
+        </div>
+      </motion.div>
+    );
+  });
 
-TaskbarClock.displayName = 'TaskbarClock';
+  NewsTicker.displayName = 'NewsTicker';
 
-const NewsTicker = memo(({ 
-  isDarkMode, 
-  newsSpeed, 
-  theme 
-}: { 
-  isDarkMode: boolean; 
-  newsSpeed: number; 
-  theme: any;
-}) => {
-  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+  const profileContent = useMemo(() => (
+    <ProfileWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
+  ), [currentTheme, isDarkMode, t]);
 
-  useEffect(() => {
-    const newsInterval = setInterval(() => {
-      setCurrentNewsIndex((prev) => (prev + 1) % NEWS_HEADLINES.length);
-    }, newsSpeed * 1000);
-    return () => clearInterval(newsInterval);
-  }, [newsSpeed]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
-      className={`${isDarkMode ? 'bg-black/30' : 'bg-white/70'} backdrop-blur-md border ${isDarkMode ? 'border-white/10' : 'border-slate-200'} rounded-xl p-4 w-[500px] h-[100px]`}
-    >
-      <div className="h-[52px] overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={currentNewsIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className={`${isDarkMode ? 'text-white/90' : 'text-slate-700'} text-sm leading-relaxed line-clamp-2`}
-          >
-            {NEWS_HEADLINES[currentNewsIndex]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-      
-      <div className="flex gap-2 mt-3">
-        {NEWS_HEADLINES.map((_, i) => (
+  const socialContent = useMemo(() => (
+    <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleSnsScroll}>
+      {SNS_LINKS.map((sns, index) => {
+        const offset = index - selectedSns;
+        const isSelected = index === selectedSns;
+        return (
           <div
-            key={i}
-            className={`h-2 rounded-full transition-all ${
-              i === currentNewsIndex 
-                ? `bg-gradient-to-r ${theme.gradient} w-6` 
-                : `${isDarkMode ? 'bg-white/30' : 'bg-slate-300'} w-2`
-            }`}
-          />
-        ))}
-      </div>
-    </motion.div>
-  );
-});
+            key={sns.id}
+            className="absolute transition-all duration-300 ease-out cursor-pointer"
+            style={{
+              left: '50%',
+              top: '55%',
+              transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
+              opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
+              zIndex: 100 - Math.abs(offset),
+              pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
+            }}
+            onClick={() => setSelectedSns(index)}
+          >
+            <SnsWidget {...sns} isSelected={isSelected} />
+          </div>
+        );
+      })}
+    </div>
+  ), [selectedSns, handleSnsScroll]);
 
-NewsTicker.displayName = 'NewsTicker';
+  const projectsContent = useMemo(() => (
+    <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleProjectScroll}>
+      {PROJECTS.map((project, index) => {
+        const offset = index - selectedProject;
+        const isSelected = index === selectedProject;
+        return (
+          <div
+            key={project.id}
+            className="absolute transition-all duration-300 ease-out cursor-pointer"
+            style={{
+              left: '50%',
+              top: '55%',
+              transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
+              opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
+              zIndex: 100 - Math.abs(offset),
+              pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
+            }}
+            onClick={() => setSelectedProject(index)}
+          >
+            <ProjectWidget {...project} isSelected={isSelected} />
+          </div>
+        );
+      })}
+    </div>
+  ), [selectedProject, handleProjectScroll]);
+
+  const analyticsContent = useMemo(() => (
+    <AnalyticsWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
+  ), [currentTheme, isDarkMode, t]);
+
+  const azureDocsContent = useMemo(() => (
+    <AzureDocsWindow theme={currentTheme} isDarkMode={isDarkMode} />
+  ), [currentTheme, isDarkMode]);
+
+  const musicContent = useMemo(() => (
+    <MusicPlayerWindow theme={currentTheme} isDarkMode={isDarkMode} />
+  ), [currentTheme, isDarkMode]);
+
+  const discordContent = useMemo(() => (
+    <DiscordWindow theme={currentTheme} isDarkMode={isDarkMode} />
+  ), [currentTheme, isDarkMode]);
+
+  const liveChatContent = useMemo(() => (
+    <LiveChatWindow theme={currentTheme} isDarkMode={isDarkMode} />
+  ), [currentTheme, isDarkMode]);
+
+  const blogContent = useMemo(() => (
+    <BlogWindow theme={currentTheme} isDarkMode={isDarkMode} />
+  ), [currentTheme, isDarkMode]);
+
+  const terminalContent = useMemo(() => (
+    <TerminalWindow />
+  ), []);
+
+  const settingsContent = useMemo(() => (
+    <SettingsWindow theme={currentTheme} />
+  ), [currentTheme]);
+
+  const windowConfig: Record<string, { 
+    title: string; 
+    content: React.ReactNode; 
+    large?: boolean; 
+    scrollable?: boolean;
+  }> = useMemo(() => ({
+    'profile': {
+      title: t('profile'),
+      content: profileContent,
+    },
+    'social': {
+      title: t('social'),
+      content: socialContent,
+    },
+    'projects': {
+      title: t('projects'),
+      content: projectsContent,
+    },
+    'analytics': {
+      title: t('analytics'),
+      content: analyticsContent,
+    },
+    'azure-docs': {
+      title: 'Azure Supporter Documentation',
+      content: azureDocsContent,
+      large: true,
+    },
+    'music': {
+      title: 'Music Player',
+      content: musicContent,
+      scrollable: true,
+    },
+    'discord': {
+      title: 'Discord',
+      content: discordContent,
+      scrollable: true,
+    },
+    'live-chat': {
+      title: 'Live Chat',
+      content: liveChatContent,
+    },
+    'blog': {
+      title: 'Blog',
+      content: blogContent,
+      scrollable: true,
+    },
+    'terminal': {
+      title: t('terminal'),
+      content: terminalContent,
+    },
+    'settings': {
+      title: t('settings'),
+      content: settingsContent,
+      scrollable: true,
+    },
+  }), [
+    t,
+    profileContent,
+    socialContent,
+    projectsContent,
+    analyticsContent,
+    azureDocsContent,
+    musicContent,
+    discordContent,
+    liveChatContent,
+    blogContent,
+    terminalContent,
+    settingsContent,
+  ]);
+  
+  const handleWindowFocus = useCallback((windowId: string) => {
+    setActiveWindow(windowId);
+    setOpenWindows(prev => {
+      if (prev[prev.length - 1] === windowId) return prev;
+      return [...prev.filter(id => id !== windowId), windowId];
+    });
+  }, []);
 
   const MusicPlayerWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -1215,13 +1381,6 @@ NewsTicker.displayName = 'NewsTicker';
     );
   });
 
-MusicPlayerWindow.displayName = 'MusicPlayerWindow';
-DiscordWindow.displayName = 'DiscordWindow';
-LiveChatWindow.displayName = 'LiveChatWindow';
-BlogWindow.displayName = 'BlogWindow';
-TerminalWindow.displayName = 'TerminalWindow';
-ProfileWindow.displayName = 'ProfileWindow';
-
   const settingsValue: SettingsContextType = {
     theme, setTheme,
     rainIntensity, setRainIntensity,
@@ -1361,132 +1520,25 @@ ProfileWindow.displayName = 'ProfileWindow';
         {/* Dynamic Windows Rendering */}
         <AnimatePresence>
           {openWindows.map((windowId) => {
-            // Determine which content to show based on windowId
-            let content;
-            let title = t(windowId);
-            let isLarge = false;
-            let isScrollable = false;
-
-            switch (windowId) {
-              case 'profile':
-                content = useMemo(() => (<ProfileWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />), [currentTheme, isDarkMode, t]);
-                break;
-              case 'social':
-                content = useMemo(() => (
-                  <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleSnsScroll}>
-                    {SNS_LINKS.map((sns, index) => {
-                      const offset = index - selectedSns;
-                      const isSelected = index === selectedSns;
-                      return (
-                        <div
-                          key={sns.id}
-                          className="absolute transition-all duration-300 ease-out cursor-pointer"
-                          style={{
-                            left: '50%',
-                            top: '55%',
-                            transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
-                            opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
-                            zIndex: 100 - Math.abs(offset),
-                            pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
-                          }}
-                          onClick={() => setSelectedSns(index)}
-                        >
-                          <SnsWidget {...sns} isSelected={isSelected} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ), [selectedSns]);
-                break;
-              case 'projects':
-                title = t('projects');
-                content = useMemo(() => (
-                  <div 
-                    className="relative h-[500px] flex items-center justify-center pt-4" 
-                    onWheel={handleProjectScroll}
-                  >
-                    {PROJECTS.map((project, index) => {
-                      const offset = index - selectedProject;
-                      const isSelected = index === selectedProject;
-                      
-                      return (
-                        <div
-                          key={project.id}
-                          className="absolute transition-all duration-300 ease-out cursor-pointer"
-                          style={{
-                            left: '50%',
-                            top: '55%',
-                            transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
-                            opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
-                            zIndex: 100 - Math.abs(offset),
-                            pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
-                          }}
-                          onClick={() => setSelectedProject(index)}
-                        >
-                          <ProjectWidget {...project} isSelected={isSelected} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ), [selectedProject]);
-                break;
-              case 'analytics':
-                content = useMemo(() => (<AnalyticsWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />), [currentTheme, isDarkMode, t]);
-                break;
-              case 'azure-docs':
-                title = "Azure Supporter Documentation";
-                content = useMemo(() => (<AzureDocsWindow theme={currentTheme} isDarkMode={isDarkMode} />), [currentTheme, isDarkMode]);
-                isLarge = true;
-                break;
-              case 'music':
-                title = "Music Player";
-                content = useMemo(() => (<MusicPlayerWindow theme={currentTheme} isDarkMode={isDarkMode} />), [currentTheme, isDarkMode]);
-                isScrollable = true;
-                break;
-
-              case 'discord':
-                title = "Discord";
-                content = useMemo(() => (<DiscordWindow theme={currentTheme} isDarkMode={isDarkMode} />), [currentTheme, isDarkMode]);
-                isScrollable = true;
-                break;
-              case 'live-chat':
-                title = "Live Chat";
-                content = useMemo(() => (<LiveChatWindow theme={currentTheme} isDarkMode={isDarkMode} />), [currentTheme, isDarkMode]);
-              case 'blog':
-                content = useMemo(() => (<BlogWindow theme={currentTheme} isDarkMode={isDarkMode} />), [currentTheme, isDarkMode]);
-                isScrollable = true;
-                break;
-              case 'terminal':
-                content = useMemo(() => (<TerminalWindow />), []);
-                break;
-              case 'settings':
-                content = useMemo(() => (<SettingsWindow theme={currentTheme} />), [currentTheme, isDarkMode]);
-                isScrollable = true;
-                break;
-              default:
-                return null;
-            }
+            const config = windowConfig[windowId];
+            if (!config) return null;
 
             return (
               <WindowFrame
                 key={windowId}
                 id={windowId}
-                title={title}
+                title={config.title}
                 onClose={() => closeWindow(windowId)}
                 isActive={activeWindow === windowId}
-                onFocus={() => {
-                  setActiveWindow(windowId);
-                  // Re-order stack on focus to bring to front
-                  setOpenWindows(prev => [...prev.filter(id => id !== windowId), windowId]);
-                }}
+                onFocus={() => handleWindowFocus(windowId)}
                 theme={currentTheme}
                 isDarkMode={isDarkMode}
-                large={isLarge}
-                scrollable={isScrollable}
-                position={windowPositions[windowId] || { x: 100, y: 100 }}
-                onPositionChange={(x, y) => updateWindowPosition(windowId, x, y)}
+                large={config.large}
+                scrollable={config.scrollable}
+                position={windowPositions[windowId] || { x: 100 + openWindows.indexOf(windowId) * 30, y: 100 + openWindows.indexOf(windowId) * 30 }}
+                onPositionChange={(posX, posY) => updateWindowPosition(windowId, posX, posY)}
               >
-                {content}
+                {config.content}
               </WindowFrame>
             );
           })}
@@ -1494,6 +1546,40 @@ ProfileWindow.displayName = 'ProfileWindow';
 
         {/* Taskbar */}
         <div className={`absolute bottom-0 left-0 right-0 h-16 ${isDarkMode ? 'bg-slate-900/95' : 'bg-white/90'} backdrop-blur-md border-t ${isDarkMode ? 'border-white/10' : 'border-slate-200'} flex items-center px-4 gap-4`}>
+          {/* Taskbar start button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`p-3 bg-gradient-to-r ${currentTheme.gradient} rounded-lg shadow-lg`}
+          >
+            <Sparkles className="text-white" size={24} />
+          </motion.button>
+
+          {/* Open windows in taskbar */}
+          <div className="flex-1 flex gap-2">
+            {openWindows.map((windowId) => {
+              const icon = desktopIcons.find(i => i.id === windowId);
+              const config = windowConfig[windowId];
+              return (
+                <button
+                  key={windowId}
+                  onClick={() => handleWindowFocus(windowId)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    activeWindow === windowId
+                      ? `${isDarkMode ? 'bg-white/20 border-white/30' : 'bg-slate-200 border-slate-300'} border-2`
+                      : `${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'} border-2 border-transparent`
+                  }`}
+                >
+                  {icon && <icon.icon className={isDarkMode ? 'text-white' : 'text-slate-700'} size={18} />}
+                  <span className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-medium`}>
+                    {config?.title || windowId}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Clock */}
           <TaskbarClock isDarkMode={isDarkMode} />
         </div>
       </motion.main>
