@@ -1215,6 +1215,13 @@ NewsTicker.displayName = 'NewsTicker';
     );
   });
 
+MusicPlayerWindow.displayName = 'MusicPlayerWindow';
+DiscordWindow.displayName = 'DiscordWindow';
+LiveChatWindow.displayName = 'LiveChatWindow';
+BlogWindow.displayName = 'BlogWindow';
+TerminalWindow.displayName = 'TerminalWindow';
+ProfileWindow.displayName = 'ProfileWindow';
+
   const settingsValue: SettingsContextType = {
     theme, setTheme,
     rainIntensity, setRainIntensity,
