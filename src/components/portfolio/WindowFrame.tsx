@@ -1,6 +1,13 @@
-import { motion } from "framer-motion";
-import { memo, useState, useRef } from "react";
-import { X, Minus, Square, ChevronDown } from "lucide-react";
+// ============================================
+// FIXED WindowFrame Component
+// - Smooth dragging
+// - Exit fullscreen when dragging
+// - Single click actions work on non-focused windows
+// ============================================
+
+import { motion, useMotionValue } from "framer-motion";
+import { memo, useState, useRef, useEffect } from "react";
+import { X, Square, ChevronDown } from "lucide-react";
 
 interface WindowPosition {
   x: number;
@@ -41,12 +48,27 @@ const WindowFrame = memo(({
   const [isMaximized, setIsMaximized] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<'close' | 'hide' | 'maximize' | null>(null);
   
+  // Use motion values for smooth dragging
+  const x = useMotionValue(position.x);
+  const y = useMotionValue(position.y);
+  
   const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
+  const wasMaximizedRef = useRef(false);
+
+  // Sync motion values with position prop
+  useEffect(() => {
+    if (!isMaximized) {
+      x.set(position.x);
+      y.set(position.y);
+    }
+  }, [position.x, position.y, isMaximized]);
 
   const handleMaximize = () => {
     if (!isMaximized) {
-      savedPositionRef.current = { x: position.x, y: position.y };
+      savedPositionRef.current = { x: x.get(), y: y.get() };
     } else {
+      x.set(savedPositionRef.current.x);
+      y.set(savedPositionRef.current.y);
       onPositionChange(savedPositionRef.current.x, savedPositionRef.current.y);
     }
     setIsMaximized(!isMaximized);
@@ -58,15 +80,54 @@ const WindowFrame = memo(({
     }
   };
 
-  // Focus and perform action in one click
   const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     e.preventDefault();
-    // Focus first, then immediately perform action
     if (!isActive) {
       onFocus();
     }
     action();
+  };
+
+  const handleDragStart = () => {
+    // If maximized, exit fullscreen and position window at cursor
+    if (isMaximized) {
+      wasMaximizedRef.current = true;
+      setIsMaximized(false);
+    }
+  };
+
+  const handleDrag = (event: any, info: any) => {
+    // If we just exited fullscreen, reposition window centered under cursor
+    if (wasMaximizedRef.current) {
+      wasMaximizedRef.current = false;
+      
+      // Get cursor position
+      const cursorX = event.clientX || event.touches?.[0]?.clientX || 0;
+      const cursorY = event.clientY || event.touches?.[0]?.clientY || 0;
+      
+      // Center window under cursor (assume ~350px as half of min-width 700px)
+      const newX = cursorX - 350;
+      const newY = cursorY - 20;
+      
+      x.set(Math.max(0, newX));
+      y.set(Math.max(0, newY));
+      
+      savedPositionRef.current = { x: Math.max(0, newX), y: Math.max(0, newY) };
+    }
+  };
+
+  const handleDragEnd = () => {
+    const currentX = x.get();
+    const currentY = y.get();
+    
+    // Snap to fullscreen if dragged to top edge
+    if (currentY <= 5) {
+      savedPositionRef.current = { x: currentX, y: 50 };
+      setIsMaximized(true);
+    } else {
+      onPositionChange(currentX, currentY);
+    }
   };
 
   return (
@@ -75,32 +136,26 @@ const WindowFrame = memo(({
       animate={{ 
         scale: 1, 
         opacity: 1,
-        x: isMaximized ? -position.x : 0,
-        y: isMaximized ? -position.y : 0,
       }}
       exit={{ scale: 0.9, opacity: 0 }}
       transition={{ duration: 0.15 }}
-      drag={!isMaximized}
+      drag
       dragMomentum={false}
-      onDragEnd={(e, info) => {
-        if (!isMaximized) {
-          onPositionChange(
-            position.x,
-            position.y,
-          );
-        }
-      }}
-      // Only focus on mousedown for the title bar drag area, not the whole window
+      dragElastic={0}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
       onMouseDown={(e) => {
-        // Don't prevent focus, but don't block button clicks
         if (!isActive) {
           onFocus();
         }
       }}
       style={{
-        position: 'absolute',
-        left: position.x,
-        top: position.y,
+        position: isMaximized ? 'fixed' : 'absolute',
+        left: isMaximized ? 0 : undefined,
+        top: isMaximized ? 0 : undefined,
+        x: isMaximized ? 0 : x,
+        y: isMaximized ? 0 : y,
         width: isMaximized ? '100vw' : 'auto',
         height: isMaximized ? 'calc(100vh - 64px)' : 'auto',
         zIndex: isActive ? 50 : 40,
@@ -218,8 +273,9 @@ const WindowFrame = memo(({
         </div>
       </div>
 
-      {/* Content - Also handle focus on click */}
+      {/* Content */}
       <div 
+        onMouseDown={(e) => e.stopPropagation()}
         className={`
           p-6 
           ${isMaximized 
