@@ -11,7 +11,7 @@ interface WindowFrameProps {
   title: string;
   id: string;
   onClose: () => void;
-  onHide?: () => void; // New: hide/minimize to taskbar
+  onHide?: () => void;
   isActive: boolean;
   onFocus: () => void;
   children: React.ReactNode;
@@ -41,15 +41,12 @@ const WindowFrame = memo(({
   const [isMaximized, setIsMaximized] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<'close' | 'hide' | 'maximize' | null>(null);
   
-  // Store position before maximizing so we can restore it
   const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
 
   const handleMaximize = () => {
     if (!isMaximized) {
-      // Save current position before maximizing
       savedPositionRef.current = { x: position.x, y: position.y };
     } else {
-      // Restore saved position when un-maximizing
       onPositionChange(savedPositionRef.current.x, savedPositionRef.current.y);
     }
     setIsMaximized(!isMaximized);
@@ -59,6 +56,17 @@ const WindowFrame = memo(({
     if (onHide) {
       onHide();
     }
+  };
+
+  // Focus and perform action in one click
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    e.preventDefault();
+    // Focus first, then immediately perform action
+    if (!isActive) {
+      onFocus();
+    }
+    action();
   };
 
   return (
@@ -82,7 +90,13 @@ const WindowFrame = memo(({
           );
         }
       }}
-      onMouseDown={onFocus}
+      // Only focus on mousedown for the title bar drag area, not the whole window
+      onMouseDown={(e) => {
+        // Don't prevent focus, but don't block button clicks
+        if (!isActive) {
+          onFocus();
+        }
+      }}
       style={{
         position: 'absolute',
         left: position.x,
@@ -132,10 +146,8 @@ const WindowFrame = memo(({
         <div className="flex items-center h-full">
           {/* Hide/Minimize to Taskbar Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHide();
-            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => handleButtonClick(e, handleHide)}
             onMouseEnter={() => setHoveredButton('hide')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
@@ -156,10 +168,8 @@ const WindowFrame = memo(({
 
           {/* Maximize Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMaximize();
-            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => handleButtonClick(e, handleMaximize)}
             onMouseEnter={() => setHoveredButton('maximize')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
@@ -180,10 +190,8 @@ const WindowFrame = memo(({
 
           {/* Close Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => handleButtonClick(e, onClose)}
             onMouseEnter={() => setHoveredButton('close')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
@@ -210,18 +218,20 @@ const WindowFrame = memo(({
         </div>
       </div>
 
-      {/* Content */}
-      <div className={`
-        p-6 
-        ${isMaximized 
-          ? 'w-full h-[calc(100vh-64px-40px)] max-h-none overflow-y-auto' 
-          : large 
-            ? 'min-w-[900px] max-h-[80vh] overflow-y-auto' 
-            : scrollable 
-              ? 'min-w-[700px] max-h-[70vh] overflow-y-auto' 
-              : 'min-w-[700px]'
-        }
-      `}>
+      {/* Content - Also handle focus on click */}
+      <div 
+        className={`
+          p-6 
+          ${isMaximized 
+            ? 'w-full h-[calc(100vh-64px-40px)] max-h-none overflow-y-auto' 
+            : large 
+              ? 'min-w-[900px] max-h-[80vh] overflow-y-auto' 
+              : scrollable 
+                ? 'min-w-[700px] max-h-[70vh] overflow-y-auto' 
+                : 'min-w-[700px]'
+          }
+        `}
+      >
         {children}
       </div>
     </motion.div>
