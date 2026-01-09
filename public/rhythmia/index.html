@@ -96,7 +96,6 @@
         function redirectToTimeSlot() {
             try {
                 const timeSlot = getCurrentTimeSlot();
-                console.log(`Redirecting to ${timeSlot.name} (${timeSlot.file})`);
                 
                 // Redirect to the appropriate time slot HTML
                 window.location.replace(timeSlot.file);
