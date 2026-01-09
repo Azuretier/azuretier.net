@@ -300,7 +300,6 @@
         let gameRunning = false;
         let noteInterval;
         let activeNotes = [];
-        let lastNoteTime = 0;
 
         const tracks = [
             { key: 'd', position: '15%', index: 0 },
@@ -422,13 +421,6 @@
                 checkHit(key);
             }
         });
-
-        // Display current JST time
-        setInterval(() => {
-            const now = new Date();
-            const jstTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-            console.log('Current JST time:', jstTime.toLocaleTimeString());
-        }, 60000);
     </script>
 </body>
 </html>
