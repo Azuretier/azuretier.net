@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安定した幸せ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #D4A574 0%, #8B7355 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .emoji {
+            font-size: 8rem;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 40px 0;
+        }
+        
+        .value-card {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .value-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .value-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .value-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .quote {
+            max-width: 700px;
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">✨</div>
+        <h1>安定した幸せ</h1>
+        <p class="subtitle">創造と調和の旅路を表現したパーソナルポートフォリオ体験</p>
+        
+        <div class="values">
+            <div class="value-card">
+                <div class="value-icon">🎨</div>
+                <div class="value-title">創造性</div>
+                <div class="value-description">
+                    新しいアイデアを形にし、世界に価値を提供する
+                </div>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">🤝</div>
+                <div class="value-title">調和</div>
+                <div class="value-description">
+                    人々と協力し、共に成長する関係を築く
+                </div>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">🌱</div>
+                <div class="value-title">成長</div>
+                <div class="value-description">
+                    常に学び、進化し続ける姿勢を持つ
+                </div>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">💎</div>
+                <div class="value-title">誠実</div>
+                <div class="value-description">
+                    真実に向き合い、正直に生きる
+                </div>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">🎯</div>
+                <div class="value-title">目的</div>
+                <div class="value-description">
+                    明確な目標を持ち、情熱を持って追求する
+                </div>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">🌟</div>
+                <div class="value-title">貢献</div>
+                <div class="value-description">
+                    社会に良い影響を与え、価値を還元する
+                </div>
+            </div>
+        </div>
+        
+        <div class="quote">
+            "幸せとは、自分の価値観に従って生き、<br>
+            創造と調和のバランスを見出すことである。"
+        </div>
+    </div>
+    
+    <script>
+        // Add interactive sparkle effect
+        document.querySelectorAll('.value-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) rotate(2deg)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) rotate(0deg)';
+            });
+        });
+        
+        // Create floating particles
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.position = 'fixed';
+            particle.style.width = '4px';
+            particle.style.height = '4px';
+            particle.style.background = 'rgba(255, 255, 255, 0.6)';
+            particle.style.borderRadius = '50%';
+            particle.style.pointerEvents = 'none';
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = window.innerHeight + 'px';
+            particle.style.transition = 'all 3s linear';
+            
+            document.body.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.style.top = '-10px';
+                particle.style.opacity = '0';
+            }, 100);
+            
+            setTimeout(() => particle.remove(), 3100);
+        }
+        
+        setInterval(createParticle, 500);
+    </script>
+</body>
+</html>

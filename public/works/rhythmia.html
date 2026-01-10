@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHYTHMIA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FF6B9D 0%, #C44569 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .emoji {
+            font-size: 6rem;
+            margin-bottom: 30px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        p {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .blocks {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .block {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .block:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-5px) scale(1.05);
+        }
+        
+        .block.active {
+            background: rgba(255, 255, 255, 0.8);
+            animation: beat 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🎮</div>
+        <h1>RHYTHMIA</h1>
+        <p>リズムとパズルが融合したゲーム<br>ビートに合わせてブロックを積み、世界を攻略しよう</p>
+        
+        <div class="blocks" id="blocks"></div>
+    </div>
+    
+    <script>
+        const blocksContainer = document.getElementById('blocks');
+        const blocks = [];
+        
+        // Create 16 blocks
+        for (let i = 0; i < 16; i++) {
+            const block = document.createElement('div');
+            block.className = 'block';
+            block.addEventListener('click', () => {
+                block.classList.add('active');
+                setTimeout(() => block.classList.remove('active'), 500);
+            });
+            blocksContainer.appendChild(block);
+            blocks.push(block);
+        }
+        
+        // Auto-animate blocks in rhythm
+        let index = 0;
+        setInterval(() => {
+            blocks[index].classList.add('active');
+            setTimeout(() => blocks[index].classList.remove('active'), 500);
+            index = (index + 1) % blocks.length;
+        }, 500);
+    </script>
+</body>
+</html>

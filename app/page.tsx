@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -44,6 +45,12 @@ export default function Home() {
             </p>
           </div>
           <div className="flex flex-col gap-3 text-base font-medium sm:flex-row">
+            <Link
+              className="flex h-12 items-center justify-center gap-2 rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] sm:w-auto"
+              href="/works"
+            >
+              🎨 Works
+            </Link>
             <a
               className="flex h-12 items-center justify-center gap-2 rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] sm:w-auto"
               href="https://github.com/azuretier"

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Journey</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #FFE4E1 0%, #FFB6C1 100%);
+            min-height: 100vh;
+        }
+        
+        #root {
+            min-height: 100vh;
+        }
+        
+        .journey-container {
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #4a4a4a;
+        }
+        
+        .chapter {
+            max-width: 800px;
+            margin: 0 auto 60px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .chapter-number {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .chapter-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #d63384;
+        }
+        
+        .chapter-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const chapters = [
+            { emoji: '👶', title: '誕生', content: '新しい命が世界に迎えられる瞬間' },
+            { emoji: '🎓', title: '学び', content: '知識と経験を積み重ねる時期' },
+            { emoji: '💼', title: '挑戦', content: '夢を追いかけ、道を切り開く' },
+            { emoji: '❤️', title: '愛', content: '深い絆と繋がりを見つける' },
+            { emoji: '🌟', title: '達成', content: '目標を実現し、成長を実感する' },
+            { emoji: '🧘', title: '成熟', content: '人生の意味を深く理解する' },
+            { emoji: '🌱', title: '継承', content: '次世代へ知恵と愛を伝える' }
+        ];
+        
+        function LifeJourney() {
+            const [visibleChapters, setVisibleChapters] = useState([]);
+            
+            useEffect(() => {
+                chapters.forEach((_, index) => {
+                    setTimeout(() => {
+                        setVisibleChapters(prev => [...prev, index]);
+                    }, index * 800);
+                });
+            }, []);
+            
+            return (
+                <div className="journey-container">
+                    <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                        <h1 style={{ fontSize: '3.5rem', marginBottom: '20px', color: '#d63384' }}>
+                            Life Journey
+                        </h1>
+                        <p style={{ fontSize: '1.5rem', color: '#666' }}>
+                            人生の7つの章を詩的に表現したインタラクティブ体験
+                        </p>
+                    </div>
+                    
+                    {chapters.map((chapter, index) => (
+                        <div 
+                            key={index}
+                            className={`chapter ${visibleChapters.includes(index) ? 'visible' : ''}`}
+                        >
+                            <div className="chapter-number">{chapter.emoji}</div>
+                            <h2 className="chapter-title">第{index + 1}章: {chapter.title}</h2>
+                            <p className="chapter-content">{chapter.content}</p>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<LifeJourney />, document.getElementById('root'));
+    </script>
+</body>
+</html>
