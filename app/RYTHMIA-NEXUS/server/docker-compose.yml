@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  rhythmia-server:
+    build: .
+    container_name: rhythmia-nexus-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
