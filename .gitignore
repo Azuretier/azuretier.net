@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+seer/
+
+app/RYTHMIA-NEXUS/server/.env
+app/RYTHMIA-NEXUS/server/node_modules/
+app/RYTHMIA-NEXUS/server/dist/

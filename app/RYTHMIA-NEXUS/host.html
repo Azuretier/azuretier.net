@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHYTHMIA NEXUS - Host</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-pink: #FF6B9D;
+            --neon-cyan: #4ECDC4;
+            --neon-purple: #A29BFE;
+            --neon-gold: #FFD700;
+            --dark-bg: #0a0a12;
+            --darker-bg: #050508;
+            --card-bg: rgba(20, 20, 35, 0.9);
+        }
+
+        body {
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            background: var(--dark-bg);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(78, 205, 196, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(78, 205, 196, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--neon-purple);
+            font-weight: 700;
+        }
+
+        .status-bar {
+            background: var(--card-bg);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .room-code-display {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 0.3em;
+            color: var(--neon-gold);
+            text-shadow: 0 0 20px var(--neon-gold);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--neon-cyan);
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .player-card {
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .player-card.ready {
+            border-color: var(--neon-gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .player-name {
+            font-size: 1.1rem;
+        }
+
+        .player-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ready-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ready-indicator.ready {
+            background: var(--neon-gold);
+            box-shadow: 0 0 10px var(--neon-gold);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .player-score {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--neon-gold);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            color: white;
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(78, 205, 196, 0.2);
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(78, 205, 196, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 5px;
+        }
+
+        .chat-sender {
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin-right: 0.5rem;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .connection-status.connected {
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 107, 157, 0.2);
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .room-code-display {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <div class="connection-status disconnected" id="connectionStatus">
+        <div class="connection-indicator"></div>
+        <span>Connecting...</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">RHYTHMIA NEXUS</h1>
+            <p class="subtitle">HOST DASHBOARD</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">Room Code</div>
+                <div class="room-code-display" id="roomCode">------</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Players</div>
+                <div class="status-value"><span id="playerCount">0</span>/8</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Status</div>
+                <div class="status-value" id="gameStatus">Waiting</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">Players</h2>
+                <div class="players-list" id="playersList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>Waiting for players to join...</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem;">Share the room code above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h2 class="card-title">Controls</h2>
+                    <div class="controls">
+                        <button class="btn btn-primary" id="startGameBtn" disabled>
+                            Start Game
+                        </button>
+                        <button class="btn btn-secondary" id="resetGameBtn" disabled>
+                            Reset Game
+                        </button>
+                        <button class="btn btn-secondary" id="closeRoomBtn">
+                            Close Room
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1rem;">
+                    <h2 class="card-title">Chat</h2>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-container">
+                            <input 
+                                type="text" 
+                                class="chat-input" 
+                                id="chatInput" 
+                                placeholder="Type a message..."
+                                maxlength="200"
+                            >
+                            <button class="btn btn-primary" id="sendChatBtn">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const WS_URL = 'ws://localhost:3001'; // Change this to your server URL
+        
+        // State
+        let ws = null;
+        let roomCode = null;
+        let players = new Map();
+        let isGameStarted = false;
+
+        // DOM Elements
+        const connectionStatus = document.getElementById('connectionStatus');
+        const roomCodeDisplay = document.getElementById('roomCode');
+        const playerCount = document.getElementById('playerCount');
+        const gameStatus = document.getElementById('gameStatus');
+        const playersList = document.getElementById('playersList');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const resetGameBtn = document.getElementById('resetGameBtn');
+        const closeRoomBtn = document.getElementById('closeRoomBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+
+        // Initialize
+        function init() {
+            connectToServer();
+            setupEventListeners();
+        }
+
+        // WebSocket Connection
+        function connectToServer() {
+            updateConnectionStatus('connecting');
+            
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('Connected to server');
+                updateConnectionStatus('connected');
+                createRoom();
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('disconnected');
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                updateConnectionStatus('disconnected');
+                setTimeout(() => {
+                    if (roomCode) {
+                        connectToServer();
+                    }
+                }, 3000);
+            };
+        }
+
+        function createRoom() {
+            sendMessage({ type: 'CREATE_ROOM' });
+        }
+
+        function sendMessage(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data));
+            }
+        }
+
+        // Message Handlers
+        function handleServerMessage(data) {
+            console.log('Server message:', data);
+
+            switch (data.type) {
+                case 'ROOM_CREATED':
+                    handleRoomCreated(data);
+                    break;
+                case 'PLAYER_JOINED':
+                    handlePlayerJoined(data);
+                    break;
+                case 'PLAYER_LEFT':
+                    handlePlayerLeft(data);
+                    break;
+                case 'PLAYER_READY_CHANGED':
+                    handlePlayerReadyChanged(data);
+                    break;
+                case 'SCORE_UPDATED':
+                    handleScoreUpdated(data);
+                    break;
+                case 'CHAT_MESSAGE':
+                    handleChatMessage(data);
+                    break;
+                case 'GAME_ACTION':
+                    handleGameAction(data);
+                    break;
+                case 'ERROR':
+                    handleError(data);
+                    break;
+            }
+        }
+
+        function handleRoomCreated(data) {
+            roomCode = data.roomCode;
+            roomCodeDisplay.textContent = roomCode;
+            addChatMessage('System', `Room created! Share code: ${roomCode}`);
+        }
+
+        function handlePlayerJoined(data) {
+            addChatMessage('System', `${data.player.name} joined the room`);
+            updatePlayersList(data.players);
+        }
+
+        function handlePlayerLeft(data) {
+            const player = players.get(data.playerId);
+            if (player) {
+                addChatMessage('System', `${player.name} left the room`);
+            }
+            updatePlayersList(data.players);
+        }
+
+        function handlePlayerReadyChanged(data) {
+            updatePlayersList(data.players);
+            checkAllPlayersReady();
+        }
+
+        function handleScoreUpdated(data) {
+            updatePlayersList(data.players);
+        }
+
+        function handleChatMessage(data) {
+            addChatMessage(data.playerName, data.message);
+        }
+
+        function handleGameAction(data) {
+            // Handle game-specific actions from players
+            console.log('Game action:', data);
+        }
+
+        function handleError(data) {
+            console.error('Server error:', data.error);
+            addChatMessage('Error', data.error);
+        }
+
+        // UI Updates
+        function updateConnectionStatus(status) {
+            connectionStatus.className = `connection-status ${status}`;
+            const statusText = {
+                connecting: 'Connecting...',
+                connected: 'Connected',
+                disconnected: 'Disconnected'
+            };
+            connectionStatus.querySelector('span').textContent = statusText[status];
+        }
+
+        function updatePlayersList(playerData) {
+            players.clear();
+            playerData.forEach(p => players.set(p.id, p));
+            
+            playerCount.textContent = players.size;
+
+            if (players.size === 0) {
+                playersList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>Waiting for players to join...</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem;">Share the room code above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            playersList.innerHTML = '';
+            players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.isReady ? 'ready' : ''}`;
+                playerCard.innerHTML = `
+                    <div class="player-info">
+                        <div class="player-avatar">${player.name.charAt(0).toUpperCase()}</div>
+                        <div class="player-name">${player.name}</div>
+                    </div>
+                    <div class="player-status">
+                        <div class="ready-indicator ${player.isReady ? 'ready' : ''}"></div>
+                        <span>${player.isReady ? 'Ready' : 'Not Ready'}</span>
+                        <span class="player-score">${player.score}</span>
+                    </div>
+                `;
+                playersList.appendChild(playerCard);
+            });
+        }
+
+        function checkAllPlayersReady() {
+            const allReady = players.size > 0 && 
+                           Array.from(players.values()).every(p => p.isReady);
+            startGameBtn.disabled = !allReady || isGameStarted;
+        }
+
+        function addChatMessage(sender, message) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message';
+            msgDiv.innerHTML = `
+                <span class="chat-sender">${sender}:</span>
+                <span>${message}</span>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            startGameBtn.addEventListener('click', () => {
+                sendMessage({ 
+                    type: 'START_GAME',
+                    level: 1
+                });
+                isGameStarted = true;
+                gameStatus.textContent = 'Playing';
+                startGameBtn.disabled = true;
+                resetGameBtn.disabled = false;
+                addChatMessage('System', 'Game started!');
+            });
+
+            resetGameBtn.addEventListener('click', () => {
+                isGameStarted = false;
+                gameStatus.textContent = 'Waiting';
+                resetGameBtn.disabled = true;
+                checkAllPlayersReady();
+                addChatMessage('System', 'Game reset');
+            });
+
+            closeRoomBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to close the room?')) {
+                    ws.close();
+                    window.location.href = 'rhythmia-nexus-multiplayer.html';
+                }
+            });
+
+            sendChatBtn.addEventListener('click', sendChat);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChat();
+            });
+        }
+
+        function sendChat() {
+            const message = chatInput.value.trim();
+            if (message) {
+                sendMessage({
+                    type: 'CHAT_MESSAGE',
+                    message
+                });
+                chatInput.value = '';
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

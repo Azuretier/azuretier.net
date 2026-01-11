@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHYTHMIA NEXUS - Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-pink: #FF6B9D;
+            --neon-cyan: #4ECDC4;
+            --neon-purple: #A29BFE;
+            --neon-gold: #FFD700;
+            --dark-bg: #0a0a12;
+            --darker-bg: #050508;
+            --card-bg: rgba(20, 20, 35, 0.9);
+        }
+
+        body {
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            background: var(--dark-bg);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 107, 157, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 107, 157, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--neon-pink);
+            font-weight: 700;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 2px solid rgba(255, 107, 157, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--neon-pink);
+        }
+
+        /* Join Screen */
+        .join-screen {
+            display: block;
+        }
+
+        .join-screen.hidden {
+            display: none;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--neon-pink);
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--neon-purple);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .input-field.room-code {
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            color: white;
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 107, 157, 0.2);
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 107, 157, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 107, 157, 0.1);
+            border: 2px solid var(--neon-pink);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.3rem;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--neon-pink);
+        }
+
+        .player-info-card {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(162, 155, 254, 0.2));
+            border: 2px solid var(--neon-purple);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .player-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 30px rgba(255, 107, 157, 0.5);
+        }
+
+        .player-name-display {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-score-display {
+            font-size: 1.5rem;
+            color: var(--neon-gold);
+        }
+
+        .ready-toggle {
+            margin: 2rem 0;
+        }
+
+        .ready-btn {
+            padding: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .ready-btn.ready {
+            background: linear-gradient(45deg, var(--neon-gold), var(--neon-orange));
+            animation: readyPulse 2s infinite;
+        }
+
+        @keyframes readyPulse {
+            0%, 100% { box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 5px 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        .players-count {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .players-count-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .players-count-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 107, 157, 0.1);
+            border-radius: 5px;
+        }
+
+        .chat-sender {
+            font-weight: 700;
+            color: var(--neon-pink);
+            margin-right: 0.5rem;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--neon-pink);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 107, 157, 0.2);
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .error-message {
+            background: rgba(255, 107, 157, 0.2);
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .game-started-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-started-overlay.show {
+            display: flex;
+        }
+
+        .game-started-content {
+            text-align: center;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .game-started-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .leave-btn {
+            margin-top: 2rem;
+            background: rgba(255, 107, 157, 0.2);
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <div class="connection-status disconnected" id="connectionStatus">
+        <div class="connection-indicator"></div>
+        <span>Connecting...</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">RHYTHMIA NEXUS</h1>
+            <p class="subtitle">PLAYER</p>
+        </div>
+
+        <!-- Join Screen -->
+        <div class="join-screen" id="joinScreen">
+            <div class="card">
+                <h2 class="card-title">Join Room</h2>
+                
+                <div class="input-group">
+                    <label class="input-label">Your Name</label>
+                    <input 
+                        type="text" 
+                        class="input-field" 
+                        id="playerNameInput" 
+                        placeholder="Enter your name"
+                        maxlength="20"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Room Code</label>
+                    <input 
+                        type="text" 
+                        class="input-field room-code" 
+                        id="roomCodeInput" 
+                        placeholder="000000"
+                        maxlength="6"
+                    >
+                </div>
+
+                <button class="btn btn-primary" id="joinBtn">Join Room</button>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">Room</div>
+                    <div class="status-value" id="roomCodeDisplay">------</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Players</div>
+                    <div class="status-value" id="playersCount">0</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Status</div>
+                    <div class="status-value" id="gameStatus">Waiting</div>
+                </div>
+            </div>
+
+            <div class="player-info-card">
+                <div class="player-avatar-large" id="playerAvatar">?</div>
+                <div class="player-name-display" id="playerNameDisplay">Player</div>
+                <div class="player-score-display">Score: <span id="playerScore">0</span></div>
+            </div>
+
+            <div class="ready-toggle">
+                <button class="btn btn-primary ready-btn" id="readyBtn">
+                    I'm Ready!
+                </button>
+            </div>
+
+            <div class="players-count">
+                <div class="players-count-number" id="totalPlayers">1</div>
+                <div class="players-count-label">Players in Room</div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Chat</h2>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="Type a message..."
+                            maxlength="200"
+                        >
+                        <button class="btn btn-primary" id="sendChatBtn" style="width: auto; padding: 0.75rem 1.5rem;">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn leave-btn" id="leaveBtn">Leave Room</button>
+        </div>
+    </div>
+
+    <!-- Game Started Overlay -->
+    <div class="game-started-overlay" id="gameStartedOverlay">
+        <div class="game-started-content">
+            <div class="game-started-title">GAME STARTING!</div>
+            <p style="font-size: 1.5rem; color: var(--neon-cyan);">Get ready to play...</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const WS_URL = 'ws://localhost:3001'; // Change this to your server URL
+        
+        // State
+        let ws = null;
+        let playerId = null;
+        let playerName = '';
+        let roomCode = null;
+        let isReady = false;
+        let myScore = 0;
+
+        // DOM Elements
+        const connectionStatus = document.getElementById('connectionStatus');
+        const joinScreen = document.getElementById('joinScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const roomCodeInput = document.getElementById('roomCodeInput');
+        const joinBtn = document.getElementById('joinBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+        const playersCount = document.getElementById('playersCount');
+        const gameStatus = document.getElementById('gameStatus');
+        const playerAvatar = document.getElementById('playerAvatar');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const playerScore = document.getElementById('playerScore');
+        const readyBtn = document.getElementById('readyBtn');
+        const totalPlayers = document.getElementById('totalPlayers');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const gameStartedOverlay = document.getElementById('gameStartedOverlay');
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+        }
+
+        // WebSocket Connection
+        function connectToServer() {
+            updateConnectionStatus('connecting');
+            
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('Connected to server');
+                updateConnectionStatus('connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('disconnected');
+                showError('Connection error. Please try again.');
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                updateConnectionStatus('disconnected');
+                
+                if (roomCode) {
+                    showError('Disconnected from server. Reconnecting...');
+                    setTimeout(connectToServer, 3000);
+                }
+            };
+        }
+
+        function sendMessage(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data));
+            }
+        }
+
+        // Message Handlers
+        function handleServerMessage(data) {
+            console.log('Server message:', data);
+
+            switch (data.type) {
+                case 'ROOM_JOINED':
+                    handleRoomJoined(data);
+                    break;
+                case 'PLAYER_JOINED':
+                    handlePlayerUpdate(data);
+                    break;
+                case 'PLAYER_LEFT':
+                    handlePlayerUpdate(data);
+                    break;
+                case 'PLAYER_READY_CHANGED':
+                    handlePlayerUpdate(data);
+                    break;
+                case 'GAME_STARTED':
+                    handleGameStarted(data);
+                    break;
+                case 'SCORE_UPDATED':
+                    handleScoreUpdated(data);
+                    break;
+                case 'CHAT_MESSAGE':
+                    handleChatMessage(data);
+                    break;
+                case 'HOST_DISCONNECTED':
+                    handleHostDisconnected(data);
+                    break;
+                case 'ERROR':
+                    handleError(data);
+                    break;
+            }
+        }
+
+        function handleRoomJoined(data) {
+            playerId = data.playerId;
+            roomCode = data.roomCode;
+            
+            joinScreen.classList.add('hidden');
+            gameScreen.classList.add('active');
+            
+            roomCodeDisplay.textContent = roomCode;
+            playerNameDisplay.textContent = playerName;
+            playerAvatar.textContent = playerName.charAt(0).toUpperCase();
+            
+            updatePlayersCount(data.roomInfo.playerCount);
+            addChatMessage('System', `Joined room ${roomCode}`);
+        }
+
+        function handlePlayerUpdate(data) {
+            if (data.players) {
+                updatePlayersCount(data.players.length);
+            }
+        }
+
+        function handleGameStarted(data) {
+            gameStatus.textContent = 'Playing';
+            gameStartedOverlay.classList.add('show');
+            addChatMessage('System', 'Game started!');
+            
+            setTimeout(() => {
+                gameStartedOverlay.classList.remove('show');
+            }, 3000);
+        }
+
+        function handleScoreUpdated(data) {
+            if (data.playerId === playerId) {
+                myScore = data.score;
+                playerScore.textContent = myScore;
+            }
+        }
+
+        function handleChatMessage(data) {
+            addChatMessage(data.playerName, data.message);
+        }
+
+        function handleHostDisconnected(data) {
+            showError('Host disconnected. Returning to join screen...');
+            setTimeout(() => {
+                resetToJoinScreen();
+            }, 3000);
+        }
+
+        function handleError(data) {
+            console.error('Server error:', data.error);
+            showError(data.error);
+        }
+
+        // UI Functions
+        function updateConnectionStatus(status) {
+            connectionStatus.className = `connection-status ${status}`;
+            const statusText = {
+                connecting: 'Connecting...',
+                connected: 'Connected',
+                disconnected: 'Disconnected'
+            };
+            connectionStatus.querySelector('span').textContent = statusText[status];
+        }
+
+        function updatePlayersCount(count) {
+            playersCount.textContent = count;
+            totalPlayers.textContent = count;
+        }
+
+        function addChatMessage(sender, message) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message';
+            msgDiv.innerHTML = `
+                <span class="chat-sender">${sender}:</span>
+                <span>${message}</span>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        function resetToJoinScreen() {
+            joinScreen.classList.remove('hidden');
+            gameScreen.classList.remove('active');
+            roomCode = null;
+            playerId = null;
+            isReady = false;
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Auto-uppercase room code
+            roomCodeInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toUpperCase();
+            });
+
+            joinBtn.addEventListener('click', () => {
+                playerName = playerNameInput.value.trim();
+                const code = roomCodeInput.value.trim().toUpperCase();
+
+                if (!playerName) {
+                    showError('Please enter your name');
+                    return;
+                }
+
+                if (code.length !== 6) {
+                    showError('Room code must be 6 characters');
+                    return;
+                }
+
+                connectToServer();
+                
+                // Wait for connection then join
+                const checkConnection = setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        clearInterval(checkConnection);
+                        sendMessage({
+                            type: 'JOIN_ROOM',
+                            roomCode: code,
+                            playerName: playerName
+                        });
+                    }
+                }, 100);
+            });
+
+            readyBtn.addEventListener('click', () => {
+                isReady = !isReady;
+                sendMessage({
+                    type: 'PLAYER_READY',
+                    isReady: isReady
+                });
+
+                if (isReady) {
+                    readyBtn.textContent = '✓ Ready!';
+                    readyBtn.classList.add('ready');
+                } else {
+                    readyBtn.textContent = "I'm Ready!";
+                    readyBtn.classList.remove('ready');
+                }
+            });
+
+            sendChatBtn.addEventListener('click', sendChat);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChat();
+            });
+
+            leaveBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to leave?')) {
+                    sendMessage({ type: 'LEAVE_ROOM' });
+                    resetToJoinScreen();
+                }
+            });
+
+            // Simulate score increase for testing (remove in production)
+            document.addEventListener('keypress', (e) => {
+                if (e.key === 's' && gameScreen.classList.contains('active')) {
+                    myScore += 100;
+                    sendMessage({
+                        type: 'UPDATE_SCORE',
+                        score: myScore
+                    });
+                }
+            });
+        }
+
+        function sendChat() {
+            const message = chatInput.value.trim();
+            if (message) {
+                sendMessage({
+                    type: 'CHAT_MESSAGE',
+                    message
+                });
+                chatInput.value = '';
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
