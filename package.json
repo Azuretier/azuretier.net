@@ -1,14 +1,19 @@
 {
-  "name": "nextjs",
+  "name": "azuretia.net",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "server": "cd app/RYTHMIA-NEXUS/server && npm run dev",
+    "server:build": "cd app/RYTHMIA-NEXUS/server && npm run build",
+    "server:start": "cd app/RYTHMIA-NEXUS/server && npm start",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\" --names \"WEBSITE,SERVER\" --prefix-colors \"cyan,magenta\"",
+    "install:server": "cd app/RYTHMIA-NEXUS/server && npm install"
   },
-  "dependencies": {
+  "dependencies": { 
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -18,6 +23,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",

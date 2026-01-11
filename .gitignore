@@ -28,6 +28,17 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Server files should only be in app/RYTHMIA-NEXUS/server/
+/server.js
+/server.ts
+/Dockerfile
+/docker-compose.yml
+/ecosystem.config.js
+/railway.json
+/RAILWAY_DEPLOY.md
+/tsconfig.json
+/.dockerignore
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
@@ -39,3 +50,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+seer/
+
+app/RYTHMIA-NEXUS/server/.env
+app/RYTHMIA-NEXUS/server/node_modules/
+app/RYTHMIA-NEXUS/server/dist/
