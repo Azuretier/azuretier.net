@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-=======
-import Image from "next/image";
 import Link from "next/link";
 
->>>>>>> aae17566c4fbbb4d8141d61f086be56ffcd2b711
 export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
@@ -63,7 +59,6 @@ export default function Home() {
               WebSocket powered multiplayer
             </p>
           </div>
-<<<<<<< HEAD
 
           <div className="text-center p-6 rounded-xl bg-zinc-900/50 border border-zinc-800">
             <div className="text-3xl mb-3">🎵</div>
@@ -82,13 +77,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Server Status */}
-        <div className="mt-8 px-6 py-3 rounded-full bg-zinc-900/50 border border-zinc-800">
-          <p className="text-sm text-zinc-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-            Server running on localhost:3001
-          </p>
-        </div>
+        {/* Play Now Button */}
+        <Link
+          href="/game"
+          className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1 mt-8"
+        >
+          <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎮</span>
+              <span className="text-xl font-bold text-white">Play RHYTHMIA Now!</span>
+            </div>
+          </div>
+        </Link>
 
         {/* Footer */}
         <div className="mt-12 text-center space-y-4">
@@ -96,15 +96,12 @@ export default function Home() {
             Built with Next.js, TypeScript, and WebSockets
           </p>
           <div className="flex gap-4 justify-center text-sm">
-=======
-          <div className="flex flex-col gap-3 text-base font-medium sm:flex-row">
             <Link
-              className="flex h-12 items-center justify-center gap-2 rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] sm:w-auto"
               href="/works"
+              className="text-zinc-400 hover:text-white transition-colors"
             >
               🎨 Works
             </Link>
->>>>>>> aae17566c4fbbb4d8141d61f086be56ffcd2b711
             <a
               href="https://github.com/azuretier"
               target="_blank"
