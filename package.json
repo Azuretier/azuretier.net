@@ -1,26 +1,37 @@
 {
-  "name": "nextjs",
-  "version": "0.1.0",
-  "private": true,
+  "name": "rhythmia-nexus-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for RHYTHMIA NEXUS multiplayer game",
+  "main": "dist/server.js",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "watch": "tsc --watch",
+    "clean": "rimraf dist"
   },
+  "keywords": [
+    "websocket",
+    "multiplayer",
+    "game",
+    "rhythmia",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "next": "16.1.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.1",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@types/node": "^20.10.0",
+    "@types/ws": "^8.5.10",
+    "nodemon": "^3.0.2",
+    "rimraf": "^5.0.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
