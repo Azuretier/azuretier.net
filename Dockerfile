@@ -5,7 +5,6 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY tsconfig.json ./
 
 # Install dependencies
 RUN npm ci
@@ -13,34 +12,29 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Build Next.js app using npx
+RUN npx next build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Install production dependencies only
-RUN npm ci --only=production
-
+# Copy standalone build
 COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static/
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Expose port
-EXPOSE 3001
-
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=3001
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Start server
-CMD ["node", "dist/server.js"]
+CMD ["node", "server.js"]
