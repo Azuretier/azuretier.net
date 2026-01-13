@@ -12,6 +12,7 @@ interface GameMode {
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Extreme';
   colorClass: string;
   borderClass: string;
+  selectedBorderClass: string;
   hoverBorderClass: string;
   shadowClass: string;
   detailBorderClass: string;
@@ -33,6 +34,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Hard',
     colorClass: 'from-yellow-500 to-orange-500',
     borderClass: 'border-yellow-500/20',
+    selectedBorderClass: 'border-yellow-500/80',
     hoverBorderClass: 'hover:border-yellow-500/50',
     shadowClass: 'hover:shadow-yellow-500/20',
     detailBorderClass: 'border-yellow-500/30',
@@ -53,6 +55,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Extreme',
     colorClass: 'from-red-500 to-pink-500',
     borderClass: 'border-red-500/20',
+    selectedBorderClass: 'border-red-500/80',
     hoverBorderClass: 'hover:border-red-500/50',
     shadowClass: 'hover:shadow-red-500/20',
     detailBorderClass: 'border-red-500/30',
@@ -73,6 +76,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Extreme',
     colorClass: 'from-purple-500 to-indigo-500',
     borderClass: 'border-purple-500/20',
+    selectedBorderClass: 'border-purple-500/80',
     hoverBorderClass: 'hover:border-purple-500/50',
     shadowClass: 'hover:shadow-purple-500/20',
     detailBorderClass: 'border-purple-500/30',
@@ -92,6 +96,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Medium',
     colorClass: 'from-cyan-500 to-blue-500',
     borderClass: 'border-cyan-500/20',
+    selectedBorderClass: 'border-cyan-500/80',
     hoverBorderClass: 'hover:border-cyan-500/50',
     shadowClass: 'hover:shadow-cyan-500/20',
     detailBorderClass: 'border-cyan-500/30',
@@ -111,6 +116,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Hard',
     colorClass: 'from-green-500 to-emerald-500',
     borderClass: 'border-green-500/20',
+    selectedBorderClass: 'border-green-500/80',
     hoverBorderClass: 'hover:border-green-500/50',
     shadowClass: 'hover:shadow-green-500/20',
     detailBorderClass: 'border-green-500/30',
@@ -130,6 +136,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Extreme',
     colorClass: 'from-gray-500 to-zinc-500',
     borderClass: 'border-gray-500/20',
+    selectedBorderClass: 'border-gray-500/80',
     hoverBorderClass: 'hover:border-gray-500/50',
     shadowClass: 'hover:shadow-gray-500/20',
     detailBorderClass: 'border-gray-500/30',
@@ -149,6 +156,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Hard',
     colorClass: 'from-orange-500 to-red-500',
     borderClass: 'border-orange-500/20',
+    selectedBorderClass: 'border-orange-500/80',
     hoverBorderClass: 'hover:border-orange-500/50',
     shadowClass: 'hover:shadow-orange-500/20',
     detailBorderClass: 'border-orange-500/30',
@@ -169,6 +177,7 @@ const GAME_MODES: GameMode[] = [
     difficulty: 'Easy',
     colorClass: 'from-teal-500 to-cyan-500',
     borderClass: 'border-teal-500/20',
+    selectedBorderClass: 'border-teal-500/80',
     hoverBorderClass: 'hover:border-teal-500/50',
     shadowClass: 'hover:shadow-teal-500/20',
     detailBorderClass: 'border-teal-500/30',
@@ -215,7 +224,7 @@ export default function GameIdeasPage() {
               onClick={() => setSelectedMode(mode)}
               className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${mode.colorClass}/10 border-2 ${
                 selectedMode?.id === mode.id
-                  ? mode.borderClass.replace('/20', '/80')
+                  ? mode.selectedBorderClass
                   : mode.borderClass
               } ${mode.hoverBorderClass} ${mode.shadowClass} p-6 transition-all hover:shadow-2xl hover:-translate-y-1 text-left`}
             >
@@ -224,7 +233,11 @@ export default function GameIdeasPage() {
                 <h2 className="text-xl font-bold text-white mb-2">
                   {mode.title}
                 </h2>
-                <p className="text-sm text-zinc-400 mb-3 line-clamp-2">
+                <p className="text-sm text-zinc-400 mb-3 overflow-hidden" style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}>
                   {mode.description}
                 </p>
                 <div className="flex items-center justify-between">
