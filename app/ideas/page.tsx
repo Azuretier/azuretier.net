@@ -10,7 +10,12 @@ interface GameMode {
   description: string;
   features: string[];
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Extreme';
-  color: string;
+  colorClass: string;
+  borderClass: string;
+  hoverBorderClass: string;
+  shadowClass: string;
+  detailBorderClass: string;
+  buttonGradientClass: string;
 }
 
 const GAME_MODES: GameMode[] = [
@@ -26,7 +31,12 @@ const GAME_MODES: GameMode[] = [
       'Miss penalties increase speed dramatically',
     ],
     difficulty: 'Hard',
-    color: 'from-yellow-500 to-orange-500',
+    colorClass: 'from-yellow-500 to-orange-500',
+    borderClass: 'border-yellow-500/20',
+    hoverBorderClass: 'hover:border-yellow-500/50',
+    shadowClass: 'hover:shadow-yellow-500/20',
+    detailBorderClass: 'border-yellow-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-yellow-500 to-orange-500',
   },
   {
     id: 'survival',
@@ -41,7 +51,12 @@ const GAME_MODES: GameMode[] = [
       'Miss: -10% health',
     ],
     difficulty: 'Extreme',
-    color: 'from-red-500 to-pink-500',
+    colorClass: 'from-red-500 to-pink-500',
+    borderClass: 'border-red-500/20',
+    hoverBorderClass: 'hover:border-red-500/50',
+    shadowClass: 'hover:shadow-red-500/20',
+    detailBorderClass: 'border-red-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-red-500 to-pink-500',
   },
   {
     id: 'accuracy',
@@ -56,7 +71,12 @@ const GAME_MODES: GameMode[] = [
       '10x score multiplier active',
     ],
     difficulty: 'Extreme',
-    color: 'from-purple-500 to-indigo-500',
+    colorClass: 'from-purple-500 to-indigo-500',
+    borderClass: 'border-purple-500/20',
+    hoverBorderClass: 'hover:border-purple-500/50',
+    shadowClass: 'hover:shadow-purple-500/20',
+    detailBorderClass: 'border-purple-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-purple-500 to-indigo-500',
   },
   {
     id: 'mirror',
@@ -70,7 +90,12 @@ const GAME_MODES: GameMode[] = [
       'Can be combined with other modes',
     ],
     difficulty: 'Medium',
-    color: 'from-cyan-500 to-blue-500',
+    colorClass: 'from-cyan-500 to-blue-500',
+    borderClass: 'border-cyan-500/20',
+    hoverBorderClass: 'hover:border-cyan-500/50',
+    shadowClass: 'hover:shadow-cyan-500/20',
+    detailBorderClass: 'border-cyan-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-cyan-500 to-blue-500',
   },
   {
     id: 'random',
@@ -84,7 +109,12 @@ const GAME_MODES: GameMode[] = [
       'Different experience every playthrough',
     ],
     difficulty: 'Hard',
-    color: 'from-green-500 to-emerald-500',
+    colorClass: 'from-green-500 to-emerald-500',
+    borderClass: 'border-green-500/20',
+    hoverBorderClass: 'hover:border-green-500/50',
+    shadowClass: 'hover:shadow-green-500/20',
+    detailBorderClass: 'border-green-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-green-500 to-emerald-500',
   },
   {
     id: 'blindfold',
@@ -98,7 +128,12 @@ const GAME_MODES: GameMode[] = [
       'Ultimate timing challenge',
     ],
     difficulty: 'Extreme',
-    color: 'from-gray-500 to-zinc-500',
+    colorClass: 'from-gray-500 to-zinc-500',
+    borderClass: 'border-gray-500/20',
+    hoverBorderClass: 'hover:border-gray-500/50',
+    shadowClass: 'hover:shadow-gray-500/20',
+    detailBorderClass: 'border-gray-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-gray-500 to-zinc-500',
   },
   {
     id: 'combo-rush',
@@ -112,7 +147,12 @@ const GAME_MODES: GameMode[] = [
       'Combo break resets multiplier to 1x',
     ],
     difficulty: 'Hard',
-    color: 'from-orange-500 to-red-500',
+    colorClass: 'from-orange-500 to-red-500',
+    borderClass: 'border-orange-500/20',
+    hoverBorderClass: 'hover:border-orange-500/50',
+    shadowClass: 'hover:shadow-orange-500/20',
+    detailBorderClass: 'border-orange-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-orange-500 to-red-500',
   },
   {
     id: 'zen',
@@ -127,7 +167,12 @@ const GAME_MODES: GameMode[] = [
       'Perfect for practice and relaxation',
     ],
     difficulty: 'Easy',
-    color: 'from-teal-500 to-cyan-500',
+    colorClass: 'from-teal-500 to-cyan-500',
+    borderClass: 'border-teal-500/20',
+    hoverBorderClass: 'hover:border-teal-500/50',
+    shadowClass: 'hover:shadow-teal-500/20',
+    detailBorderClass: 'border-teal-500/30',
+    buttonGradientClass: 'bg-gradient-to-r from-teal-500 to-cyan-500',
   },
 ];
 
@@ -168,17 +213,11 @@ export default function GameIdeasPage() {
             <button
               key={mode.id}
               onClick={() => setSelectedMode(mode)}
-              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${
-                mode.color
-              }/10 border-2 ${
+              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${mode.colorClass}/10 border-2 ${
                 selectedMode?.id === mode.id
-                  ? `border-${mode.color}/80`
-                  : `border-${mode.color}/20`
-              } p-6 transition-all hover:border-${
-                mode.color
-              }/50 hover:shadow-2xl hover:shadow-${
-                mode.color
-              }/20 hover:-translate-y-1 text-left`}
+                  ? mode.borderClass.replace('/20', '/80')
+                  : mode.borderClass
+              } ${mode.hoverBorderClass} ${mode.shadowClass} p-6 transition-all hover:shadow-2xl hover:-translate-y-1 text-left`}
             >
               <div className="relative z-10">
                 <div className="text-5xl mb-3">{mode.emoji}</div>
@@ -206,7 +245,7 @@ export default function GameIdeasPage() {
                 </div>
               </div>
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${mode.color}/0 to-${mode.color}/10 opacity-0 group-hover:opacity-100 transition-opacity`}
+                className={`absolute inset-0 bg-gradient-to-br from-transparent to-zinc-900/10 opacity-0 group-hover:opacity-100 transition-opacity`}
               />
             </button>
           ))}
@@ -216,7 +255,7 @@ export default function GameIdeasPage() {
         {selectedMode && (
           <div className="max-w-4xl mx-auto">
             <div
-              className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${selectedMode.color}/10 border-2 border-${selectedMode.color}/30 p-8`}
+              className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${selectedMode.colorClass}/10 border-2 ${selectedMode.detailBorderClass} p-8`}
             >
               <button
                 onClick={() => setSelectedMode(null)}
@@ -256,7 +295,7 @@ export default function GameIdeasPage() {
 
               <div className="mt-8 flex gap-4">
                 <div
-                  className={`px-4 py-2 rounded-lg bg-gradient-to-r ${selectedMode.color} text-white font-semibold`}
+                  className={`px-4 py-2 rounded-lg ${selectedMode.buttonGradientClass} text-white font-semibold`}
                 >
                   Difficulty: {selectedMode.difficulty}
                 </div>
