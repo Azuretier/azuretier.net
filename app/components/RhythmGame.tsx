@@ -75,6 +75,8 @@ export default function RhythmGame() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [judgmentText, setJudgmentText] = useState<string>('');
   const [judgmentColor, setJudgmentColor] = useState<string>('');
+  const [nextNoteLane, setNextNoteLane] = useState<number | null>(null);
+  const [currentLane, setCurrentLane] = useState<number>(1); // Track current position (middle lanes)
   
   const gameLoopRef = useRef<number | undefined>(undefined);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -286,6 +288,9 @@ export default function RhythmGame() {
   const handleKeyPress = useCallback((lane: number) => {
     if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver) return;
     
+    // Update current lane position
+    setCurrentLane(lane);
+    
     // Find the closest note in this lane
     const laneNotes = notes.filter(n => n.lane === lane && !n.hit && !n.missed);
     if (laneNotes.length === 0) return;
@@ -369,6 +374,17 @@ export default function RhythmGame() {
           
           return { ...note, y: newY };
         });
+        
+        // Update next note indicator - find the next active note closest to hit zone
+        const activeNotes = updated.filter(n => !n.hit && !n.missed && n.y < CONFIG.HIT_ZONE_Y);
+        if (activeNotes.length > 0) {
+          const closestNote = activeNotes.reduce((closest, note) => 
+            note.y > closest.y ? note : closest
+          );
+          setNextNoteLane(closestNote.lane);
+        } else {
+          setNextNoteLane(null);
+        }
         
         // Remove old notes
         return updated.filter(n => n.y < CONFIG.HIT_ZONE_Y + 200);
@@ -454,22 +470,67 @@ export default function RhythmGame() {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative" style={{ width: '450px', height: '700px' }}>
           {/* Lanes */}
-          {CONFIG.LANES.map((lane) => (
-            <div
-              key={lane}
-              className="absolute top-0 bottom-0 border-l border-r border-zinc-700/50 cursor-pointer transition-all hover:bg-white/5"
-              style={{
-                left: `${50 + lane * 110}px`,
-                width: `${CONFIG.LANE_WIDTH}px`,
-              }}
-              onClick={() => handleLaneClick(lane)}
-            >
-              {/* Lane key indicator */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-2xl font-bold text-zinc-600">
-                {CONFIG.KEYS[lane].toUpperCase()}
+          {CONFIG.LANES.map((lane) => {
+            const isCurrentLane = lane === currentLane;
+            const isNextNoteLane = lane === nextNoteLane;
+            const direction = nextNoteLane !== null && gameState.isPlaying 
+              ? (nextNoteLane > currentLane ? 'right' : nextNoteLane < currentLane ? 'left' : 'center')
+              : null;
+            
+            return (
+              <div
+                key={lane}
+                className={`absolute top-0 bottom-0 border-l border-r cursor-pointer transition-all ${
+                  isCurrentLane 
+                    ? 'border-cyan-400/60 bg-cyan-500/10' 
+                    : isNextNoteLane
+                    ? 'border-pink-400/60 bg-pink-500/10 animate-pulse'
+                    : 'border-zinc-700/50 hover:bg-white/5'
+                }`}
+                style={{
+                  left: `${50 + lane * 110}px`,
+                  width: `${CONFIG.LANE_WIDTH}px`,
+                }}
+                onClick={() => handleLaneClick(lane)}
+              >
+                {/* Lane key indicator */}
+                <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-2xl font-bold transition-colors ${
+                  isCurrentLane ? 'text-cyan-400' : isNextNoteLane ? 'text-pink-400' : 'text-zinc-600'
+                }`}>
+                  {CONFIG.KEYS[lane].toUpperCase()}
+                </div>
+                
+                {/* Next note indicator */}
+                {isNextNoteLane && gameState.isPlaying && (
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce">
+                    <div className="text-pink-400 text-xs font-bold">NEXT</div>
+                    <div className="text-3xl">▼</div>
+                  </div>
+                )}
               </div>
+            );
+          })}
+          
+          {/* Direction indicator at the top */}
+          {nextNoteLane !== null && gameState.isPlaying && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-pink-500/30">
+              {nextNoteLane < currentLane && (
+                <>
+                  <div className="text-2xl animate-pulse">←</div>
+                  <span className="text-pink-400 font-bold text-sm">MOVE LEFT</span>
+                </>
+              )}
+              {nextNoteLane > currentLane && (
+                <>
+                  <span className="text-pink-400 font-bold text-sm">MOVE RIGHT</span>
+                  <div className="text-2xl animate-pulse">→</div>
+                </>
+              )}
+              {nextNoteLane === currentLane && (
+                <span className="text-cyan-400 font-bold text-sm">STAY</span>
+              )}
             </div>
-          ))}
+          )}
           
           {/* Hit zone */}
           <div 
@@ -517,6 +578,18 @@ export default function RhythmGame() {
               RHYTHMIA
             </h1>
             <p className="text-xl text-zinc-400">Press the keys when notes hit the line!</p>
+            
+            {/* Feature Preview */}
+            <div className="my-6 p-6 bg-zinc-900/80 rounded-xl border border-zinc-700 max-w-md mx-auto">
+              <p className="text-sm text-cyan-400 font-bold mb-3">✨ NEW: Navigation Indicators</p>
+              <div className="space-y-2 text-sm text-zinc-400 text-left">
+                <p>• <span className="text-pink-400">Pink highlight</span> shows next note lane</p>
+                <p>• <span className="text-cyan-400">Cyan highlight</span> shows your current position</p>
+                <p>• Direction arrows guide you left/right/stay</p>
+                <p>• Play rhythmically and watch the indicators!</p>
+              </div>
+            </div>
+            
             <div className="flex gap-4 justify-center text-lg text-zinc-300">
               {CONFIG.KEYS.map(key => (
                 <div key={key} className="px-6 py-3 bg-zinc-800 rounded-lg border border-zinc-700">
