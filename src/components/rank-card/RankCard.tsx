@@ -1,5 +1,13 @@
 import { cn } from '@/lib/utils';
 
+// XP Calculation Configuration
+const XP_CONFIG = {
+  // XP required per level (linear: level * baseXpPerLevel)
+  baseXpPerLevel: 1000,
+  // Alternative: Could implement exponential scaling here
+  calculateXpForLevel: (level: number): number => level * 1000,
+};
+
 interface RankCardProps {
   displayName: string;
   level: number;
@@ -17,9 +25,9 @@ export function RankCard({
   avatarUrl,
   className,
 }: RankCardProps) {
-  // Calculate XP progress (assuming 1000 XP per level for demonstration)
-  const xpForCurrentLevel = level * 1000;
-  const xpForNextLevel = (level + 1) * 1000;
+  // Calculate XP progress using configuration
+  const xpForCurrentLevel = XP_CONFIG.calculateXpForLevel(level);
+  const xpForNextLevel = XP_CONFIG.calculateXpForLevel(level + 1);
   const xpInCurrentLevel = xp - xpForCurrentLevel;
   const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
   const progressPercentage = Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);

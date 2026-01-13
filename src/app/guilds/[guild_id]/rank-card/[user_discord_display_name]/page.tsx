@@ -114,9 +114,13 @@ export default function RankCardPage() {
     let unsubscribePromise = setupSubscription();
 
     return () => {
-      unsubscribePromise.then(unsub => {
-        if (unsub) unsub();
-      });
+      unsubscribePromise
+        .then(unsub => {
+          if (unsub) unsub();
+        })
+        .catch(err => {
+          console.error('Error during cleanup:', err);
+        });
     };
   }, [guildId, encodedDisplayName]);
 

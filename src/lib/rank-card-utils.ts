@@ -31,26 +31,3 @@ export async function generateCardId(
   // Fallback for older environments
   throw new Error('Web Crypto API not available');
 }
-
-/**
- * Synchronous version using a simple hash for client-side use
- * Not cryptographically secure, but sufficient for card IDs
- */
-export function generateCardIdSync(
-  guildId: string,
-  displayNameKey: string
-): string {
-  const input = `${guildId}:${displayNameKey}`;
-  let hash = 0;
-  
-  for (let i = 0; i < input.length; i++) {
-    const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  
-  // Convert to hex and pad to simulate SHA-256 length
-  const baseHash = Math.abs(hash).toString(16).padStart(8, '0');
-  // Repeat to get a longer hash-like string
-  return baseHash.repeat(8).substring(0, 64);
-}

@@ -99,6 +99,7 @@ export async function POST(
     const rankCardRef = db.doc(`guilds/${guildId}/rankCards/${cardId}`);
 
     // Handle avatar field (might be avatarUrl or misspelled avaterUrl)
+    // TODO: Once all data is migrated to use 'avatarUrl', remove the 'avaterUrl' fallback
     const avatarUrl = memberData.avatarUrl || memberData.avaterUrl || null;
 
     await rankCardRef.set({
