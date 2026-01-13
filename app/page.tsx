@@ -77,13 +77,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Server Status */}
-        <div className="mt-8 px-6 py-3 rounded-full bg-zinc-900/50 border border-zinc-800">
-          <p className="text-sm text-zinc-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-            Server running on localhost:3001
-          </p>
-        </div>
+        {/* Play Now Button */}
+        <Link
+          href="/game"
+          className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1 mt-8"
+        >
+          <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎮</span>
+              <span className="text-xl font-bold text-white">Play RHYTHMIA Now!</span>
+            </div>
+          </div>
+        </Link>
 
         {/* Footer */}
         <div className="mt-12 text-center space-y-4">
@@ -92,8 +97,8 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center text-sm">
             <Link
-              className="text-zinc-400 hover:text-white transition-colors"
               href="/works"
+              className="text-zinc-400 hover:text-white transition-colors"
             >
               Works
             </Link>
