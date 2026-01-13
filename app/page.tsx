@@ -95,18 +95,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Classic Game Link */}
-        <Link
-          href="/game"
-          className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1 mt-8"
-        >
-          <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎮</span>
-              <span className="text-xl font-bold text-white">Classic RHYTHMIA</span>
+        {/* Action Links */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+          <Link
+            href="/game"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1"
+          >
+            <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎮</span>
+                <span className="text-xl font-bold text-white">Classic RHYTHMIA</span>
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+
+          <Link
+            href="/ideas"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 p-1"
+          >
+            <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💡</span>
+                <span className="text-xl font-bold text-white">Creative Game Ideas</span>
+              </div>
+            </div>
+          </Link>
+        </div>
 
         {/* Footer */}
         <div className="mt-12 text-center space-y-4">
