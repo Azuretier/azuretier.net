@@ -3,12 +3,15 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
-      <main className="flex flex-col items-center gap-12 px-8 py-16">
+      {/* Animated grid background */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(78,205,196,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(78,205,196,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [perspective:500px] [transform:rotateX(60deg)] animate-pulse opacity-20" />
+      
+      <main className="relative z-10 flex flex-col items-center gap-12 px-8 py-16">
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-6xl font-black bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
-            AZURETIA.NET
+          <h1 className="text-6xl font-black bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent animate-pulse">
+            RHYTHMIA NEXUS
           </h1>
           <p className="text-xl text-zinc-400">
             Multiplayer Rhythm Game Platform
@@ -16,12 +19,27 @@ export default function Home() {
         </div>
 
         {/* Main Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
           
+          {/* Solo Play Card */}
+          <Link
+            href="/solo"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-2 border-purple-500/20 p-8 transition-all hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20 hover:-translate-y-1"
+          >
+            <div className="relative z-10">
+              <div className="text-4xl mb-4">🎵</div>
+              <h2 className="text-2xl font-bold text-white mb-2">Solo Play</h2>
+              <p className="text-zinc-400">
+                Practice and master your rhythm skills
+              </p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
+
           {/* Host Card */}
-          <a
-            href="/app/RYTHMIA-NEXUS/host.html"
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-2 border-cyan-500/20 p-8 transition-all hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20"
+          <Link
+            href="/host"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-2 border-cyan-500/20 p-8 transition-all hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 hover:-translate-y-1"
           >
             <div className="relative z-10">
               <div className="text-4xl mb-4">🎮</div>
@@ -31,12 +49,12 @@ export default function Home() {
               </p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </a>
+          </Link>
 
-          {/* Player Card */}
-          <a
-            href="/app/RYTHMIA-NEXUS/player.html"
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500/10 to-pink-500/5 border-2 border-pink-500/20 p-8 transition-all hover:border-pink-500/50 hover:shadow-2xl hover:shadow-pink-500/20"
+          {/* Join Card */}
+          <Link
+            href="/join"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500/10 to-pink-500/5 border-2 border-pink-500/20 p-8 transition-all hover:border-pink-500/50 hover:shadow-2xl hover:shadow-pink-500/20 hover:-translate-y-1"
           >
             <div className="relative z-10">
               <div className="text-4xl mb-4">👥</div>
@@ -46,7 +64,7 @@ export default function Home() {
               </p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </a>
+          </Link>
         </div>
 
         {/* Features */}
@@ -77,7 +95,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Play Now Button */}
+        {/* Classic Game Link */}
         <Link
           href="/game"
           className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1 mt-8"
@@ -85,7 +103,7 @@ export default function Home() {
           <div className="relative z-10 rounded-xl bg-black px-8 py-4 transition-all group-hover:bg-transparent">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🎮</span>
-              <span className="text-xl font-bold text-white">Play RHYTHMIA Now!</span>
+              <span className="text-xl font-bold text-white">Classic RHYTHMIA</span>
             </div>
           </div>
         </Link>

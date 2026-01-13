@@ -16,20 +16,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
-  // Custom rewrites for multiplayer pages
-  async rewrites() {
-    return [
-      {
-        source: '/multiplayer/host',
-        destination: '/app/RYTHMIA-NEXUS/host.html',
-      },
-      {
-        source: '/multiplayer/player',
-        destination: '/app/RYTHMIA-NEXUS/player.html',
-      },
-    ];
-  },
 };
 
 export default nextConfig;
