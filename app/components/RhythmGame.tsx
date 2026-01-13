@@ -76,7 +76,7 @@ export default function RhythmGame() {
   const [judgmentText, setJudgmentText] = useState<string>('');
   const [judgmentColor, setJudgmentColor] = useState<string>('');
   const [nextNoteLane, setNextNoteLane] = useState<number | null>(null);
-  const [currentLane, setCurrentLane] = useState<number>(1); // Track current position (middle lanes)
+  const [currentLane, setCurrentLane] = useState<number>(1); // Track current position (starts at lane 1)
   
   const gameLoopRef = useRef<number | undefined>(undefined);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -378,8 +378,9 @@ export default function RhythmGame() {
         // Update next note indicator - find the next active note closest to hit zone
         const activeNotes = updated.filter(n => !n.hit && !n.missed && n.y < CONFIG.HIT_ZONE_Y);
         if (activeNotes.length > 0) {
+          // Find note closest to hit zone (smallest y value since notes move down)
           const closestNote = activeNotes.reduce((closest, note) => 
-            note.y > closest.y ? note : closest
+            note.y < closest.y ? note : closest
           );
           setNextNoteLane(closestNote.lane);
         } else {
@@ -473,9 +474,6 @@ export default function RhythmGame() {
           {CONFIG.LANES.map((lane) => {
             const isCurrentLane = lane === currentLane;
             const isNextNoteLane = lane === nextNoteLane;
-            const direction = nextNoteLane !== null && gameState.isPlaying 
-              ? (nextNoteLane > currentLane ? 'right' : nextNoteLane < currentLane ? 'left' : 'center')
-              : null;
             
             return (
               <div
