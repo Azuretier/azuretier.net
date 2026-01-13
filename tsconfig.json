@@ -4,7 +4,9 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": [
-      "ES2020"
+      "ES2020",
+      "dom",
+      "dom.iterable"
     ],
     "outDir": "./dist",
     "rootDir": "./",
