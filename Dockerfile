@@ -12,8 +12,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build Next.js app
-RUN npm run build
+# Build Next.js app using npx
+RUN npx next build
 
 # Production stage
 FROM node:20-alpine AS runner
