@@ -25,7 +25,11 @@ export function getAdminApp(): admin.app.App {
         credential: admin.credential.cert(serviceAccount),
       });
     } else {
-      adminApp = admin.apps[0];
+      adminApp = admin.apps[0] ?? undefined;
+    }
+
+    if (!adminApp) {
+      throw new Error('Failed to initialize Firebase Admin app');
     }
 
     return adminApp;
