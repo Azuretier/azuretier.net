@@ -98,3 +98,15 @@ interface GPUTexture {
 }
 
 interface GPUTextureView {}
+// Spark SDK types (for Discord community features)
+interface SparkSDK {
+  llm(prompt: string, model: string, json?: boolean): Promise<string>;
+  kv: {
+    get<T>(key: string): Promise<T | null>;
+    set<T>(key: string, value: T): Promise<void>;
+  };
+}
+
+interface Window {
+  spark?: SparkSDK;
+}
