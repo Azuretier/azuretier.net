@@ -13,7 +13,7 @@ export default function V1_0_1_UI() {
     { icon: <Twitter />, label: "X (Twitter)", url: "https://x.com/c2c546", color: "hover:text-blue-400" },
     { icon: <Youtube />, label: "YouTube", url: "https://www.youtube.com/@azuretya", color: "hover:text-red-500" },
     { icon: <FaDiscord />, label: "Discord", url: "https://discord.gg/TRFHTWCY4W", color: "hover:text-indigo-400" },
-    { icon: <Instagram />, label: "Instagram", url: "https://www.instagram.com/azuretya", color: "hover:text-pink-500" },
+    { icon: <Instagram />, label: "Instagram", url: "https://www.instagram.com/azuqun1", color: "hover:text-pink-500" },
     { icon: <Github />, label: "GitHub", url: "https://github.com/Azuretier", color: "hover:text-gray-300" },
   ];
 
