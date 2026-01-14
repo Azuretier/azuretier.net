@@ -4,9 +4,9 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import type { AppVersion } from './types';
-import { getStoredVersion, setStoredVersion } from './storage';
+import { setStoredVersion } from './storage';
 
 interface VersionContextType {
   currentVersion: AppVersion | null;
@@ -20,14 +20,8 @@ export function VersionProvider({ children }: { children: ReactNode }) {
   const [currentVersion, setCurrentVersion] = useState<AppVersion | null>(null);
   const [isVersionSelected, setIsVersionSelected] = useState(false);
 
-  useEffect(() => {
-    // Load version from localStorage on mount
-    const stored = getStoredVersion();
-    if (stored) {
-      setCurrentVersion(stored);
-      setIsVersionSelected(true);
-    }
-  }, []);
+  // Note: localStorage restoring is deprecated - version selector will always show
+  // We still save to localStorage for record keeping, but don't auto-restore on mount
 
   const setVersion = (version: AppVersion) => {
     setCurrentVersion(version);

@@ -1,5 +1,8 @@
 /**
  * Version storage utilities for persisting user's version selection
+ * 
+ * @deprecated The auto-restore feature is deprecated. Version selector will always show.
+ * localStorage is still used for record keeping but not for restoring user preference.
  */
 
 import type { AppVersion } from './types';
@@ -8,6 +11,7 @@ const VERSION_STORAGE_KEY = 'azuret_app_version';
 
 /**
  * Get the stored version from localStorage
+ * @deprecated Auto-restore is deprecated. This function is kept for reference only.
  */
 export function getStoredVersion(): AppVersion | null {
   if (typeof window === 'undefined') return null;
