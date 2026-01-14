@@ -7,6 +7,7 @@ Explaining current situation below since there are several pages.
 azuret.net/: Interactive homepage with UI version selection (Discord-like or Patreon-style)
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
+azuret.net/community: Discord community learning system with interactive rules and quizzes
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
 azuret.net/play: Multiplayer Score Attack game with real-time WebSocket gameplay
 ```
@@ -86,7 +87,27 @@ The homepage features a modern interactive experience with **user-selectable UI 
 - **Content Feed**: Recent posts with likes and engagement
 - **Social Links**: Quick access to all social media platforms
 
-### 2. Discord Rank Card System
+### 2. Discord Community Learning System (`/community`)
+
+An interactive educational platform for learning community rules and guidelines:
+
+- **📚 Interactive Lessons**: Step-by-step rule learning with examples
+- **🎮 Quizzes**: Test your knowledge with interactive quizzes
+- **📊 Progress Tracking**: Track completion and mastery of all rules
+- **🏆 Points System**: Earn points for completing lessons and passing quizzes
+- **📖 Quick Reference**: Search and browse all rules in one place
+- **💾 Local Storage**: Progress saved automatically in browser
+
+**Features:**
+- Tab-based navigation (Learn, Quiz, Progress, Reference)
+- Beautiful gradient UI with smooth animations
+- Real-time progress tracking
+- Quiz scoring with 70% passing threshold
+- Confetti celebration when all rules are mastered
+
+The community learning system was integrated from the [Azuretier/Discord](https://github.com/Azuretier/Discord) repository and adapted for Next.js.
+
+### 3. Discord Rank Card System
 
 Display real-time Discord rank cards for server members:
 
@@ -99,7 +120,7 @@ Display real-time Discord rank cards for server members:
 
 **Documentation**: See [RANK_CARD_SETUP.md](./RANK_CARD_SETUP.md) for setup instructions.
 
-### 3. Discord Role Selection (`/azure-supporter`)
+### 4. Discord Role Selection (`/azure-supporter`)
 
 The `/azure-supporter` page allows users to select EN or JP roles which are synced to your Discord server.
 
@@ -298,24 +319,61 @@ CMD ["npm", "run", "multiplayer"]
 
 **📖 Railway 24/7 Deployment Guide**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete Railway deployment instructions.
 
+### Discord Bot Integration
+
+The `/discord-bot` folder contains a standalone Discord bot that can be deployed separately from the web application.
+
+**Features:**
+- XP tracking and level system
+- Discord slash commands (/profile, /leaderboard, /rules, /roles)
+- Auto role assignment for new members
+- Integration with community learning system
+
+**Setup:**
+1. Navigate to the `discord-bot` folder
+2. Copy `.env.example` to `.env` and configure:
+   ```env
+   DISCORD_TOKEN=your_bot_token_here
+   DISCORD_CLIENT_ID=your_client_id_here
+   DISCORD_GUILD_ID=your_guild_id_here
+   WEBAPP_URL=https://azuret.me
+   WEBAPP_API_KEY=your-secure-api-key-here
+   ```
+3. Install dependencies: `npm install`
+4. Deploy commands: `npm run deploy-commands`
+5. Start bot: `npm start`
+
+**Documentation**: See `/discord-bot/QUICKSTART.md` for detailed setup instructions.
+
 ### Project Structure
 
 ```
 /src
   /app
+    /community         # Discord community learning system
     /play              # Multiplayer game page
+    /azure-supporter   # Discord role selection
     /api               # API routes
   /components
+    /discord-community # Community learning UI components
     /game              # Game UI components (legacy)
   /hooks
     /useMultiplayer.ts # WebSocket client hook
+    /useLocalStorage.ts # Local storage state management
     /useGameSocket.ts  # Socket.IO client hook (legacy)
   /lib
+    /discord-community # Community learning logic & rules
     /multiplayer       # Multiplayer room management
     /game              # Game logic (legacy)
   /types
+    /community.ts      # Community learning types
     /multiplayer.ts    # Multiplayer protocol types
     /game.ts           # Game types (legacy)
+/discord-bot           # Standalone Discord bot
+  /src
+    /commands          # Slash commands
+    /events            # Discord event handlers
+    /services          # XP, KV, and role services
 /multiplayer-server.ts # Standalone WebSocket server
 /server.ts             # Custom Next.js + Socket.IO server
 ```

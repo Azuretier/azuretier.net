@@ -1,7 +1,5 @@
 import { ComponentProps } from "react"
-import { ChevronLeft } from "lucide-react"
-import { ChevronRight } from "lucide-react"
-import MoreHorizontalIcon from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreHorizontal as MoreHorizontalIcon } from "lucide-react"
 
 import { cn } from "@/lib/discord-community/utils"
 import { Button, buttonVariants } from "@/components/discord-community/ui/button"
