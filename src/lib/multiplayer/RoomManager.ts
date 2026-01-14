@@ -7,10 +7,13 @@ import {
 
 interface Room {
   code: string;
+  name: string;
   hostId: string;
   players: Map<string, MultiplayerPlayer>;
   phase: RoomPhase;
   maxPlayers: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export class MultiplayerRoomManager {
@@ -56,15 +59,18 @@ export class MultiplayerRoomManager {
    */
   createRoom(
     playerId: string,
-    playerName: string
+    playerName: string,
+    roomName?: string
   ): { roomCode: string; player: MultiplayerPlayer } {
     // Clean player name
     const cleanName = (playerName || 'Player').trim().slice(0, 20);
+    const cleanRoomName = (roomName || 'Game Room').trim().slice(0, 50);
 
     // Remove player from any existing room
     this.removePlayerFromRoom(playerId);
 
     const roomCode = this.generateRoomCode();
+    const now = Date.now();
     const player: MultiplayerPlayer = {
       id: playerId,
       name: cleanName,
@@ -75,10 +81,13 @@ export class MultiplayerRoomManager {
 
     const room: Room = {
       code: roomCode,
+      name: cleanRoomName,
       hostId: playerId,
       players: new Map([[playerId, player]]),
       phase: RoomPhase.LOBBY,
       maxPlayers: MULTIPLAYER_CONFIG.DEFAULT_MAX_PLAYERS,
+      createdAt: now,
+      updatedAt: now,
     };
 
     this.rooms.set(roomCode, room);
@@ -136,6 +145,9 @@ export class MultiplayerRoomManager {
     room.players.set(playerId, player);
     this.playerToRoomCode.set(playerId, roomCode);
 
+    // Update timestamp
+    room.updatedAt = Date.now();
+
     return { success: true, player, room };
   }
 
@@ -162,6 +174,7 @@ export class MultiplayerRoomManager {
     }
 
     player.isReady = ready;
+    room.updatedAt = Date.now();
     return { success: true, room };
   }
 
@@ -198,6 +211,7 @@ export class MultiplayerRoomManager {
     }
 
     room.phase = RoomPhase.PLAYING;
+    room.updatedAt = Date.now();
     return { success: true, room };
   }
 
@@ -277,10 +291,13 @@ export class MultiplayerRoomManager {
 
     return {
       roomCode: room.code,
+      name: room.name,
       hostId: room.hostId,
       players: Array.from(room.players.values()),
       phase: room.phase,
       maxPlayers: room.maxPlayers,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
     };
   }
 
@@ -304,5 +321,12 @@ export class MultiplayerRoomManager {
       return [];
     }
     return Array.from(room.players.keys());
+  }
+
+  /**
+   * Get all rooms for listing
+   */
+  getAllRooms(): Room[] {
+    return Array.from(this.rooms.values());
   }
 }

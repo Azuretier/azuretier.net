@@ -1,11 +1,15 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import type { IncomingMessage } from 'http';
+import { initializeApp, cert, ServiceAccount } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
+import { FirestoreRoomService } from './src/lib/multiplayer/FirestoreRoomService';
 import type {
   ClientMessage,
   ServerMessage,
   ErrorMessage,
+  RoomListItem,
 } from './src/types/multiplayer';
 
 // Environment configuration
@@ -14,6 +18,28 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:3000', 'http://localhost:3001'];
+const CLEANUP_INTERVAL = 300000; // 5 minutes
+
+// Initialize Firebase Admin (optional - only if credentials provided)
+let firestoreService: FirestoreRoomService | null = null;
+
+try {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (serviceAccountJson) {
+    const serviceAccount = JSON.parse(serviceAccountJson) as ServiceAccount;
+    initializeApp({
+      credential: cert(serviceAccount),
+    });
+    const firestore = getFirestore();
+    firestoreService = new FirestoreRoomService(firestore);
+    console.log('Firestore integration enabled');
+  } else {
+    console.log('Firestore integration disabled (no credentials provided)');
+  }
+} catch (error) {
+  console.warn('Failed to initialize Firestore:', error);
+  console.log('Running without Firestore persistence');
+}
 
 // Initialize room manager
 const roomManager = new MultiplayerRoomManager();
@@ -63,6 +89,35 @@ function sendError(playerId: string, errorMessage: string, code?: string): void 
 }
 
 /**
+ * Sync room to Firestore
+ */
+async function syncRoomToFirestore(roomCode: string): Promise<void> {
+  if (!firestoreService) return;
+  
+  try {
+    const roomState = roomManager.getRoomState(roomCode);
+    if (roomState) {
+      await firestoreService.saveRoom(roomState);
+    }
+  } catch (error) {
+    console.error('Error syncing room to Firestore:', error);
+  }
+}
+
+/**
+ * Delete room from Firestore
+ */
+async function deleteRoomFromFirestore(roomCode: string): Promise<void> {
+  if (!firestoreService) return;
+  
+  try {
+    await firestoreService.deleteRoom(roomCode);
+  } catch (error) {
+    console.error('Error deleting room from Firestore:', error);
+  }
+}
+
+/**
  * Validate message structure
  */
 function isValidMessage(data: any): data is ClientMessage {
@@ -91,8 +146,37 @@ function handleMessage(playerId: string, data: string): void {
 
   try {
     switch (message.type) {
+      case 'list_rooms': {
+        const rooms = roomManager.getAllRooms();
+        const roomList: RoomListItem[] = rooms
+          .filter(room => room.phase === 'lobby') // Only show lobby rooms
+          .map(room => {
+            const hostPlayer = Array.from(room.players.values()).find(p => p.isHost);
+            return {
+              roomCode: room.code,
+              name: room.name,
+              hostName: hostPlayer?.name || 'Unknown',
+              playerCount: room.players.size,
+              maxPlayers: room.maxPlayers,
+              status: 'open' as const,
+              createdAt: room.createdAt,
+            };
+          })
+          .sort((a, b) => b.createdAt - a.createdAt);
+
+        sendToPlayer(playerId, {
+          type: 'room_list',
+          rooms: roomList,
+        });
+        break;
+      }
+
       case 'create_room': {
-        const { roomCode, player } = roomManager.createRoom(playerId, message.playerName);
+        const { roomCode, player } = roomManager.createRoom(
+          playerId,
+          message.playerName,
+          message.roomName
+        );
         
         sendToPlayer(playerId, {
           type: 'room_created',
@@ -106,6 +190,9 @@ function handleMessage(playerId: string, data: string): void {
             type: 'room_state',
             roomState,
           });
+          
+          // Sync to Firestore
+          syncRoomToFirestore(roomCode);
         }
 
         console.log(`Room ${roomCode} created by ${player.name}`);
@@ -153,6 +240,9 @@ function handleMessage(playerId: string, data: string): void {
           roomState,
         });
 
+        // Sync to Firestore
+        syncRoomToFirestore(message.roomCode);
+
         console.log(`${result.player!.name} joined room ${message.roomCode}`);
         break;
       }
@@ -177,6 +267,13 @@ function handleMessage(playerId: string, data: string): void {
           }
 
           console.log(`Player ${playerId} left room ${result.roomCode}`);
+          
+          // Delete from Firestore if room is empty
+          if (!result.room) {
+            deleteRoomFromFirestore(result.roomCode);
+          } else {
+            syncRoomToFirestore(result.roomCode);
+          }
         }
         break;
       }
@@ -204,6 +301,9 @@ function handleMessage(playerId: string, data: string): void {
               type: 'room_state',
               roomState,
             });
+            
+            // Sync to Firestore
+            syncRoomToFirestore(roomCode);
           }
         }
         break;
@@ -230,6 +330,9 @@ function handleMessage(playerId: string, data: string): void {
               type: 'room_state',
               roomState,
             });
+            
+            // Sync to Firestore
+            syncRoomToFirestore(roomCode);
           }
 
           console.log(`Game started in room ${roomCode}`);
@@ -283,6 +386,9 @@ function handleDisconnect(playerId: string): void {
           roomState,
         });
       }
+    } else {
+      // Room was deleted, remove from Firestore
+      deleteRoomFromFirestore(result.roomCode);
     }
   }
 
@@ -360,7 +466,23 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
 server.listen(PORT, HOST, () => {
   console.log(`WebSocket multiplayer server running on ${HOST}:${PORT}`);
   console.log(`Allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
+  console.log(`Firestore: ${firestoreService ? 'enabled' : 'disabled'}`);
 });
+
+// Periodic cleanup task for stale Firestore rooms
+if (firestoreService) {
+  setInterval(async () => {
+    try {
+      const count = await firestoreService!.cleanupStaleRooms();
+      if (count > 0) {
+        console.log(`Cleanup: removed ${count} stale rooms from Firestore`);
+      }
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
+  }, CLEANUP_INTERVAL);
+  console.log(`Cleanup task scheduled every ${CLEANUP_INTERVAL / 1000}s`);
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

@@ -27,12 +27,16 @@ export interface RoomStateData {
   players: MultiplayerPlayer[];
   phase: RoomPhase;
   maxPlayers: number;
+  name?: string; // Optional display name for the room
+  createdAt?: number; // Timestamp when room was created
+  updatedAt?: number; // Timestamp when room was last updated
 }
 
 // Client to Server Messages
 export interface CreateRoomMessage {
   type: 'create_room';
   playerName: string;
+  roomName?: string; // Optional room name for display
 }
 
 export interface JoinRoomMessage {
@@ -59,13 +63,18 @@ export interface RelayMessage {
   payload: any; // Intentionally generic - games can send custom data structures
 }
 
+export interface ListRoomsMessage {
+  type: 'list_rooms';
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
   | LeaveRoomMessage
   | SetReadyMessage
   | StartGameMessage
-  | RelayMessage;
+  | RelayMessage
+  | ListRoomsMessage;
 
 // Server to Client Messages
 export interface RoomCreatedMessage {
@@ -123,6 +132,21 @@ export interface ConnectedMessage {
   playerId: string;
 }
 
+export interface RoomListMessage {
+  type: 'room_list';
+  rooms: RoomListItem[];
+}
+
+export interface RoomListItem {
+  roomCode: string;
+  name: string;
+  hostName: string;
+  playerCount: number;
+  maxPlayers: number;
+  status: 'open' | 'in_game';
+  createdAt: number;
+}
+
 export type ServerMessage =
   | RoomCreatedMessage
   | JoinedRoomMessage
@@ -133,7 +157,8 @@ export type ServerMessage =
   | GameStartedMessage
   | RelayedMessage
   | ErrorMessage
-  | ConnectedMessage;
+  | ConnectedMessage
+  | RoomListMessage;
 
 // Configuration
 export const MULTIPLAYER_CONFIG = {

@@ -7,6 +7,7 @@ import {
   MultiplayerPlayer,
   RoomPhase,
   RoomStateData,
+  RoomListItem,
 } from '@/types/multiplayer';
 
 export interface UseMultiplayerReturn {
@@ -14,15 +15,17 @@ export interface UseMultiplayerReturn {
   playerId: string | null;
   roomCode: string | null;
   roomState: RoomStateData | null;
+  roomList: RoomListItem[];
   error: string | null;
   
   // Actions
-  createRoom: (playerName: string) => void;
+  createRoom: (playerName: string, roomName?: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
   leaveRoom: () => void;
   setReady: (ready: boolean) => void;
   startGame: () => void;
   sendRelay: (payload: any) => void;
+  listRooms: () => void;
   
   // Computed
   currentPlayer: MultiplayerPlayer | null;
@@ -35,6 +38,7 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [roomState, setRoomState] = useState<RoomStateData | null>(null);
+  const [roomList, setRoomList] = useState<RoomListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
@@ -116,6 +120,11 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
           setTimeout(() => setError(null), 5000);
           break;
 
+        case 'room_list':
+          setRoomList(message.rooms);
+          console.log('Room list updated:', message.rooms.length, 'rooms');
+          break;
+
         default:
           console.warn('Unknown message type:', (message as any).type);
       }
@@ -193,10 +202,11 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
   /**
    * Create a new room
    */
-  const createRoom = useCallback((playerName: string) => {
+  const createRoom = useCallback((playerName: string, roomName?: string) => {
     sendMessage({
       type: 'create_room',
       playerName,
+      roomName,
     });
   }, [sendMessage]);
 
@@ -252,6 +262,15 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
     });
   }, [sendMessage]);
 
+  /**
+   * Request the current room list from the server
+   */
+  const listRooms = useCallback(() => {
+    sendMessage({
+      type: 'list_rooms',
+    });
+  }, [sendMessage]);
+
   // Computed values
   const currentPlayer = roomState?.players.find(p => p.id === playerId) || null;
   const isHost = currentPlayer?.isHost || false;
@@ -267,6 +286,7 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
     playerId,
     roomCode,
     roomState,
+    roomList,
     error,
     createRoom,
     joinRoom,
@@ -274,6 +294,7 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
     setReady,
     startGame,
     sendRelay,
+    listRooms,
     currentPlayer,
     isHost,
     canStartGame,
