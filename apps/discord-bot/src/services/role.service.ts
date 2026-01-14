@@ -55,7 +55,7 @@ export const AVAILABLE_ROLES: ServerRole[] = [
   {
     id: 'thinker',
     name: 'Thinker',
-    description: 'Intelli people',
+    description: 'Intelligent people',
     color: 'oklch(0.60 0.18 240)',
     icon: '🧠',
     category: 'interest'
