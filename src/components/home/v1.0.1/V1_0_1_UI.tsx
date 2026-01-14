@@ -62,7 +62,7 @@ export default function V1_0_1_UI() {
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 p-1">
                     <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/profile_image/Azur.png"
+                        src="/profile_image/Switch_Edition.png"
                         alt="Azur"
                         className="w-full h-full object-cover"
                       />
