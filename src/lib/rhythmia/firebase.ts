@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 // Check if all required config values are present
-const isConfigured = Object.values(firebaseConfig).every(val => val && val !== 'undefined');
+const isConfigured = Object.values(firebaseConfig).every(val => val && typeof val !== 'undefined' && val !== 'undefined');
 
 // Singleton pattern to prevent re-initialization in Next.js dev mode
 let app: FirebaseApp | null = null;

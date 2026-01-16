@@ -7,10 +7,11 @@ import {
   query, 
   where, 
   onSnapshot, 
-  updateDoc, 
-  doc, 
+  updateDoc,
+  doc,
   deleteDoc,
   serverTimestamp,
+  getDocs,
   Timestamp
 } from 'firebase/firestore';
 import { db } from '@/lib/rhythmia/firebase';
@@ -65,7 +66,6 @@ export default function MultiplayerGame() {
       }
       setConnectionStatus('connecting');
       // Test Firebase connection with a simple query
-      const { getDocs } = await import('firebase/firestore');
       const testQuery = query(collection(db, 'rhythmia_rooms'));
       await getDocs(testQuery);
       setConnectionStatus('connected');
