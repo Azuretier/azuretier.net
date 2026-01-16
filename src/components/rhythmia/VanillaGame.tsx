@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './VanillaGame.module.css';
+import styles from './Rhythmia.module.css';
 
 // ===== Types =====
 interface PieceCell {
@@ -22,11 +22,11 @@ interface World {
 const W = 10;
 const H = 18;
 
-const WORLDS: World[] = [
+const WORLDS:  World[] = [
   { name: '🎀 メロディア', bpm: 100, colors: ['#FF6B9D', '#FF8FAB', '#FFB6C1', '#C44569', '#E8668B', '#D4587D', '#B84A6F'] },
   { name: '🌊 ハーモニア', bpm: 110, colors: ['#4ECDC4', '#45B7AA', '#3DA69B', '#35958C', '#2D847D', '#26736E', '#1A535C'] },
   { name:  '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
-  { name: '🔥 フォルティッシモ', bpm: 140, colors: ['#FF6B6B', '#FF5252', '#FF3838', '#FF1F1F', '#E61717', '#CC0F0F', '#B30707'] },
+  { name:  '🔥 フォルティッシモ', bpm: 140, colors: ['#FF6B6B', '#FF5252', '#FF3838', '#FF1F1F', '#E61717', '#CC0F0F', '#B30707'] },
   { name: '✨ 静寂の間', bpm: 160, colors: ['#A29BFE', '#9B8EFD', '#9381FC', '#8B74FB', '#8367FA', '#7B5AF9', '#6C5CE7'] },
 ];
 
@@ -41,7 +41,7 @@ const SHAPES = [
 ];
 
 // ===== Component =====
-export const Rhythmia: React.FC = () => {
+export const Rhythmia: React. FC = () => {
   // Game state
   const [board, setBoard] = useState<(PieceCell | null)[][]>([]);
   const [piece, setPiece] = useState<Piece | null>(null);
@@ -67,9 +67,10 @@ export const Rhythmia: React.FC = () => {
 
   // Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const lastBeatRef = useRef(Date.now());
+  const beatStartTimeRef = useRef(0); // Track when the beat cycle started
   const dropTimerRef = useRef<number | null>(null);
   const beatTimerRef = useRef<number | null>(null);
+  const beatAnimFrameRef = useRef<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const cellSizeRef = useRef(20);
   const pieceRef = useRef(piece);
@@ -86,8 +87,8 @@ export const Rhythmia: React.FC = () => {
 
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
-  useEffect(() => { piecePosRef.current = piecePos; }, [piecePos]);
-  useEffect(() => { boardStateRef. current = board; }, [board]);
+  useEffect(() => { piecePosRef. current = piecePos; }, [piecePos]);
+  useEffect(() => { boardStateRef.current = board; }, [board]);
   useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
   useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { scoreRef.current = score; }, [score]);
@@ -100,11 +101,11 @@ export const Rhythmia: React.FC = () => {
   // ===== Audio =====
   const initAudio = useCallback(() => {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      audioCtxRef.current = new (window. AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
   }, []);
 
-  const playTone = useCallback((freq:  number, dur = 0.1, type: OscillatorType = 'sine') => {
+  const playTone = useCallback((freq: number, dur = 0.1, type:  OscillatorType = 'sine') => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     const osc = ctx.createOscillator();
@@ -125,7 +126,7 @@ export const Rhythmia: React.FC = () => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency. setValueAtTime(150, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
     gain.gain.setValueAtTime(0.5, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
@@ -151,7 +152,7 @@ export const Rhythmia: React.FC = () => {
       p.style.cssText = `
         left: ${x}px; top: ${y}px;
         width: ${size}px; height: ${size}px;
-        background:  ${color};
+        background: ${color};
         box-shadow: 0 0 10px ${color};
         transition: all 0.5s ease-out;
       `;
@@ -172,10 +173,10 @@ export const Rhythmia: React.FC = () => {
     return { shape, color };
   }, []);
 
-  const collision = useCallback((p: Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
+  const collision = useCallback((p:  Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
     return p.shape.some((row, py) =>
       row.some((val, px) => {
-        if (!val) return false;
+        if (! val) return false;
         const nx = x + px, ny = y + py;
         return nx < 0 || nx >= W || ny >= H || (ny >= 0 && boardState[ny] && boardState[ny][nx]);
       })
@@ -185,7 +186,7 @@ export const Rhythmia: React.FC = () => {
   const rotate = useCallback((p: Piece): Piece => {
     return {
       ...p,
-      shape: p.shape[0].map((_, i) => p.shape.map(row => row[i]).reverse()),
+      shape: p.shape[0].map((_, i) => p.shape. map(row => row[i]).reverse()),
     };
   }, []);
 
@@ -213,7 +214,7 @@ export const Rhythmia: React.FC = () => {
         setEnemyHP(100);
       }, 2000);
     } else {
-      showJudgment('WORLD CLEAR!', '#00FF00');
+      showJudgment('WORLD CLEAR! ', '#00FF00');
       setWorldIdx(newWorldIdx);
       setEnemyHP(100);
     }
@@ -224,11 +225,12 @@ export const Rhythmia: React.FC = () => {
     setShowGameOver(true);
     if (dropTimerRef.current) clearInterval(dropTimerRef.current);
     if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+    if (beatAnimFrameRef. current) cancelAnimationFrame(beatAnimFrameRef.current);
     playTone(131, 0.5, 'sawtooth');
   }, [playTone]);
 
   const lock = useCallback(() => {
-    const currentPiece = pieceRef.current;
+    const currentPiece = pieceRef. current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
     const currentBeatPhase = beatPhaseRef. current;
@@ -244,7 +246,7 @@ export const Rhythmia: React.FC = () => {
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
       comboRef.current = newCombo;
-      showJudgment('PERFECT! ', '#FFD700');
+      showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
       if (boardRef.current) {
         const rect = boardRef.current.getBoundingClientRect();
@@ -301,7 +303,7 @@ export const Rhythmia: React.FC = () => {
         linesRef.current = newLines;
 
         // Enemy damage
-        const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
+        const newEnemyHP = Math.max(0, enemyHPRef.current - cleared * 8 * mult);
         setEnemyHP(newEnemyHP);
         enemyHPRef.current = newEnemyHP;
 
@@ -345,14 +347,14 @@ export const Rhythmia: React.FC = () => {
   const move = useCallback((dx: number, dy: number) => {
     if (gameOverRef.current || !pieceRef.current) return;
 
-    const currentPiece = pieceRef.current;
+    const currentPiece = pieceRef. current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
     if (! collision(currentPiece, currentPos.x + dx, currentPos. y + dy, currentBoard)) {
       const newPos = { x: currentPos.x + dx, y: currentPos.y + dy };
       setPiecePos(newPos);
-      piecePosRef.current = newPos;
+      piecePosRef. current = newPos;
       if (dx !== 0) playTone(392, 0.05, 'square');
     } else if (dy > 0) {
       lock();
@@ -367,7 +369,7 @@ export const Rhythmia: React.FC = () => {
     const currentBoard = boardStateRef.current;
 
     const rotated = rotate(currentPiece);
-    if (! collision(rotated, currentPos. x, currentPos.y, currentBoard)) {
+    if (! collision(rotated, currentPos.x, currentPos.y, currentBoard)) {
       setPiece(rotated);
       pieceRef.current = rotated;
       playTone(523, 0.08);
@@ -425,14 +427,15 @@ export const Rhythmia: React.FC = () => {
     setGameStarted(true);
     setClearingRows([]);
 
-    lastBeatRef.current = Date.now();
+    // Initialize beat timing - use performance.now() for more accurate timing
+    beatStartTimeRef.current = performance.now();
   }, [initAudio, randomPiece]);
 
   // ===== Effects =====
 
   // Drop timer
   useEffect(() => {
-    if (! gameStarted || gameOver) return;
+    if (!gameStarted || gameOver) return;
 
     dropTimerRef.current = window.setInterval(() => {
       if (! gameOverRef.current) {
@@ -445,45 +448,62 @@ export const Rhythmia: React.FC = () => {
     };
   }, [gameStarted, gameOver, move]);
 
-  // Beat timer
+  // Beat timer and phase animation - combined for synchronization
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
     const world = WORLDS[worldIdx];
     const interval = 60000 / world.bpm;
+    
+    // Reset beat start time when world changes
+    beatStartTimeRef. current = performance.now();
 
+    // Continuous beat phase update using requestAnimationFrame
+    const updateBeatPhase = () => {
+      if (gameOverRef.current) return;
+
+      const now = performance.now();
+      const elapsed = now - beatStartTimeRef. current;
+      const phase = (elapsed % interval) / interval;
+      
+      setBeatPhase(phase);
+      beatPhaseRef.current = phase;
+
+      // Check if we've crossed the beat threshold (phase wrapped around)
+      const prevPhase = beatPhaseRef.current;
+      if (phase < 0.1 && prevPhase > 0.9) {
+        // Beat just occurred
+        setBoardBeat(true);
+        playDrum();
+        setTimeout(() => setBoardBeat(false), 100);
+      }
+
+      beatAnimFrameRef.current = requestAnimationFrame(updateBeatPhase);
+    };
+
+    // Start the animation loop
+    beatAnimFrameRef.current = requestAnimationFrame(updateBeatPhase);
+
+    // Use setInterval for reliable beat triggers (audio timing)
+    let lastBeatIndex = 0;
     beatTimerRef.current = window.setInterval(() => {
-      lastBeatRef.current = Date. now();
-      setBoardBeat(true);
-      playDrum();
-      setTimeout(() => setBoardBeat(false), 100);
-    }, interval);
+      const now = performance.now();
+      const elapsed = now - beatStartTimeRef.current;
+      const currentBeatIndex = Math.floor(elapsed / interval);
+      
+      if (currentBeatIndex > lastBeatIndex) {
+        lastBeatIndex = currentBeatIndex;
+        setBoardBeat(true);
+        playDrum();
+        setTimeout(() => setBoardBeat(false), 100);
+      }
+    }, 16); // Check frequently for beat timing
 
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+      if (beatAnimFrameRef. current) cancelAnimationFrame(beatAnimFrameRef.current);
     };
   }, [gameStarted, gameOver, worldIdx, playDrum]);
-
-  // Beat phase animation
-  useEffect(() => {
-    if (!gameStarted || gameOver) return;
-
-    let animFrame: number;
-    const updateBeat = () => {
-      if (!gameOverRef.current) {
-        const world = WORLDS[worldIdxRef.current];
-        const interval = 60000 / world.bpm;
-        const elapsed = Date.now() - lastBeatRef.current;
-        const phase = (elapsed % interval) / interval;
-        setBeatPhase(phase);
-        beatPhaseRef.current = phase;
-        animFrame = requestAnimationFrame(updateBeat);
-      }
-    };
-    animFrame = requestAnimationFrame(updateBeat);
-
-    return () => cancelAnimationFrame(animFrame);
-  }, [gameStarted, gameOver]);
 
   // Keyboard controls
   useEffect(() => {
@@ -558,7 +578,7 @@ export const Rhythmia: React.FC = () => {
   return (
     <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
       {/* Title Screen */}
-      {! gameStarted && (
+      {!gameStarted && (
         <div className={styles.titleScreen}>
           <h1>RHYTHMIA</h1>
           <p>リズムに乗ってブロックを積め！</p>
@@ -680,7 +700,7 @@ export const Rhythmia: React.FC = () => {
 
       {/* Game Over */}
       {showGameOver && (
-        <div className={`${styles.gameover} ${styles.show}`}>
+        <div className={`${styles.gameover} ${styles. show}`}>
           <h2>GAME OVER</h2>
           <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
           <button className={styles.restartBtn} onClick={startGame}>もう一度</button>
