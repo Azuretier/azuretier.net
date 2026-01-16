@@ -475,7 +475,8 @@ export const Rhythmia: React.FC = () => {
         const world = WORLDS[worldIdxRef.current];
         const interval = 60000 / world.bpm;
         const elapsed = Date.now() - lastBeatRef.current;
-        const phase = (elapsed % interval) / interval;
+        // Calculate phase as progress within current beat (0 to 1)
+        const phase = Math.min(elapsed / interval, 1);
         setBeatPhase(phase);
         beatPhaseRef.current = phase;
         animFrame = requestAnimationFrame(updateBeat);
