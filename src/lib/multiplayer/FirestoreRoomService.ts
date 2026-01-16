@@ -4,7 +4,7 @@
  */
 
 import { Firestore } from 'firebase-admin/firestore';
-import { RoomStateData, MultiplayerPlayer, RoomPhase } from '@/types/multiplayer';
+import { RoomState, Player } from '@/types/multiplayer';
 
 export interface FirestoreRoomDocument {
   name: string;
@@ -34,30 +34,30 @@ export class FirestoreRoomService {
   /**
    * Save or update a room in Firestore
    */
-  async saveRoom(roomState: RoomStateData): Promise<void> {
+  async saveRoom(roomState: RoomState & { createdAt?: number; maxPlayers?: number }): Promise<void> {
     const now = Date.now();
     const doc: FirestoreRoomDocument = {
-      name: roomState.name || `Room ${roomState.roomCode}`,
-      code: roomState.roomCode,
+      name: roomState.name || `Room ${roomState.code}`,
+      code: roomState.code,
       createdAt: roomState.createdAt || now,
       updatedAt: now,
-      status: roomState.phase === RoomPhase.PLAYING ? 'in_game' : 'open',
-      maxPlayers: roomState.maxPlayers,
+      status: roomState.status === 'playing' ? 'in_game' : 'open',
+      maxPlayers: roomState.maxPlayers || 8,
       hostId: roomState.hostId,
       players: roomState.players.map((p) => ({
         id: p.id,
         name: p.name,
-        isHost: p.isHost,
+        isHost: p.id === roomState.hostId,
         joinedAt: now,
       })),
     };
 
     await this.db
       .collection(this.roomsCollection)
-      .doc(roomState.roomCode)
+      .doc(roomState.code)
       .set(doc, { merge: true });
 
-    console.log(`Room ${roomState.roomCode} saved to Firestore`);
+    console.log(`Room ${roomState.code} saved to Firestore`);
   }
 
   /**
