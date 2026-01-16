@@ -295,6 +295,9 @@ export const Rhythmia: React.FC = () => {
     if (cleared > 0) {
       // Complete the remaining board by adding empty rows at the top
       boardForCollisionCheck = completeBoard(remainingBoard);
+      
+      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
+      boardStateRef.current = boardForCollisionCheck;
 
       setClearingRows(rowsToClear);
       setBoard(newBoard);
