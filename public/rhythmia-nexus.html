@@ -3397,6 +3397,109 @@
 
     <div class="error-toast" id="errorToast"></div>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration - use environment variables in production
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo-Rv5pYYLCKHZH_aZH_n6rYJbHzvDxfA",
+            authDomain: "azuret-me.firebaseapp.com",
+            projectId: "azuret-me",
+            storageBucket: "azuret-me.firebasestorage.app",
+            messagingSenderId: "1058234893661",
+            appId: "1:1058234893661:web:77e7ecc3d0cac1b8d7e7b7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Make auth and db available globally
+        window.firebaseAuth = auth;
+        window.firestoreDB = db;
+        window.firebaseInitialized = false;
+
+        // Anonymous authentication on load
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('[FIREBASE] Authenticated as:', user.uid);
+                window.firebaseUser = user;
+                window.firebaseInitialized = true;
+                
+                // Trigger connection if needed
+                if (typeof window.onFirebaseReady === 'function') {
+                    window.onFirebaseReady();
+                }
+            } else {
+                console.log('[FIREBASE] Signing in anonymously...');
+                signInAnonymously(auth).catch((error) => {
+                    console.error('[FIREBASE] Auth error:', error);
+                });
+            }
+        });
+
+        // Expose Firestore functions globally
+        window.getFirestoreRooms = async function() {
+            try {
+                const roomsRef = collection(db, 'rhythmia_rooms');
+                const q = query(
+                    roomsRef,
+                    where('status', '==', 'open'),
+                    orderBy('createdAt', 'desc'),
+                    limit(50)
+                );
+                const snapshot = await getDocs(q);
+                const rooms = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    rooms.push({
+                        code: data.code,
+                        name: data.name,
+                        hostName: data.players.find(p => p.isHost)?.name || 'Unknown',
+                        playerCount: data.players.length
+                    });
+                });
+                return rooms;
+            } catch (error) {
+                console.error('[FIRESTORE] Error getting rooms:', error);
+                return [];
+            }
+        };
+
+        // Subscribe to Firestore room updates
+        window.subscribeToRooms = function(callback) {
+            const roomsRef = collection(db, 'rhythmia_rooms');
+            const q = query(
+                roomsRef,
+                where('status', '==', 'open'),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            return onSnapshot(q, (snapshot) => {
+                const rooms = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    rooms.push({
+                        code: data.code,
+                        name: data.name,
+                        hostName: data.players.find(p => p.isHost)?.name || 'Unknown',
+                        playerCount: data.players.length
+                    });
+                });
+                callback(rooms);
+            }, (error) => {
+                console.error('[FIRESTORE] Subscription error:', error);
+            });
+        };
+
+        console.log('[FIREBASE] Initialization complete');
+    </script>
+
     <script>
         const W = 10, H = 20;
         const COLORS = ['#FF6B9D','#4ECDC4','#FFE66D','#A29BFE','#FF6B6B','#6C5CE7','#00D9FF'];
@@ -3855,8 +3958,23 @@
             const savedName = localStorage.getItem('rhythmia_player_name') || '';
             document.getElementById('playerNameInput').value = savedName;
             
+            // Wait for Firebase to initialize if needed
+            if (!window.firebaseInitialized) {
+                console.log('[FIREBASE] Waiting for initialization...');
+                showInfo('認証中...');
+                await new Promise((resolve) => {
+                    window.onFirebaseReady = () => {
+                        console.log('[FIREBASE] Ready!');
+                        resolve();
+                    };
+                    // Timeout after 5 seconds
+                    setTimeout(resolve, 5000);
+                });
+            }
+            
             try {
                 await connectWebSocket();
+                console.log('[INIT] Firebase and WebSocket connected');
             } catch (e) {
                 showError('サーバーに接続できません。URLを確認してください。');
             }
@@ -3913,12 +4031,25 @@
             document.getElementById('publicToggle').classList.toggle('active', isPublicRoom);
         }
 
-        function refreshRoomList() {
+        async function refreshRoomList() {
             const listEl = document.getElementById('roomList');
             listEl.innerHTML = '<div class="room-list-empty">ルームを検索中...</div>';
             
-            // Request room list from server
-            sendMessage({ type: 'get_rooms' });
+            // Try to get rooms from Firestore first, fallback to WebSocket
+            try {
+                if (window.firebaseInitialized && window.getFirestoreRooms) {
+                    const rooms = await window.getFirestoreRooms();
+                    renderRoomList(rooms);
+                    console.log('[FIRESTORE] Loaded', rooms.length, 'rooms');
+                } else {
+                    // Fallback to WebSocket
+                    sendMessage({ type: 'get_rooms' });
+                }
+            } catch (error) {
+                console.error('[ROOM LIST] Error:', error);
+                // Fallback to WebSocket
+                sendMessage({ type: 'get_rooms' });
+            }
         }
 
         function renderRoomList(rooms) {
