@@ -67,6 +67,7 @@ export default function MultiplayerGame() {
         playerIdRef.current = user.uid;
         setIsAuthenticated(true);
       } else {
+        playerIdRef.current = '';
         setIsAuthenticated(false);
       }
     });
