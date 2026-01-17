@@ -129,7 +129,7 @@ export default function WebGPUStage() {
             
             // Animated grid with perspective
             let gridScale = 20.0;
-            let gridCoord = coord * gridScale;
+            var gridCoord = coord * gridScale;
             gridCoord.y += time * 2.0; // Move grid
             
             let grid = fract(gridCoord);
