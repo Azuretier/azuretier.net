@@ -315,7 +315,7 @@ fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
   col = mix(col, cloudCol, clouds * 0.3);
   
   // Vignette
-  let vignette = 1.0 - length(p * 0.4);
+  var vignette = 1.0 - length(p * 0.4);
   vignette = smoothstep(0.4, 1.0, vignette);
   col = col * (vignette * 0.5 + 0.5);
   
