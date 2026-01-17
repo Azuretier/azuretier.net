@@ -209,10 +209,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
             setPendingGarbage(prev => prev + (payload.count || 0));
           } else if (payload.type === 'game_over') {
             // Opponent lost - we win!
+            // Call handleGameEnd directly to avoid code duplication
+            // Note: handleGameEnd will be defined later, so we'll handle inline for now
+            // to avoid circular dependencies in useCallback
             setGameOver(true);
             setWinner(playerId);
             if (dropTimerRef.current) clearInterval(dropTimerRef.current);
             if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+            gameOverRef.current = true;
             showJudgment('VICTORY!');
             playTone(523, 0.3, 'triangle');
             onGameEnd(playerId);
@@ -395,7 +399,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
     // Check if piece extends above board (game over)
     if (pieceExtendsAboveBoard) {
       sendGameOver();
-      const winner = opponentId || 'opponent';
+      // Player lost - opponent wins
+      // Use opponentId if available, otherwise this player loses to unknown opponent
+      const winner = opponentId || playerId; // If no opponent, declare self as loser
       handleGameEnd(winner);
       return;
     }
@@ -482,8 +488,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       sendGameOver();
-      // Player lost - opponent wins (or unknown if opponent not connected)
-      const winner = opponentId || 'opponent';
+      // Player lost - opponent wins
+      // Use opponentId if available, otherwise this player loses to unknown opponent
+      const winner = opponentId || playerId; // If no opponent, declare self as loser
       handleGameEnd(winner);
     }
   }, [nextPiece, showJudgment, playTone, randomPiece, collision, playLineClear, sendGameState, sendGarbage, sendGameOver, handleGameEnd, opponentId, addGarbageLines, completeBoard]);
