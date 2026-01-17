@@ -237,7 +237,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         actions,
       }));
     }
-  }, []);
+  }, []); // currentTickRef is a ref, so it's safe to omit from dependencies
 
   // Request resync from server
   const requestResync = useCallback(() => {
@@ -253,18 +253,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     // Process inputs for all players simultaneously
     const { tick, inputs } = tickMsg;
     
-    // Apply opponent's inputs to their board (visual only)
-    Object.entries(inputs).forEach(([pid, actions]) => {
-      if (pid !== playerId && actions.length > 0) {
-        // For now, we can't fully simulate opponent's game state
-        // This would require refactoring game logic to be pure/deterministic
-        // For now, keep using the relay fallback for opponent board sync
-      }
-    });
+    // Note: Full deterministic opponent simulation requires refactoring
+    // game logic to be pure/stateless. For now, we rely on the relay
+    // fallback (sendGameState) to sync opponent's board state.
+    // Future improvement: implement deterministic replay of opponent inputs.
 
     // Update current tick
     setCurrentTick(tick + 1);
-  }, [playerId]);
+  }, []);
 
   // Handle resync message from server
   const handleResync = useCallback((resyncMsg: GameResyncMessage) => {

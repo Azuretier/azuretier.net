@@ -721,7 +721,7 @@ async function handleMessage(playerId: string, data: string): Promise<void> {
           break;
         }
 
-        const inputMsg = message as any;
+        const inputMsg = message as { type: 'input'; tick: number; actions: GameAction[] };
         const success = gameSession.submitInput(playerId, inputMsg.tick, inputMsg.actions || []);
         
         if (!success) {
