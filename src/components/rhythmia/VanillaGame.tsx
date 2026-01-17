@@ -123,6 +123,11 @@ export const Rhythmia: React.FC = () => {
   const moveRepeatTimeout = useRef<number | null>(null);
   const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
+  // Lock delay mechanism (Tetris-like behavior)
+  // - Piece locks 250ms after last successful move/rotation while grounded
+  // - Timer resets on successful moves/rotations while grounded
+  // - Timer is NOT reset by failed moves (collisions)
+  // - Hard drop bypasses delay for immediate lock
   const lockDelayTimer = useRef<number | null>(null);
   const wasGroundedRef = useRef(false);
   const lockFnRef = useRef<(() => void) | null>(null);
