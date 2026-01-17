@@ -48,9 +48,9 @@ const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
 // SRS Wall Kick Data
 // Offset tests for JLSTZ pieces (relative to rotation center)
-// Format: [test 1, test 2, test 3, test 4, test 5]
+// Format: 5 offset tests [test 1, test 2, test 3, test 4, test 5]
 // Each test is [x, y] where positive x is right, positive y is UP (SRS convention)
-// But our coordinate system has positive y as DOWN, so we negate y values
+// Our coordinate system has positive y as DOWN, so y values are negated from SRS spec
 const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
   '0->1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
   '1->0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
