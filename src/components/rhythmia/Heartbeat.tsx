@@ -159,7 +159,7 @@ fn particles(p: vec2<f32>, t: f32) -> f32 {
     let rnd = hash22(vec2<f32>(id, id * 1.234));
     
     let moveSpeed = 0.05 + rnd.x * 0.1;
-    let pos = vec2<f32>(
+    var pos = vec2<f32>(
       fract(rnd.x + t * moveSpeed),
       fract(rnd.y + sin(t * 2.0 + id) * 0.1)
     );
