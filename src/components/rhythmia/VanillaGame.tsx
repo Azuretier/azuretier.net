@@ -427,67 +427,59 @@ export const Rhythmia: React.FC = () => {
     if (cleared > 0) {
       // Complete the remaining board by adding empty rows at the top
       boardForCollisionCheck = completeBoard(remainingBoard);
+
+      const currentCombo = comboRef.current;
+      const currentLevel = levelRef.current;
       
-      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
-      boardStateRef.current = boardForCollisionCheck;
-
-      setClearingRows(rowsToClear);
-      setBoard(newBoard);
-
-      setTimeout(() => {
-        const currentCombo = comboRef.current;
-        const currentLevel = levelRef.current;
+      // Base scoring
+      let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
+      
+      // T-Spin bonus scoring
+      if (tSpinType) {
+        const tSpinBonus = tSpinType === 'full' ? 400 : 100;
+        const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
+        pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
         
-        // Base scoring
-        let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
-        
-        // T-Spin bonus scoring
-        if (tSpinType) {
-          const tSpinBonus = tSpinType === 'full' ? 400 : 100;
-          const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
-          pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
-          
-          // Show T-Spin judgment
-          if (cleared === 0) {
-            showJudgment('T-SPIN!', '#FF00FF');
-          } else if (tSpinType === 'mini') {
-            showJudgment(`T-SPIN MINI ${cleared}!`, '#FF00FF');
-          } else {
-            showJudgment(`T-SPIN ${cleared}!`, '#FF00FF');
-          }
-          playTone(880, 0.3, 'square');
+        // Show T-Spin judgment
+        if (cleared === 0) {
+          showJudgment('T-SPIN!', '#FF00FF');
+        } else if (tSpinType === 'mini') {
+          showJudgment(`T-SPIN MINI ${cleared}!`, '#FF00FF');
+        } else {
+          showJudgment(`T-SPIN ${cleared}!`, '#FF00FF');
         }
-        
-        const newScore = scoreRef.current + pts;
-        const newLines = linesRef.current + cleared;
+        playTone(880, 0.3, 'square');
+      }
+      
+      const newScore = scoreRef.current + pts;
+      const newLines = linesRef.current + cleared;
 
-        updateScore(newScore);
-        scoreRef.current = newScore;
-        setLines(newLines);
-        linesRef.current = newLines;
+      updateScore(newScore);
+      scoreRef.current = newScore;
+      setLines(newLines);
+      linesRef.current = newLines;
 
-        // Enemy damage
-        const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
-        setEnemyHP(newEnemyHP);
-        enemyHPRef.current = newEnemyHP;
+      // Enemy damage
+      const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
+      setEnemyHP(newEnemyHP);
+      enemyHPRef.current = newEnemyHP;
 
-        if (newEnemyHP <= 0) {
-          nextWorld();
-        }
+      if (newEnemyHP <= 0) {
+        nextWorld();
+      }
 
-        const newLevel = Math.floor(newLines / 10);
-        setLevel(newLevel);
-        levelRef.current = newLevel;
+      const newLevel = Math.floor(newLines / 10);
+      setLevel(newLevel);
+      levelRef.current = newLevel;
 
-        playLineClear(cleared);
-        setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
+      playLineClear(cleared);
+      setBoardShake(true);
+      setTimeout(() => setBoardShake(false), 200);
 
-        setClearingRows([]);
-        const completedBoard = completeBoard(remainingBoard);
-        setBoard(completedBoard);
-        boardStateRef.current = completedBoard;
-      }, 300);
+      setClearingRows([]);
+      const completedBoard = completeBoard(remainingBoard);
+      setBoard(completedBoard);
+      boardStateRef.current = completedBoard;
     } else {
       setBoard(newBoard);
       boardStateRef.current = newBoard;
