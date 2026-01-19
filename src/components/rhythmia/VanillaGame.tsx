@@ -231,9 +231,11 @@ export const Rhythmia: React.FC = () => {
   }, []);
 
   const rotateCCW = useCallback((p: Piece): Piece => {
+    const newRotation = ((p.rotation + 3) % 4) as 0 | 1 | 2 | 3; // -1 mod 4 = 3
     return {
       ...p,
       shape: p.shape[0].map((_, i) => p.shape.map(row => row[row.length - 1 - i])),
+      rotation: newRotation,
     };
   }, []);
 
@@ -542,9 +544,23 @@ export const Rhythmia: React.FC = () => {
     // 1. Get the target shape
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
     
-    // 2. Define Kick Tests (Simplified example or reference your SRS table)
-    // This allows the piece to "jump" 1 space left/right/up to find a fit
-    const kickTests = [[0, 0], [-1, 0], [1, 0], [0, -1]]; 
+    // 2. Determine rotation key for SRS wall kicks
+    const fromRotation = currentPiece.rotation;
+    const toRotation = direction === 1 
+      ? ((fromRotation + 1) % 4) 
+      : ((fromRotation + 3) % 4); // -1 mod 4 = 3
+    const kickKey = `${fromRotation}->${toRotation}`;
+    
+    // 3. Get appropriate SRS kick data based on piece type
+    // O piece doesn't need kicks, I piece has special kicks, others use JLSTZ
+    let kickTests: [number, number][];
+    if (currentPiece.type === 'O') {
+      kickTests = [[0, 0]];
+    } else if (currentPiece.type === 'I') {
+      kickTests = WALL_KICK_I[kickKey] || [[0, 0]];
+    } else {
+      kickTests = WALL_KICK_JLSTZ[kickKey] || [[0, 0]];
+    }
 
     for (const [offsetX, offsetY] of kickTests) {
       if (!collision(rotated, currentPos.x + offsetX, currentPos.y + offsetY, currentBoard)) {
@@ -556,13 +572,17 @@ export const Rhythmia: React.FC = () => {
         setPiecePos(newPos);
         piecePosRef.current = newPos;
         
+        // Mark that the last successful move was a rotation (for T-Spin detection)
+        setLastRotationWasSuccessful(true);
+        lastRotationRef.current = true;
+        
         playTone(direction === 1 ? 523 : 440, 0.08);
-        lastRotationRef.current = true; // For T-Spin detection
         return; 
       }
     }
     
     // If we reach here, no kicks worked
+    setLastRotationWasSuccessful(false);
     lastRotationRef.current = false;
   }, [rotate, rotateCCW, collision, playTone]);
 
