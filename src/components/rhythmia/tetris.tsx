@@ -642,17 +642,6 @@ export default function Rhythmia() {
     lastGravityRef.current = performance.now();
   }, [getShape]);
 
-  // Drop timer
-  useEffect(() => {
-    if (isPlaying && !gameOver && !isPaused) {
-      const speed = Math.max(100, 1000 - (level - 1) * 100);
-      gameLoopRef.current = window.setInterval(tick, speed);
-      return () => {
-        if (gameLoopRef.current) window.clearInterval(gameLoopRef.current);
-      };
-    }
-  }, [isPlaying, gameOver, isPaused, level, tick]);
-
   // Beat timer for rhythm game
   useEffect(() => {
     if (!isPlaying || gameOver) return;
