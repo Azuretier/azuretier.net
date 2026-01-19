@@ -46,32 +46,33 @@ const SHAPES = [
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
-// SRS Wall Kick Data
-// Offset tests for JLSTZ pieces (relative to rotation center)
-// Format: 5 offset tests [test 1, test 2, test 3, test 4, test 5]
-// Each test is [x, y] where positive x is right, positive y is UP (SRS convention)
-// Our coordinate system has positive y as DOWN, so y values are negated from SRS spec
+// SRS Wall Kick Data - Using rotation state names ('0', 'R', '2', 'L')
+// Format: [dx, dy] offsets to try when rotation fails
+// Tests are tried in order until one succeeds
+// Note: SRS uses inverted Y for kicks (positive Y = up), so we negate dy when applying
+const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
+
 const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
-  '0->1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-  '1->0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-  '1->2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-  '2->1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-  '2->3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
-  '3->2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-  '3->0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-  '0->3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '0->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'R->2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  'L->0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  'R->0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'L->2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  '0->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
 };
 
 // Offset tests for I piece (different from JLSTZ)
 const WALL_KICK_I: Record<string, [number, number][]> = {
-  '0->1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
-  '1->0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
-  '1->2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
-  '2->1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-  '2->3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
-  '3->2': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
-  '3->0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-  '0->3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+  '0->R': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  'R->2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  '2->L': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  'L->0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'R->0': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  '2->R': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'L->2': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  '0->L': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
 };
 
 // ===== Component =====
@@ -550,6 +551,21 @@ export const Rhythmia: React.FC = () => {
     }
   }, [collision, playTone, lock]);
 
+  // Get wall kicks for a specific rotation transition
+  const getWallKicks = useCallback((type: PieceType, fromRotation: number, toRotation: number): [number, number][] => {
+    const from = ROTATION_NAMES[fromRotation];
+    const to = ROTATION_NAMES[toRotation];
+    const key = `${from}->${to}`;
+    
+    if (type === 'I') {
+      return WALL_KICK_I[key] || [[0, 0]];
+    } else if (type === 'O') {
+      return [[0, 0]]; // O piece doesn't need wall kicks
+    } else {
+      return WALL_KICK_JLSTZ[key] || [[0, 0]];
+    }
+  }, []);
+
   const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
     if (gameOverRef.current || !pieceRef.current) return;
 
@@ -557,17 +573,25 @@ export const Rhythmia: React.FC = () => {
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
-    // 1. Get the target shape
+    // Get the rotated piece
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
     
-    // 2. Define Kick Tests (Simplified example or reference your SRS table)
-    // This allows the piece to "jump" 1 space left/right/up to find a fit
-    const kickTests = [[0, 0], [-1, 0], [1, 0], [0, -1]]; 
+    // Calculate rotation indices
+    const fromRotation = currentPiece.rotation;
+    const toRotation = rotated.rotation;
+    
+    // Get SRS wall kick tests for this rotation
+    const kicks = getWallKicks(currentPiece.type, fromRotation, toRotation);
 
-    for (const [offsetX, offsetY] of kickTests) {
-      if (!collision(rotated, currentPos.x + offsetX, currentPos.y + offsetY, currentBoard)) {
+    // Try each kick offset until one succeeds
+    for (const [dx, dy] of kicks) {
+      // SRS uses inverted Y for kicks, so we negate dy
+      const testX = currentPos.x + dx;
+      const testY = currentPos.y - dy;
+      
+      if (!collision(rotated, testX, testY, currentBoard)) {
         // Success! Update position and piece
-        const newPos = { x: currentPos.x + offsetX, y: currentPos.y + offsetY };
+        const newPos = { x: testX, y: testY };
         
         setPiece(rotated);
         pieceRef.current = rotated;
@@ -575,14 +599,16 @@ export const Rhythmia: React.FC = () => {
         piecePosRef.current = newPos;
         
         playTone(direction === 1 ? 523 : 440, 0.08);
+        setLastRotationWasSuccessful(true);
         lastRotationRef.current = true; // For T-Spin detection
         return; 
       }
     }
     
     // If we reach here, no kicks worked
+    setLastRotationWasSuccessful(false);
     lastRotationRef.current = false;
-  }, [rotate, rotateCCW, collision, playTone]);
+  }, [rotate, rotateCCW, collision, playTone, getWallKicks]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef.current || !pieceRef.current) return;
