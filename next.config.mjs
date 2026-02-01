@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    turbopack: {},
     async headers() {
       return [
         {
@@ -39,9 +40,6 @@ const nextConfig = {
     }
     
     return config;
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   };
 
