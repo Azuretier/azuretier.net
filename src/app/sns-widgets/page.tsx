@@ -71,7 +71,7 @@ export default function SNSWidgetsPage() {
     ));
   };
 
-  const updateWidgetConfig = (id: WidgetType, config: any) => {
+  const updateWidgetConfig = (id: WidgetType, config: Partial<WidgetConfig['config']>) => {
     setWidgets(widgets.map(w => 
       w.id === id ? { ...w, config: { ...w.config, ...config } } : w
     ));
@@ -79,7 +79,13 @@ export default function SNSWidgetsPage() {
 
   const generateEmbedCode = (widget: WidgetConfig) => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://azuretier.net';
-    return `<iframe src="${baseUrl}/sns-widgets/embed/${widget.id}?${new URLSearchParams(widget.config as any).toString()}" width="350" height="500" frameborder="0" scrolling="no"></iframe>`;
+    const params = new URLSearchParams();
+    Object.entries(widget.config).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, String(value));
+      }
+    });
+    return `<iframe src="${baseUrl}/sns-widgets/embed/${widget.id}?${params.toString()}" width="350" height="500" style="border: 0;" scrolling="no"></iframe>`;
   };
 
   const renderWidget = (widget: WidgetConfig) => {

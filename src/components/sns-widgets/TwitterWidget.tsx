@@ -13,7 +13,7 @@ export default function TwitterWidget({ config }: TwitterWidgetProps) {
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center gap-3 mb-4">
           <div className={`w-12 h-12 rounded-full ${theme === 'dark' ? 'bg-blue-600' : 'bg-blue-500'} flex items-center justify-center text-white font-bold`}>
-            {username[0].toUpperCase()}
+            {username && username.length > 0 ? username[0].toUpperCase() : 'T'}
           </div>
           <div>
             <div className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
