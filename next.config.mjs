@@ -22,6 +22,19 @@ const nextConfig = {
         }
       ];
     },
+    turbopack: {
+      rules: {
+        '*.glsl': {
+          loaders: ['raw-loader'],
+        },
+        '*.frag': {
+          loaders: ['raw-loader'],
+        },
+        '*.vert': {
+          loaders: ['raw-loader'],
+        },
+      },
+    },
     webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
@@ -39,9 +52,6 @@ const nextConfig = {
     }
     
     return config;
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   };
 
