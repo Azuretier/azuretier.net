@@ -1041,7 +1041,7 @@ export const Rhythmia: React.FC = () => {
               </button>
             </div>
             <button className={styles.closeSettingsBtn} onClick={() => setShowSettings(false)}>
-              Close
+              {t.close}
             </button>
           </div>
         </div>

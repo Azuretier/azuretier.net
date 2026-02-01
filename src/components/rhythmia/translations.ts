@@ -14,6 +14,7 @@ export interface GameTranslations {
   enemy: string;
   settings: string;
   selectLanguage: string;
+  close: string;
   worlds: {
     melodia: string;
     harmonia: string;
@@ -37,6 +38,7 @@ export const GAME_TRANSLATIONS: Record<Language, GameTranslations> = {
     enemy: 'Noise Ring',
     settings: '⚙️',
     selectLanguage: 'Select Language',
+    close: 'Close',
     worlds: {
       melodia: '🎀 Melodia',
       harmonia: '🌊 Harmonia',
@@ -58,6 +60,7 @@ export const GAME_TRANSLATIONS: Record<Language, GameTranslations> = {
     enemy: 'ノイズリング',
     settings: '⚙️',
     selectLanguage: '言語を選択',
+    close: '閉じる',
     worlds: {
       melodia: '🎀 メロディア',
       harmonia: '🌊 ハーモニア',
@@ -79,6 +82,7 @@ export const GAME_TRANSLATIONS: Record<Language, GameTranslations> = {
     enemy: 'Anillo de Ruido',
     settings: '⚙️',
     selectLanguage: 'Seleccionar Idioma',
+    close: 'Cerrar',
     worlds: {
       melodia: '🎀 Melodía',
       harmonia: '🌊 Armonía',
@@ -100,6 +104,7 @@ export const GAME_TRANSLATIONS: Record<Language, GameTranslations> = {
     enemy: 'Anneau de Bruit',
     settings: '⚙️',
     selectLanguage: 'Choisir la Langue',
+    close: 'Fermer',
     worlds: {
       melodia: '🎀 Mélodia',
       harmonia: '🌊 Harmonia',
