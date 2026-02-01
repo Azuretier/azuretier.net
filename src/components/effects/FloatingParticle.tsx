@@ -1,7 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import styles from './FloatingParticle.module.css';
+
+const SIZE_VARIATION = 5;
+const DISTANCE_VARIATION_FACTOR = 0.5;
+
+const calculateParticleDistance = (spread: number): number => {
+  return spread + Math.random() * (spread * DISTANCE_VARIATION_FACTOR);
+};
 
 export interface FloatingParticleProps {
   x: number;
@@ -24,20 +31,16 @@ export const FloatingParticle: React.FC<FloatingParticleProps> = ({
   spread = 60,
   onComplete
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const particles: HTMLDivElement[] = [];
     
     for (let i = 0; i < count; i++) {
       const particle = document.createElement('div');
       particle.className = styles.particle;
       
-      const particleSize = size + Math.random() * 5;
+      const particleSize = size + Math.random() * SIZE_VARIATION;
       const angle = (Math.PI * 2 / count) * i;
-      const distance = spread + Math.random() * (spread / 2);
+      const distance = calculateParticleDistance(spread);
       
       particle.style.cssText = `
         left: ${x}px;
@@ -69,7 +72,7 @@ export const FloatingParticle: React.FC<FloatingParticleProps> = ({
     };
   }, [x, y, color, size, count, duration, spread, onComplete]);
 
-  return <div ref={containerRef} />;
+  return null;
 };
 
 export const spawnFloatingParticles = (
@@ -87,6 +90,7 @@ export const spawnFloatingParticles = (
 
   for (let i = 0; i < count; i++) {
     const particle = document.createElement('div');
+    const particleSize = size + Math.random() * SIZE_VARIATION;
     particle.style.cssText = `
       position: fixed;
       pointer-events: none;
@@ -94,15 +98,15 @@ export const spawnFloatingParticles = (
       z-index: 9999;
       left: ${x}px;
       top: ${y}px;
-      width: ${size + Math.random() * 5}px;
-      height: ${size + Math.random() * 5}px;
+      width: ${particleSize}px;
+      height: ${particleSize}px;
       background: ${color};
       box-shadow: 0 0 10px ${color};
       transition: all ${duration}ms ease-out;
     `;
     
     const angle = (Math.PI * 2 / count) * i;
-    const distance = spread + Math.random() * (spread / 2);
+    const distance = calculateParticleDistance(spread);
     
     document.body.appendChild(particle);
     
