@@ -128,6 +128,17 @@ const rotationNames = ['0', 'R', '2', 'L'];
 const createEmptyBoard = () => 
   Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 
+// Seven-bag randomization system (七種一巡)
+const shuffleBag = (): string[] => {
+  const pieces = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+  // Fisher-Yates shuffle
+  for (let i = pieces.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+  }
+  return pieces;
+};
+
 const getRandomPiece = (): string => {
   const pieces = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
   return pieces[Math.floor(Math.random() * pieces.length)];
@@ -137,6 +148,9 @@ export default function Rhythmia() {
   const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
   const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
   const [nextPiece, setNextPiece] = useState<string>(getRandomPiece());
+  const [holdPiece, setHoldPiece] = useState<string | null>(null);
+  const [canHold, setCanHold] = useState(true);
+  const [pieceBag, setPieceBag] = useState<string[]>(shuffleBag());
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [lines, setLines] = useState(0);
@@ -163,6 +177,9 @@ export default function Rhythmia() {
   const lastBeatRef = useRef(Date.now());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const nextPieceRef = useRef(nextPiece);
+  const pieceBagRef = useRef<string[]>(pieceBag);
+  const holdPieceRef = useRef<string | null>(holdPiece);
+  const canHoldRef = useRef(canHold);
   const comboRef = useRef(combo);
   const linesRef = useRef(lines);
   
@@ -200,6 +217,9 @@ export default function Rhythmia() {
   useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
   useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { nextPieceRef.current = nextPiece; }, [nextPiece]);
+  useEffect(() => { pieceBagRef.current = pieceBag; }, [pieceBag]);
+  useEffect(() => { holdPieceRef.current = holdPiece; }, [holdPiece]);
+  useEffect(() => { canHoldRef.current = canHold; }, [canHold]);
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { linesRef.current = lines; }, [lines]);
@@ -344,6 +364,17 @@ export default function Rhythmia() {
     return null;
   }, [getWallKicks, isValidPosition]);
 
+  // Get next piece from seven-bag system
+  const getNextFromBag = useCallback((): string => {
+    let bag = [...pieceBag];
+    if (bag.length === 0) {
+      bag = shuffleBag();
+    }
+    const piece = bag.shift()!;
+    setPieceBag(bag);
+    return piece;
+  }, [pieceBag]);
+
   const spawnPiece = useCallback(() => {
     const type = nextPiece;
     const shape = getShape(type, 0);
@@ -354,7 +385,8 @@ export default function Rhythmia() {
       y: type === 'I' ? -1 : 0,
     };
     
-    setNextPiece(getRandomPiece());
+    setNextPiece(getNextFromBag());
+    setCanHold(true); // Allow hold for the new piece
     
     if (!isValidPosition(newPiece, board)) {
       setGameOver(true);
@@ -363,7 +395,7 @@ export default function Rhythmia() {
     }
     
     return newPiece;
-  }, [nextPiece, getShape, isValidPosition, board]);
+  }, [nextPiece, getShape, isValidPosition, board, getNextFromBag]);
 
   const lockPiece = useCallback((piece: Piece, boardState: (string | null)[][]) => {
     const newBoard = boardState.map(row => [...row]);
@@ -556,6 +588,44 @@ export default function Rhythmia() {
     currentPieceRef.current = spawned;
   }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
 
+  const holdCurrentPiece = useCallback(() => {
+    if (!currentPiece || gameOver || isPaused || !canHold) return;
+    
+    const currentType = currentPiece.type;
+    
+    if (holdPiece === null) {
+      // First time holding, spawn next piece
+      setHoldPiece(currentType);
+      const spawned = spawnPiece();
+      setCurrentPiece(spawned);
+      currentPieceRef.current = spawned;
+    } else {
+      // Swap with held piece
+      const heldType = holdPiece;
+      setHoldPiece(currentType);
+      
+      const shape = getShape(heldType, 0);
+      const newPiece: Piece = {
+        type: heldType,
+        rotation: 0,
+        x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
+        y: heldType === 'I' ? -1 : 0,
+      };
+      
+      if (isValidPosition(newPiece, board)) {
+        setCurrentPiece(newPiece);
+        currentPieceRef.current = newPiece;
+      } else {
+        // If can't spawn held piece (game over state), revert hold
+        setHoldPiece(currentType);
+        return;
+      }
+    }
+    
+    setCanHold(false);
+    playTone(392, 0.1, 'square');
+  }, [currentPiece, gameOver, isPaused, canHold, holdPiece, spawnPiece, getShape, isValidPosition, board]);
+
   const tick = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
     const piece = currentPieceRef.current;
@@ -625,10 +695,19 @@ export default function Rhythmia() {
       down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
     };
     
-    const next = getRandomPiece();
-    setNextPiece(next);
+    // Initialize seven-bag system
+    const bag = shuffleBag();
+    setPieceBag(bag);
     
-    const type = getRandomPiece();
+    // Get first two pieces from bag
+    const type = bag.shift()!;
+    const next = bag.shift()!;
+    setPieceBag(bag);
+    
+    setNextPiece(next);
+    setHoldPiece(null);
+    setCanHold(true);
+    
     const shape = getShape(type, 0);
     
     const initialPiece = {
@@ -789,6 +868,13 @@ export default function Rhythmia() {
           if (!isPaused) rotatePiece(-1);
           break;
           
+        case 'c':
+        case 'C':
+        case 'Shift':
+          e.preventDefault();
+          if (!isPaused) holdCurrentPiece();
+          break;
+          
         case ' ':
           e.preventDefault();
           if (!isPaused) hardDrop();
@@ -823,7 +909,7 @@ export default function Rhythmia() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, movePiece, rotatePiece, hardDrop]);
+  }, [isPlaying, isPaused, gameOver, movePiece, rotatePiece, hardDrop, holdCurrentPiece]);
 
   const renderBoard = () => {
     const displayBoard = board.map(row => [...row]);
@@ -891,6 +977,41 @@ export default function Rhythmia() {
     );
   };
 
+  const renderHoldPiece = () => {
+    if (!holdPiece) {
+      return (
+        <div className={styles.next} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {Array(16).fill(null).map((_, i) => (
+            <div key={i} className={styles.nextCell} />
+          ))}
+        </div>
+      );
+    }
+    
+    const shape = getShape(holdPiece, 0);
+    
+    return (
+      <div 
+        className={styles.next}
+        style={{ 
+          gridTemplateColumns: `repeat(${shape[0].length}, 1fr)`,
+          opacity: canHold ? 1 : 0.5
+        }}
+      >
+        {shape.flat().map((val, i) => (
+          <div
+            key={i}
+            className={styles.nextCell}
+            style={val ? { 
+              backgroundColor: COLORS[holdPiece], 
+              boxShadow: `0 0 8px ${COLORS[holdPiece]}` 
+            } : {}}
+          />
+        ))}
+      </div>
+    );
+  };
+
   const displayBoard = renderBoard();
   const world = WORLDS[worldIdx];
 
@@ -924,6 +1045,11 @@ export default function Rhythmia() {
           </div>
 
           <div className={styles.gameArea}>
+            <div className={styles.nextWrap}>
+              <div className={styles.nextLabel}>HOLD (C)</div>
+              {renderHoldPiece()}
+            </div>
+
             <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}>
               <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}>
                 {displayBoard.flat().map((cell, i) => {
@@ -969,7 +1095,7 @@ export default function Rhythmia() {
           </div>
 
           <div className={styles.controls}>
-            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
+            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop', 'hold'].map((action) => (
               <button
                 key={action}
                 className={styles.ctrlBtn}
@@ -981,6 +1107,7 @@ export default function Rhythmia() {
                   else if (action === 'rotate') rotatePiece(1);
                   else if (action === 'rotateLeft') rotatePiece(-1);
                   else if (action === 'drop') hardDrop();
+                  else if (action === 'hold') holdCurrentPiece();
                 }}
                 onClick={() => {
                   if (action === 'left') movePiece(-1, 0);
@@ -989,13 +1116,15 @@ export default function Rhythmia() {
                   else if (action === 'rotate') rotatePiece(1);
                   else if (action === 'rotateLeft') rotatePiece(-1);
                   else if (action === 'drop') hardDrop();
+                  else if (action === 'hold') holdCurrentPiece();
                 }}
               >
                 {action === 'rotate' ? '↻' : 
                  action === 'rotateLeft' ? '↺' : 
                  action === 'left' ? '←' : 
                  action === 'down' ? '↓' : 
-                 action === 'right' ? '→' : '⬇'}
+                 action === 'right' ? '→' : 
+                 action === 'drop' ? '⬇' : 'HOLD'}
               </button>
             ))}
           </div>
