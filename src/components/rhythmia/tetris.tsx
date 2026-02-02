@@ -139,15 +139,10 @@ const shuffleBag = (): string[] => {
   return pieces;
 };
 
-const getRandomPiece = (): string => {
-  const pieces = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-  return pieces[Math.floor(Math.random() * pieces.length)];
-};
-
 export default function Rhythmia() {
   const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
   const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
-  const [nextPiece, setNextPiece] = useState<string>(getRandomPiece());
+  const [nextPiece, setNextPiece] = useState<string>('');
   const [holdPiece, setHoldPiece] = useState<string | null>(null);
   const [canHold, setCanHold] = useState(true);
   const [pieceBag, setPieceBag] = useState<string[]>(shuffleBag());
@@ -617,7 +612,7 @@ export default function Rhythmia() {
         currentPieceRef.current = newPiece;
       } else {
         // If can't spawn held piece (game over state), revert hold
-        setHoldPiece(currentType);
+        setHoldPiece(heldType);
         return;
       }
     }
@@ -697,12 +692,11 @@ export default function Rhythmia() {
     
     // Initialize seven-bag system
     const bag = shuffleBag();
-    setPieceBag(bag);
     
     // Get first two pieces from bag
-    const type = bag.shift()!;
-    const next = bag.shift()!;
-    setPieceBag(bag);
+    const type = bag[0];
+    const next = bag[1];
+    setPieceBag(bag.slice(2));
     
     setNextPiece(next);
     setHoldPiece(null);
