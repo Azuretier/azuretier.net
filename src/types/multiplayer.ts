@@ -73,6 +73,24 @@ export interface SyncRequestMessage {
   lastReceivedTimestamp: number;
 }
 
+// Game input actions
+export type GameAction = 
+  | { type: 'move'; direction: 'left' | 'right' | 'down' }
+  | { type: 'rotate' }
+  | { type: 'hard_drop' };
+
+// Client -> Server: Input for a specific tick
+export interface InputMessage {
+  type: 'input';
+  tick: number;
+  actions: GameAction[];
+}
+
+// Client -> Server: Request resync with current tick + history
+export interface GameResyncRequestMessage {
+  type: 'game_resync_request';
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
@@ -83,7 +101,9 @@ export type ClientMessage =
   | RelayMessage
   | PongMessage
   | ReconnectMessage
-  | SyncRequestMessage;
+  | SyncRequestMessage
+  | InputMessage
+  | GameResyncRequestMessage;
 
 // Server -> Client messages
 export interface ConnectedMessage {
@@ -158,6 +178,27 @@ export interface ErrorMessage {
   code?: string;
 }
 
+// Server -> Client: Authoritative tick inputs from all players
+export interface TickInputsMessage {
+  type: 'tick_inputs';
+  tick: number;
+  inputs: {
+    [playerId: string]: GameAction[];
+  };
+}
+
+// Server -> Client: Resync response with current tick and recent history
+export interface GameResyncMessage {
+  type: 'game_resync';
+  currentTick: number;
+  tickHistory: Array<{
+    tick: number;
+    inputs: {
+      [playerId: string]: GameAction[];
+    };
+  }>;
+}
+
 export type ServerMessage =
   | ConnectedMessage
   | RoomCreatedMessage
@@ -170,4 +211,6 @@ export type ServerMessage =
   | GameStartedMessage
   | RelayedMessage
   | PingMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | TickInputsMessage
+  | GameResyncMessage;

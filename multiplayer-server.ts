@@ -10,7 +10,160 @@ import type {
   ServerMessage,
   ErrorMessage,
   PublicRoomInfo,
+  GameAction,
+  TickInputsMessage,
+  GameResyncMessage,
 } from './src/types/multiplayer';
+
+// Game session configuration
+const TICK_RATE = 100; // ms per tick (10 ticks per second)
+const MAX_TICK_HISTORY = 100; // Keep last 100 ticks for resync
+const MAX_FUTURE_TICKS = 5; // Accept inputs up to 5 ticks in the future
+const MAX_ACTIONS_PER_TICK = 10; // Max actions per player per tick
+
+/**
+ * Manages a single game session for a room
+ * Handles tick loop, input collection, and broadcasting
+ */
+class GameSessionManager {
+  private roomCode: string;
+  private currentTick: number = 0;
+  private tickInterval: NodeJS.Timeout | null = null;
+  private pendingInputs: Map<number, Map<string, GameAction[]>> = new Map();
+  private tickHistory: Array<{ tick: number; inputs: { [playerId: string]: GameAction[] } }> = [];
+  private playerIds: Set<string> = new Set();
+  private broadcastFn: (roomCode: string, message: ServerMessage) => void;
+  
+  constructor(
+    roomCode: string,
+    playerIds: string[],
+    broadcastFn: (roomCode: string, message: ServerMessage) => void
+  ) {
+    this.roomCode = roomCode;
+    this.playerIds = new Set(playerIds);
+    this.broadcastFn = broadcastFn;
+  }
+  
+  /**
+   * Start the tick loop
+   */
+  start(): void {
+    if (this.tickInterval) return;
+    
+    console.log(`[GAME SESSION] Starting for room ${this.roomCode}`);
+    
+    this.tickInterval = setInterval(() => {
+      this.processTick();
+    }, TICK_RATE);
+  }
+  
+  /**
+   * Stop the tick loop and cleanup
+   */
+  stop(): void {
+    if (this.tickInterval) {
+      clearInterval(this.tickInterval);
+      this.tickInterval = null;
+      console.log(`[GAME SESSION] Stopped for room ${this.roomCode}`);
+    }
+  }
+  
+  /**
+   * Process a single tick: collect inputs and broadcast
+   */
+  private processTick(): void {
+    const tick = this.currentTick;
+    
+    // Get inputs for this tick (or empty arrays for players with no input)
+    const tickInputs: { [playerId: string]: GameAction[] } = {};
+    const inputsForTick = this.pendingInputs.get(tick) || new Map();
+    
+    this.playerIds.forEach(playerId => {
+      tickInputs[playerId] = inputsForTick.get(playerId) || [];
+    });
+    
+    // Broadcast to all players
+    const message: TickInputsMessage = {
+      type: 'tick_inputs',
+      tick,
+      inputs: tickInputs,
+    };
+    
+    this.broadcastFn(this.roomCode, message);
+    
+    // Store in history
+    this.tickHistory.push({ tick, inputs: tickInputs });
+    if (this.tickHistory.length > MAX_TICK_HISTORY) {
+      this.tickHistory.shift();
+    }
+    
+    // Clean up old pending inputs
+    this.pendingInputs.delete(tick);
+    
+    // Increment tick
+    this.currentTick++;
+  }
+  
+  /**
+   * Submit input from a player for a specific tick
+   */
+  submitInput(playerId: string, tick: number, actions: GameAction[]): boolean {
+    // Validate player is in this session
+    if (!this.playerIds.has(playerId)) {
+      console.warn(`[GAME SESSION] Invalid player ${playerId} for room ${this.roomCode}`);
+      return false;
+    }
+    
+    // Reject inputs for past ticks
+    if (tick < this.currentTick) {
+      console.warn(`[GAME SESSION] Ignoring input for past tick ${tick} (current: ${this.currentTick})`);
+      return false;
+    }
+    
+    // Reject inputs too far in the future
+    if (tick > this.currentTick + MAX_FUTURE_TICKS) {
+      console.warn(`[GAME SESSION] Rejecting input for future tick ${tick} (current: ${this.currentTick})`);
+      return false;
+    }
+    
+    // Cap number of actions
+    const cappedActions = actions.slice(0, MAX_ACTIONS_PER_TICK);
+    
+    // Store input
+    if (!this.pendingInputs.has(tick)) {
+      this.pendingInputs.set(tick, new Map());
+    }
+    
+    const tickInputs = this.pendingInputs.get(tick)!;
+    tickInputs.set(playerId, cappedActions);
+    
+    return true;
+  }
+  
+  /**
+   * Get current tick and recent history for resync
+   */
+  getResyncData(): { currentTick: number; tickHistory: Array<{ tick: number; inputs: { [playerId: string]: GameAction[] } }> } {
+    return {
+      currentTick: this.currentTick,
+      tickHistory: [...this.tickHistory],
+    };
+  }
+  
+  /**
+   * Add a player to the session (for reconnect)
+   */
+  addPlayer(playerId: string): void {
+    this.playerIds.add(playerId);
+  }
+  
+  /**
+   * Remove a player from the session
+   */
+  removePlayer(playerId: string): void {
+    this.playerIds.delete(playerId);
+  }
+}
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -59,6 +212,7 @@ interface PlayerConnection {
 
 const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
+const gameSessions = new Map<string, GameSessionManager>(); // Track active game sessions by room code
 
 /**
  * Generate a unique player ID
@@ -407,6 +561,14 @@ async function handleMessage(playerId: string, data: string): Promise<void> {
                 roomState: roomState as any,
               });
             }
+          } else {
+            // Room is now empty - cleanup game session
+            const gameSession = gameSessions.get(result.roomCode);
+            if (gameSession) {
+              gameSession.stop();
+              gameSessions.delete(result.roomCode);
+              console.log(`[GAME SESSION] Cleaned up for room ${result.roomCode}`);
+            }
           }
 
           console.log(`[LEAVE] Player ${playerId} left room ${result.roomCode}`);
@@ -464,6 +626,12 @@ async function handleMessage(playerId: string, data: string): Promise<void> {
           // Generate shared game seed for deterministic randomness
           const gameSeed = Math.floor(Math.random() * 1000000);
           
+          // Create game session for tick-based gameplay
+          const playerIds = roomManager.getPlayerIdsInRoom(roomCode);
+          const gameSession = new GameSessionManager(roomCode, playerIds, broadcastToRoom);
+          gameSessions.set(roomCode, gameSession);
+          gameSession.start();
+          
           broadcastToRoom(roomCode, {
             type: 'game_started',
             gameSeed,
@@ -478,7 +646,7 @@ async function handleMessage(playerId: string, data: string): Promise<void> {
             });
           }
 
-          console.log(`[GAME] Started in room ${roomCode}`);
+          console.log(`[GAME] Started in room ${roomCode} with ${playerIds.length} players`);
           
           // Sync to Firestore
           syncRoomToFirestore(roomCode);
@@ -538,6 +706,57 @@ async function handleMessage(playerId: string, data: string): Promise<void> {
         break;
       }
 
+      case 'input': {
+        // Handle game input from client
+        const room = roomManager.getRoomByPlayerId(playerId);
+        if (!room) {
+          sendError(playerId, 'Not in a room', 'NOT_IN_ROOM');
+          break;
+        }
+
+        const gameSession = gameSessions.get(room.code);
+        if (!gameSession) {
+          // No game session - might be using old relay protocol
+          console.warn(`[INPUT] No game session for room ${room.code}`);
+          break;
+        }
+
+        const inputMsg = message as { type: 'input'; tick: number; actions: GameAction[] };
+        const success = gameSession.submitInput(playerId, inputMsg.tick, inputMsg.actions || []);
+        
+        if (!success) {
+          // Input was rejected (too old, too far in future, etc)
+          // Client should handle this gracefully
+        }
+        break;
+      }
+
+      case 'game_resync_request': {
+        // Send current tick and recent history to reconnecting client
+        const room = roomManager.getRoomByPlayerId(playerId);
+        if (!room) {
+          sendError(playerId, 'Not in a room', 'NOT_IN_ROOM');
+          break;
+        }
+
+        const gameSession = gameSessions.get(room.code);
+        if (!gameSession) {
+          sendError(playerId, 'No active game session', 'NO_SESSION');
+          break;
+        }
+
+        const resyncData = gameSession.getResyncData();
+        const resyncMsg: GameResyncMessage = {
+          type: 'game_resync',
+          currentTick: resyncData.currentTick,
+          tickHistory: resyncData.tickHistory,
+        };
+        
+        sendToPlayer(playerId, resyncMsg);
+        console.log(`[RESYNC] Sent to player ${playerId} in room ${room.code} (tick ${resyncData.currentTick})`);
+        break;
+      }
+
       default:
         sendError(playerId, `Unknown message type: ${(message as any).type}`, 'UNKNOWN_TYPE');
     }
@@ -568,6 +787,14 @@ function handleDisconnect(playerId: string, reason: string = 'disconnect'): void
           type: 'room_state',
           roomState: roomState as any,
         });
+      }
+    } else {
+      // Room is now empty or deleted - cleanup game session
+      const gameSession = gameSessions.get(result.roomCode);
+      if (gameSession) {
+        gameSession.stop();
+        gameSessions.delete(result.roomCode);
+        console.log(`[GAME SESSION] Cleaned up for room ${result.roomCode}`);
       }
     }
   }
@@ -771,6 +998,13 @@ function shutdown(signal: string) {
   if (firestoreCleanupInterval) {
     clearInterval(firestoreCleanupInterval);
   }
+
+  // Cleanup all game sessions
+  gameSessions.forEach((session, roomCode) => {
+    session.stop();
+    console.log(`[SHUTDOWN] Stopped game session for room ${roomCode}`);
+  });
+  gameSessions.clear();
 
   // Notify all connected players
   playerConnections.forEach((conn, playerId) => {
