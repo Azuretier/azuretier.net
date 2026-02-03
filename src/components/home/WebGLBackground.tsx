@@ -43,7 +43,7 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
     // Load shader
     async function loadShader() {
       try {
-        const fragShader = await fetch("/shaders/light-scattering.frag").then(
+        const fragShader = await fetch("/shaders/rain.frag").then(
           (res) => {
             if (!res.ok) throw new Error("Shader not found");
             return res.text();

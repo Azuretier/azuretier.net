@@ -373,3 +373,145 @@
   border-radius: 50%;
   z-index: 150;
 }
+
+/* ===== Multiplayer Styles ===== */
+.multiplayerGame {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  gap: 10px;
+}
+
+.playersContainer {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.playerBoard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.playerName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--c1);
+  text-shadow: 0 0 20px var(--c1);
+}
+
+.vsIndicator {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 0 0 30px #FFD700;
+  align-self: center;
+  animation: vsPulse 1s ease-in-out infinite;
+}
+
+@keyframes vsPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.controlsInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+}
+
+.controlsInfo strong {
+  color: var(--c1);
+}
+
+.controlsHint {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  max-width: 200px;
+}
+
+.playerGameover {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  z-index: 100;
+  border: 2px solid var(--c1);
+}
+
+.playerGameover h3 {
+  font-size: 1.5rem;
+  color: #FF6B6B;
+  margin-bottom: 10px;
+}
+
+.winnerAnnouncement {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  z-index: 200;
+  border: 3px solid #FFD700;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+  animation: winnerPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes winnerPop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.winnerAnnouncement h2 {
+  font-size: 2.5rem;
+  color: #FFD700;
+  text-shadow: 0 0 30px #FFD700;
+  margin-bottom: 15px;
+}
+
+.winnerAnnouncement p {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 20px;
+}
+
+/* Responsive adjustments for multiplayer */
+@media (max-width: 800px) {
+  .playersContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .vsIndicator {
+    font-size: 2rem;
+  }
+  
+  .playerBoard {
+    transform: scale(0.85);
+  }
+}

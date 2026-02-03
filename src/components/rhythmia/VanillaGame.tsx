@@ -1,35 +1,99 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './VanillaGame.module.css';
 
-// ===== Types =====
-interface PieceCell {
-  color: string;
-  ghost?:  boolean;
-}
+// Tetromino definitions with all 4 rotation states (0, R, 2, L)
+// Using SRS (Super Rotation System) - the standard Tetris rotation system
+const TETROMINOES: Record<string, number[][][]> = {
+  I: [
+    [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], // 0
+    [[0,0,1,0], [0,0,1,0], [0,0,1,0], [0,0,1,0]], // R
+    [[0,0,0,0], [0,0,0,0], [1,1,1,1], [0,0,0,0]], // 2
+    [[0,1,0,0], [0,1,0,0], [0,1,0,0], [0,1,0,0]], // L
+  ],
+  O: [
+    [[1,1], [1,1]], // 0
+    [[1,1], [1,1]], // R
+    [[1,1], [1,1]], // 2
+    [[1,1], [1,1]], // L
+  ],
+  T: [
+    [[0,1,0], [1,1,1], [0,0,0]], // 0
+    [[0,1,0], [0,1,1], [0,1,0]], // R
+    [[0,0,0], [1,1,1], [0,1,0]], // 2
+    [[0,1,0], [1,1,0], [0,1,0]], // L
+  ],
+  S: [
+    [[0,1,1], [1,1,0], [0,0,0]], // 0
+    [[0,1,0], [0,1,1], [0,0,1]], // R
+    [[0,0,0], [0,1,1], [1,1,0]], // 2
+    [[1,0,0], [1,1,0], [0,1,0]], // L
+  ],
+  Z: [
+    [[1,1,0], [0,1,1], [0,0,0]], // 0
+    [[0,0,1], [0,1,1], [0,1,0]], // R
+    [[0,0,0], [1,1,0], [0,1,1]], // 2
+    [[0,1,0], [1,1,0], [1,0,0]], // L
+  ],
+  J: [
+    [[1,0,0], [1,1,1], [0,0,0]], // 0
+    [[0,1,1], [0,1,0], [0,1,0]], // R
+    [[0,0,0], [1,1,1], [0,0,1]], // 2
+    [[0,1,0], [0,1,0], [1,1,0]], // L
+  ],
+  L: [
+    [[0,0,1], [1,1,1], [0,0,0]], // 0
+    [[0,1,0], [0,1,0], [0,1,1]], // R
+    [[0,0,0], [1,1,1], [1,0,0]], // 2
+    [[1,1,0], [0,1,0], [0,1,0]], // L
+  ],
+};
 
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
+// SRS Wall Kick Data
+// Format: [dx, dy] offsets to try when rotation fails
+// Tests are tried in order until one succeeds
+const WALL_KICKS_JLSTZ: Record<string, [number, number][]> = {
+  '0->R': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+  'R->2': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+  '2->L': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+  'L->0': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+  'R->0': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+  '2->R': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+  'L->2': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+  '0->L': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+};
 
-interface Piece {
-  shape: number[][];
-  color: string;
-  type: PieceType;
-  rotation: 0 | 1 | 2 | 3;
-}
+const WALL_KICKS_I: Record<string, [number, number][]> = {
+  '0->R': [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
+  'R->2': [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
+  '2->L': [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
+  'L->0': [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
+  'R->0': [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
+  '2->R': [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
+  'L->2': [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
+  '0->L': [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
+};
 
+const COLORS: Record<string, string> = {
+  I: '#00f0f0',
+  O: '#f0f000',
+  T: '#a000f0',
+  S: '#00f000',
+  Z: '#f00000',
+  J: '#0000f0',
+  L: '#f0a000',
+};
+
+// ===== Rhythm Game Worlds =====
 interface World {
   name: string;
   bpm: number;
   colors: string[];
 }
 
-// ===== Constants =====
-const W = 10;
-const H = 18;
-
 const WORLDS: World[] = [
   { name: '🎀 メロディア', bpm: 100, colors: ['#FF6B9D', '#FF8FAB', '#FFB6C1', '#C44569', '#E8668B', '#D4587D', '#B84A6F'] },
   { name: '🌊 ハーモニア', bpm: 110, colors: ['#4ECDC4', '#45B7AA', '#3DA69B', '#35958C', '#2D847D', '#26736E', '#1A535C'] },
-  { name:  '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
+  { name: '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
   { name: '🔥 フォルティッシモ', bpm: 140, colors: ['#FF6B6B', '#FF5252', '#FF3838', '#FF1F1F', '#E61717', '#CC0F0F', '#B30707'] },
   { name: '✨ 静寂の間', bpm: 160, colors: ['#A29BFE', '#9B8EFD', '#9381FC', '#8B74FB', '#8367FA', '#7B5AF9', '#6C5CE7'] },
 ];
@@ -75,49 +139,65 @@ const WALL_KICK_I: Record<string, [number, number][]> = {
   '0->L': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
 };
 
-// ===== Component =====
-export const Rhythmia: React.FC = () => {
-  // Game state
-  const [board, setBoard] = useState<(PieceCell | null)[][]>([]);
-  const [piece, setPiece] = useState<Piece | null>(null);
-  const [piecePos, setPiecePos] = useState({ x: 0, y: 0 });
-  const [nextPiece, setNextPiece] = useState<Piece | null>(null);
+export default function Rhythmia() {
+  const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
+  const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
+  const [nextPiece, setNextPiece] = useState<string>(getRandomPiece());
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [level, setLevel] = useState(0);
   const [lines, setLines] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [gameOver, setGameOver] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Rhythm game state
   const [worldIdx, setWorldIdx] = useState(0);
   const [enemyHP, setEnemyHP] = useState(100);
-  const [gameOver, setGameOver] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
   const [beatPhase, setBeatPhase] = useState(0);
-  const [showGameOver, setShowGameOver] = useState(false);
   const [judgmentText, setJudgmentText] = useState('');
   const [judgmentColor, setJudgmentColor] = useState('');
   const [showJudgmentAnim, setShowJudgmentAnim] = useState(false);
   const [boardBeat, setBoardBeat] = useState(false);
   const [boardShake, setBoardShake] = useState(false);
   const [scorePop, setScorePop] = useState(false);
-  const [clearingRows, setClearingRows] = useState<number[]>([]);
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
-
-  // Refs
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const lastBeatRef = useRef(Date.now());
-  const dropTimerRef = useRef<number | null>(null);
+  
+  // Refs for accessing current values in callbacks (avoids stale closures)
+  const gameLoopRef = useRef<number | null>(null);
   const beatTimerRef = useRef<number | null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const cellSizeRef = useRef(20);
-  const pieceRef = useRef(piece);
-  const piecePosRef = useRef(piecePos);
-  const boardStateRef = useRef(board);
-  const gameOverRef = useRef(gameOver);
+  const lastBeatRef = useRef(Date.now());
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const nextPieceRef = useRef(nextPiece);
   const comboRef = useRef(combo);
-  const scoreRef = useRef(score);
   const linesRef = useRef(lines);
+  
+  // DAS/ARR/SDF settings (adjustable)
+  const [das, setDas] = useState(DEFAULT_DAS);
+  const [arr, setArr] = useState(DEFAULT_ARR);
+  const [sdf, setSdf] = useState(DEFAULT_SDF);
+  
+  const lastGravityRef = useRef<number>(0);
+  const currentPieceRef = useRef<Piece | null>(null);
+  const boardRef = useRef<(string | null)[][]>(createEmptyBoard());
+  const scoreRef = useRef(0);
+  
+  // Key states for DAS/ARR
+  const keyStatesRef = useRef<Record<string, KeyState>>({
+    left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+    right: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+    down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+  });
+  
+  // Settings refs for use in game loop
+  const dasRef = useRef(das);
+  const arrRef = useRef(arr);
+  const sdfRef = useRef(sdf);
   const levelRef = useRef(level);
-  const enemyHPRef = useRef(enemyHP);
+  const gameOverRef = useRef(gameOver);
+  const isPausedRef = useRef(isPaused);
   const worldIdxRef = useRef(worldIdx);
+  const enemyHPRef = useRef(enemyHP);
   const beatPhaseRef = useRef(beatPhase);
   const keysPressed = useRef<Set<string>>(new Set());
   const softDropInterval = useRef<number | null>(null);
@@ -125,34 +205,39 @@ export const Rhythmia: React.FC = () => {
   const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
 
-  // Keep refs in sync
-  useEffect(() => { pieceRef.current = piece; }, [piece]);
-  useEffect(() => { piecePosRef.current = piecePos; }, [piecePos]);
-  useEffect(() => { boardStateRef. current = board; }, [board]);
-  useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
-  useEffect(() => { comboRef.current = combo; }, [combo]);
+  // Keep refs in sync with state
+  useEffect(() => { boardRef.current = board; }, [board]);
+  useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
+  useEffect(() => { boardRef.current = board; }, [board]);
+  useEffect(() => { nextPieceRef.current = nextPiece; }, [nextPiece]);
   useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { linesRef.current = lines; }, [lines]);
+  useEffect(() => { dasRef.current = das; }, [das]);
+  useEffect(() => { arrRef.current = arr; }, [arr]);
+  useEffect(() => { sdfRef.current = sdf; }, [sdf]);
   useEffect(() => { levelRef.current = level; }, [level]);
-  useEffect(() => { enemyHPRef.current = enemyHP; }, [enemyHP]);
+  useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
+  useEffect(() => { enemyHPRef.current = enemyHP; }, [enemyHP]);
   useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
   useEffect(() => { lastRotationRef.current = lastRotationWasSuccessful; }, [lastRotationWasSuccessful]);
 
-  // ===== Audio =====
+  // ===== Audio System =====
   const initAudio = useCallback(() => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
   }, []);
 
-  const playTone = useCallback((freq:  number, dur = 0.1, type: OscillatorType = 'sine') => {
+  const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
-    osc. frequency.value = freq;
+    osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
     osc.connect(gain);
@@ -274,20 +359,41 @@ export const Rhythmia: React.FC = () => {
     }
   }, [showJudgment]);
 
-  const endGame = useCallback(() => {
-    setGameOver(true);
-    setShowGameOver(true);
-    if (dropTimerRef.current) clearInterval(dropTimerRef.current);
-    if (beatTimerRef.current) clearInterval(beatTimerRef.current);
-    playTone(131, 0.5, 'sawtooth');
-  }, [playTone]);
+  const getShape = useCallback((type: string, rotation: number) => {
+    return TETROMINOES[type][rotation];
+  }, []);
 
-  const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
-    const completed = [...partialBoard];
-    while (completed.length < H) {
-      completed.unshift(Array(W).fill(null));
+  const isValidPosition = useCallback((piece: Piece, boardState: (string | null)[][]) => {
+    const shape = getShape(piece.type, piece.rotation);
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x]) {
+          const newX = piece.x + x;
+          const newY = piece.y + y;
+          if (newX < 0 || newX >= BOARD_WIDTH || newY >= BOARD_HEIGHT) {
+            return false;
+          }
+          if (newY >= 0 && boardState[newY][newX] !== null) {
+            return false;
+          }
+        }
+      }
     }
-    return completed;
+    return true;
+  }, [getShape]);
+
+  const getWallKicks = useCallback((type: string, fromRotation: number, toRotation: number) => {
+    const from = rotationNames[fromRotation];
+    const to = rotationNames[toRotation];
+    const key = `${from}->${to}`;
+    
+    if (type === 'I') {
+      return WALL_KICKS_I[key] || [[0, 0]];
+    } else if (type === 'O') {
+      return [[0, 0]];
+    } else {
+      return WALL_KICKS_JLSTZ[key] || [[0, 0]];
+    }
   }, []);
 
   // Check if a T-Spin was performed
@@ -299,6 +405,9 @@ export const Rhythmia: React.FC = () => {
     if (piece.type !== 'T' || !lastRotationRef.current) {
       return null;
     }
+    
+    return newPiece;
+  }, [nextPiece, getShape, isValidPosition, board]);
 
     // Find the bottom center of the T piece for T-spin detection
     // The T piece rotates around its bottom axis
@@ -338,193 +447,166 @@ export const Rhythmia: React.FC = () => {
     if (centerX !== -1 && bottomY !== -1) {
       centerY = bottomY;
     }
+    return newBoard;
+  }, [getShape]);
+
+  const clearLines = useCallback((boardState: (string | null)[][]) => {
+    const newBoard = boardState.filter(row => row.some(cell => cell === null));
+    const clearedLines = BOARD_HEIGHT - newBoard.length;
     
-    if (centerX === -1) return null; // Couldn't find center
-    
-    // Check the 4 corners (diagonals from center)
-    const corners = [
-      [centerX - 1, centerY - 1], // top-left
-      [centerX + 1, centerY - 1], // top-right
-      [centerX - 1, centerY + 1], // bottom-left
-      [centerX + 1, centerY + 1], // bottom-right
-    ];
-    
-    let filledCorners = 0;
-    for (const [cx, cy] of corners) {
-      // Corner is considered filled if out of bounds or occupied
-      if (cx < 0 || cx >= W || cy < 0 || cy >= H || (cy >= 0 && board[cy] && board[cy][cx])) {
-        filledCorners++;
-      }
+    while (newBoard.length < BOARD_HEIGHT) {
+      newBoard.unshift(Array(BOARD_WIDTH).fill(null));
     }
     
-    // T-Spin requires at least 3 corners filled
-    if (filledCorners >= 3) {
-      // Check front corners vs back corners to determine mini vs full
-      // Front corners are determined by rotation direction
-      // For simplicity, we'll just return 'full' for any 3+ corner T-Spin
-      // A proper implementation would check if the two front corners are filled
-      return 'full';
-    }
-    
-    return null;
+    return { newBoard, clearedLines };
   }, []);
 
-  const lock = useCallback(() => {
-    const currentPiece = pieceRef.current;
-    const currentPos = piecePosRef.current;
-    const currentBoard = boardStateRef.current;
-    const currentBeatPhase = beatPhaseRef. current;
+  const movePiece = useCallback((dx: number, dy: number) => {
+    if (!currentPiece || gameOver || isPaused) return false;
+    const piece = currentPieceRef.current;
+    const boardState = boardRef.current;
+    
+    if (!piece) return false;
+    
+    const newPiece: Piece = {
+      ...piece,
+      x: piece.x + dx,
+      y: piece.y + dy,
+    };
+    
+    if (isValidPosition(newPiece, boardState)) {
+      setCurrentPiece(newPiece);
+      currentPieceRef.current = newPiece;
+      return true;
+    }
+    return false;
+  }, [currentPiece, board, isValidPosition, gameOver, isPaused]);
 
-    if (! currentPiece) return;
+  // Process DAS/ARR for horizontal movement
+  const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
+    const state = keyStatesRef.current[direction];
+    if (!state.pressed || isPausedRef.current || gameOverRef.current) return;
+
+    const dx = direction === 'left' ? -1 : 1;
+    const timeSincePress = currentTime - state.pressTime;
+    const currentDas = dasRef.current;
+    const currentArr = arrRef.current;
+
+    if (!state.dasCharged) {
+      // DAS phase - waiting for initial delay to charge
+      if (timeSincePress >= currentDas) {
+        state.dasCharged = true;
+        state.lastMoveTime = currentTime;
+        
+        // First move after DAS charges
+        if (currentArr === 0) {
+          // Instant ARR - move all the way instantly
+          while (movePiece(dx, 0)) {}
+        } else {
+          movePiece(dx, 0);
+        }
+      }
+    } else {
+      // ARR phase - auto-repeat is active
+      if (currentArr === 0) {
+        // Instant ARR - move to edge every frame
+        while (movePiece(dx, 0)) {}
+      } else {
+        // Normal ARR with delay between moves
+        const timeSinceLastMove = currentTime - state.lastMoveTime;
+        if (timeSinceLastMove >= currentArr) {
+          movePiece(dx, 0);
+          state.lastMoveTime = currentTime;
+        }
+      }
+    }
+  }, [movePiece]);
+
+  // Process soft drop (SDF)
+  const processSoftDrop = useCallback((currentTime: number) => {
+    const state = keyStatesRef.current.down;
+    if (!state.pressed || isPausedRef.current || gameOverRef.current) return;
+
+    const currentSdf = sdfRef.current;
+    const timeSinceLastMove = currentTime - state.lastMoveTime;
+
+    if (currentSdf === 0) {
+      // Instant soft drop (sonic drop without locking)
+      while (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+    } else if (timeSinceLastMove >= currentSdf) {
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      state.lastMoveTime = currentTime;
+    }
+  }, [movePiece]);
+
+  const rotatePiece = useCallback((direction: 1 | -1) => {
+    if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
+    
+    const rotatedPiece = tryRotation(piece, direction, boardRef.current);
+    if (rotatedPiece) {
+      setCurrentPiece(rotatedPiece);
+      currentPieceRef.current = rotatedPiece;
+    }
+  }, [currentPiece, board, tryRotation, gameOver, isPaused]);
+
+  const hardDrop = useCallback(() => {
+    if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
+    
+    let newPiece = { ...piece };
+    let dropDistance = 0;
+    
+    while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
+      newPiece.y++;
+      dropDistance++;
+    }
 
     // Beat judgment
+    const currentBeatPhase = beatPhaseRef.current;
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
     let mult = 1;
-
+    
     if (onBeat) {
       mult = 2;
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
-      comboRef.current = newCombo;
-      showJudgment('PERFECT! ', '#FFD700');
+      showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
-      if (boardRef.current) {
-        const rect = boardRef.current.getBoundingClientRect();
-        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#FFD700', 12);
-      }
     } else {
       setCombo(0);
-      comboRef.current = 0;
     }
+    
+    const newBoard = lockPiece(newPiece, boardRef.current);
+    
+    const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
+    
+    setBoard(clearedBoard);
 
-    // Lock piece to board
-    const newBoard = currentBoard.map(r => [...r]);
-    let pieceExtendsAboveBoard = false;
-    currentPiece.shape.forEach((row, py) => {
-      row.forEach((val, px) => {
-        if (val) {
-          const by = currentPos.y + py, bx = currentPos.x + px;
-          if (by < 0) {
-            // Piece extends above the visible board - game over condition
-            pieceExtendsAboveBoard = true;
-          } else if (by >= 0 && by < H) {
-            newBoard[by][bx] = { color: currentPiece.color };
-          }
-        }
-      });
-    });
-
-    // Check if piece extends above board (game over)
-    if (pieceExtendsAboveBoard) {
-      endGame();
-      return;
-    }
-
-    // Check for T-Spin before locking
-    const tSpinType = checkTSpin(currentPiece, currentPos, currentBoard);
-
-    // Line clear
-    let cleared = 0;
-    const remainingBoard:  (PieceCell | null)[][] = [];
-    const rowsToClear: number[] = [];
-
-    newBoard.forEach((row, y) => {
-      if (row.every(c => c !== null)) {
-        cleared++;
-        rowsToClear.push(y);
-      } else {
-        remainingBoard.push(row);
-      }
-    });
-
-    // Prepare the board state for collision check
-    let boardForCollisionCheck = newBoard;
-    if (cleared > 0) {
-      // Complete the remaining board by adding empty rows at the top
-      boardForCollisionCheck = completeBoard(remainingBoard);
+    // Calculate score with rhythm multiplier
+    const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * (level);
+    const finalScore = baseScore * mult * Math.max(1, comboRef.current);
+    updateScore(scoreRef.current + finalScore);
+    
+    // Enemy damage
+    if (clearedLines > 0) {
+      const damage = clearedLines * 8 * mult;
+      const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
+      setEnemyHP(newEnemyHP);
       
-      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
-      boardStateRef.current = boardForCollisionCheck;
-
-      setClearingRows(rowsToClear);
-      setBoard(newBoard);
-
-      setTimeout(() => {
-        const currentCombo = comboRef.current;
-        const currentLevel = levelRef.current;
-        
-        // Base scoring
-        let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
-        
-        // T-Spin bonus scoring
-        if (tSpinType) {
-          const tSpinBonus = tSpinType === 'full' ? 400 : 100;
-          const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
-          pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
-          
-          // Show T-Spin judgment
-          if (cleared === 0) {
-            showJudgment('T-SPIN!', '#FF00FF');
-          } else if (tSpinType === 'mini') {
-            showJudgment(`T-SPIN MINI ${cleared}!`, '#FF00FF');
-          } else {
-            showJudgment(`T-SPIN ${cleared}!`, '#FF00FF');
-          }
-          playTone(880, 0.3, 'square');
-        }
-        
-        const newScore = scoreRef.current + pts;
-        const newLines = linesRef.current + cleared;
-
-        updateScore(newScore);
-        scoreRef.current = newScore;
-        setLines(newLines);
-        linesRef.current = newLines;
-
-        // Enemy damage
-        const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
-        setEnemyHP(newEnemyHP);
-        enemyHPRef.current = newEnemyHP;
-
-        if (newEnemyHP <= 0) {
-          nextWorld();
-        }
-
-        const newLevel = Math.floor(newLines / 10);
-        setLevel(newLevel);
-        levelRef.current = newLevel;
-
-        playLineClear(cleared);
-        setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
-
-        setClearingRows([]);
-        const completedBoard = completeBoard(remainingBoard);
-        setBoard(completedBoard);
-        boardStateRef.current = completedBoard;
-      }, 300);
-    } else {
-      setBoard(newBoard);
-      boardStateRef.current = newBoard;
-    }
-
-    // Next piece
-    const currentNextPiece = nextPiece;
-    const newNextPiece = randomPiece(worldIdxRef.current);
-    const newPos = { x: Math.floor(W / 2) - 1, y: 0 };
-
-    // Reset rotation flag for new piece
-    setLastRotationWasSuccessful(false);
-    lastRotationRef.current = false;
-
-    setPiece(currentNextPiece);
-    pieceRef.current = currentNextPiece;
-    setNextPiece(newNextPiece);
-    setPiecePos(newPos);
-    piecePosRef.current = newPos;
-
-    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
-      endGame();
+      if (newEnemyHP <= 0) {
+        nextWorld();
+      }
+      
+      playLineClear(clearedLines);
+      setBoardShake(true);
+      setTimeout(() => setBoardShake(false), 200);
     }
   }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard, checkTSpin]);
 
@@ -624,69 +706,104 @@ export const Rhythmia: React.FC = () => {
     setPiecePos(currentPos);
     piecePosRef.current = currentPos;
     playTone(196, 0.1, 'sawtooth');
-    lock();
-  }, [collision, playTone, lock]);
+    const spawned = spawnPiece();
+    setCurrentPiece(spawned);
+    currentPieceRef.current = spawned;
+  }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
 
-  // ===== Start Game =====
+  const tick = useCallback(() => {
+    if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
+    
+    const newPiece: Piece = {
+      ...piece,
+      y: piece.y + 1,
+    };
+    
+    if (isValidPosition(newPiece, boardRef.current)) {
+      setCurrentPiece(newPiece);
+      currentPieceRef.current = newPiece;
+    } else {
+      // Beat judgment on lock
+      const currentBeatPhase = beatPhaseRef.current;
+      const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+      let mult = 1;
+      
+      if (onBeat) {
+        mult = 2;
+        const newCombo = comboRef.current + 1;
+        setCombo(newCombo);
+        showJudgment('PERFECT!', '#FFD700');
+        playTone(1047, 0.2, 'triangle');
+      } else {
+        setCombo(0);
+      }
+      // Lock the piece
+      const newBoard = lockPiece(piece, boardRef.current);
+      
+      const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
+      
+      setBoard(clearedBoard);
+      boardRef.current = clearedBoard;
+      setScore(prev => prev + clearedLines * 100 * levelRef.current);
+      setLines(prev => {
+        const newLines = prev + clearedLines;
+        setLevel(Math.floor(newLines / 10) + 1);
+        return newLines;
+      });
+      
+      const spawned = spawnPiece();
+      setCurrentPiece(spawned);
+      currentPieceRef.current = spawned;
+    }
+  }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
+
   const startGame = useCallback(() => {
     initAudio();
-
-    const initialBoard = Array(H).fill(null).map(() => Array(W).fill(null));
-    const initialPiece = randomPiece(0);
-    const initialNextPiece = randomPiece(0);
-    const initialPos = { x: Math.floor(W / 2) - 1, y: 0 };
-
-    setBoard(initialBoard);
-    boardStateRef.current = initialBoard;
-    setPiece(initialPiece);
-    pieceRef.current = initialPiece;
-    setNextPiece(initialNextPiece);
-    setPiecePos(initialPos);
-    piecePosRef.current = initialPos;
+    
+    setBoard(createEmptyBoard());
     setScore(0);
-    scoreRef.current = 0;
     setCombo(0);
-    comboRef.current = 0;
-    setLevel(0);
-    levelRef.current = 0;
     setLines(0);
-    linesRef.current = 0;
+    setLevel(1);
     setWorldIdx(0);
-    worldIdxRef.current = 0;
     setEnemyHP(100);
-    enemyHPRef.current = 100;
     setGameOver(false);
-    gameOverRef.current = false;
-    setShowGameOver(false);
-    setGameStarted(true);
-    setClearingRows([]);
-  }, [initAudio, randomPiece]);
-
-  // ===== Effects =====
-
-  // Drop timer
-  useEffect(() => {
-    if (! gameStarted || gameOver) return;
-
-    dropTimerRef.current = window.setInterval(() => {
-      if (! gameOverRef.current) {
-        move(0, 1);
-      }
-    }, 500);
-
-    return () => {
-      if (dropTimerRef.current) clearInterval(dropTimerRef. current);
+    setIsPaused(false);
+    setIsPlaying(true);
+    
+    // Reset key states
+    keyStatesRef.current = {
+      left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+      right: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+      down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
     };
-  }, [gameStarted, gameOver, move]);
+    
+    const next = getRandomPiece();
+    setNextPiece(next);
+    
+    const type = getRandomPiece();
+    const shape = getShape(type, 0);
+    
+    const initialPiece = {
+      type,
+      rotation: 0,
+      x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
+      y: type === 'I' ? -2 : -1, // Start higher to match new spawn position
+    };
+    setCurrentPiece(initialPiece);
+    currentPieceRef.current = initialPiece;
+    lastGravityRef.current = performance.now();
+  }, [getShape]);
 
-  // Beat timer
+  // Beat timer for rhythm game
   useEffect(() => {
-    if (!gameStarted || gameOver) return;
+    if (!isPlaying || gameOver) return;
 
     const world = WORLDS[worldIdx];
     const interval = 60000 / world.bpm;
 
-    // Initialize lastBeatRef to now so the phase calculation starts correctly
     lastBeatRef.current = Date.now();
 
     beatTimerRef.current = window.setInterval(() => {
@@ -699,11 +816,11 @@ export const Rhythmia: React.FC = () => {
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [gameStarted, gameOver, worldIdx, playDrum]);
+  }, [isPlaying, gameOver, worldIdx, playDrum]);
 
   // Beat phase animation
   useEffect(() => {
-    if (!gameStarted || gameOver) return;
+    if (!isPlaying || gameOver) return;
 
     let animFrame: number;
     const updateBeat = () => {
@@ -713,16 +830,48 @@ export const Rhythmia: React.FC = () => {
         const elapsed = Date.now() - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
         setBeatPhase(phase);
-        beatPhaseRef.current = phase;
         animFrame = requestAnimationFrame(updateBeat);
       }
     };
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [gameStarted, gameOver]);
+  }, [isPlaying, gameOver]);
 
-  // Keyboard controls
+  useEffect(() => {
+    if (!isPlaying || gameOver) return;
+    const gameLoop = (currentTime: number) => {
+      if (!isPausedRef.current && !gameOverRef.current) {
+        // Process DAS/ARR for horizontal movement
+        // Priority: most recently pressed direction wins (handled by canceling opposite on press)
+        processHorizontalDasArr('left', currentTime);
+        processHorizontalDasArr('right', currentTime);
+        
+        // Process soft drop
+        processSoftDrop(currentTime);
+
+        // Gravity
+        const speed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+        if (currentTime - lastGravityRef.current >= speed) {
+          tick();
+          lastGravityRef.current = currentTime;
+        }
+      }
+
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    lastGravityRef.current = performance.now();
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop]);
+
+  // Key handlers with proper DAS/ARR initialization
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent key repeat events
@@ -798,65 +947,87 @@ export const Rhythmia: React.FC = () => {
     };
   }, [move, rotatePiece, hardDrop]);
 
-  // Update cell size on resize
-  useEffect(() => {
-    const updateCellSize = () => {
-      if (boardRef.current) {
-        const cell = boardRef.current.querySelector(`.${styles.cell}`) as HTMLElement;
-        if (cell) {
-          cellSizeRef.current = cell.getBoundingClientRect().width;
-        }
-      }
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
+  }, [isPlaying, isPaused, gameOver, movePiece, rotatePiece, hardDrop]);
 
-    updateCellSize();
-    window.addEventListener('resize', updateCellSize);
-    return () => window.removeEventListener('resize', updateCellSize);
-  }, [gameStarted]);
-
-  // ===== Render Helpers =====
-  const getDisplayBoard = useCallback(() => {
-    const display = board.map(r => r.map(c => c ? { ... c } : null));
-
-    // Ghost position
-    if (piece) {
-      let gy = piecePos.y;
-      while (! collision(piece, piecePos.x, gy + 1, board)) gy++;
-
-      piece.shape.forEach((row, py) => {
-        row.forEach((val, px) => {
-          if (val) {
-            const by = gy + py, bx = piecePos.x + px;
-            if (by >= 0 && by < H && bx >= 0 && bx < W && ! display[by][bx]) {
-              display[by][bx] = { color: piece.color, ghost: true };
+  const renderBoard = () => {
+    const displayBoard = board.map(row => [...row]);
+    
+    if (currentPiece) {
+      const shape = getShape(currentPiece.type, currentPiece.rotation);
+      
+      // Add ghost piece first
+      let ghostY = currentPiece.y;
+      while (isValidPosition({ ...currentPiece, y: ghostY + 1 }, board)) {
+        ghostY++;
+      }
+      if (ghostY !== currentPiece.y) {
+        for (let y = 0; y < shape.length; y++) {
+          for (let x = 0; x < shape[y].length; x++) {
+            if (shape[y][x]) {
+              const boardY = ghostY + y;
+              const boardX = currentPiece.x + x;
+              if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                if (displayBoard[boardY][boardX] === null) {
+                  displayBoard[boardY][boardX] = `ghost-${currentPiece.type}`;
+                }
+              }
             }
           }
-        });
-      });
+        }
+      }
+
+      // Add current piece on top
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const boardY = currentPiece.y + y;
+            const boardX = currentPiece.x + x;
+            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+              displayBoard[boardY][boardX] = currentPiece.type;
+            }
+          }
+        }
+      }
     }
+    
+    return displayBoard;
+  };
 
-    return display;
-  }, [board, piece, piecePos, collision]);
+  const renderNextPiece = () => {
+    const shape = getShape(nextPiece, 0);
+    
+    return (
+      <div 
+        className={styles.next}
+        style={{ gridTemplateColumns: `repeat(${shape[0].length}, 1fr)` }}
+      >
+        {shape.flat().map((val, i) => (
+          <div
+            key={i}
+            className={styles.nextCell}
+            style={val ? { 
+              backgroundColor: COLORS[nextPiece], 
+              boxShadow: `0 0 8px ${COLORS[nextPiece]}` 
+            } : {}}
+          />
+        ))}
+      </div>
+    );
+  };
 
-  const handleControlClick = useCallback((action: string) => {
-    switch (action) {
-      case 'left': move(-1, 0); break;
-      case 'right': move(1, 0); break;
-      case 'down': move(0, 1); break;
-      case 'rotate': rotatePiece(1); break;
-      case 'rotateLeft': rotatePiece(-1); break;
-      case 'drop': hardDrop(); break;
-    }
-  }, [move, rotatePiece, hardDrop]);
-
+  const displayBoard = renderBoard();
   const world = WORLDS[worldIdx];
-  const displayBoard = getDisplayBoard();
-  const unit = cellSizeRef.current + 1;
 
   return (
     <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
       {/* Title Screen */}
-      {! gameStarted && (
+      {!isPlaying && !gameOver && (
         <div className={styles.titleScreen}>
           <h1>RHYTHMIA</h1>
           <p>リズムに乗ってブロックを積め！</p>
@@ -865,16 +1036,16 @@ export const Rhythmia: React.FC = () => {
       )}
 
       {/* Game */}
-      {gameStarted && (
-        <div className={styles. game}>
+      {(isPlaying || gameOver) && (
+        <div className={styles.game}>
           <div className={styles.worldDisplay}>{world.name}</div>
 
           <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
-            {score. toLocaleString()}
+            {score.toLocaleString()}
           </div>
 
           <div className={`${styles.combo} ${combo >= 2 ? styles.show : ''} ${combo >= 5 ? styles.big : ''}`}>
-            {combo} COMBO! 
+            {combo} COMBO!
           </div>
 
           <div className={styles.enemyLabel}>👻 ノイズリング</div>
@@ -883,74 +1054,48 @@ export const Rhythmia: React.FC = () => {
           </div>
 
           <div className={styles.gameArea}>
-            <div
-              ref={boardRef}
-              className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}
-            >
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
+            <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}>
                 {displayBoard.flat().map((cell, i) => {
-                  const y = Math.floor(i / W);
-                  const isClearing = clearingRows.includes(y);
+                  const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
+                  const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
+                  
                   return (
                     <div
                       key={i}
-                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?. ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
-                      style={cell ? { backgroundColor: cell.color, color: cell.color } : {}}
+                      className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''}`}
+                      style={cell && !isGhost ? { 
+                        backgroundColor: COLORS[pieceType as string], 
+                        boxShadow: `0 0 8px ${COLORS[pieceType as string]}` 
+                      } : isGhost ? {
+                        borderColor: `${COLORS[pieceType as string]}60`
+                      } : {}}
                     />
                   );
                 })}
               </div>
 
-              {/* Active Piece */}
-              {piece && (
-                <div
-                  className={styles.activePiece}
-                  style={{ transform: `translate(${piecePos.x * unit}px, ${piecePos.y * unit}px)` }}
-                >
-                  {piece.shape.map((row, py) =>
-                    row.map((val, px) =>
-                      val ? (
-                        <div
-                          key={`${py}-${px}`}
-                          className={styles.pieceCell}
-                          style={{
-                            width: cellSizeRef.current,
-                            height: cellSizeRef.current,
-                            backgroundColor: piece.color,
-                            color: piece.color,
-                            left: px * unit,
-                            top: py * unit,
-                          }}
-                        />
-                      ) : null
-                    )
-                  )}
+              {/* Overlay for Game Over / Paused */}
+              {(gameOver || isPaused) && (
+                <div className={styles.gameover} style={{ display: 'flex' }}>
+                  <h2>{gameOver ? 'GAME OVER' : 'PAUSED'}</h2>
+                  <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
+                  <button className={styles.restartBtn} onClick={startGame}>
+                    {gameOver ? 'もう一度' : 'Resume'}
+                  </button>
                 </div>
               )}
             </div>
 
             <div className={styles.nextWrap}>
               <div className={styles.nextLabel}>NEXT</div>
-              {nextPiece && (
-                <div
-                  className={styles.next}
-                  style={{ gridTemplateColumns: `repeat(${nextPiece.shape[0]. length}, 1fr)` }}
-                >
-                  {nextPiece.shape.flat().map((val, i) => (
-                    <div
-                      key={i}
-                      className={styles.nextCell}
-                      style={val ? { backgroundColor: nextPiece.color, boxShadow: `0 0 8px ${nextPiece.color}` } : {}}
-                    />
-                  ))}
-                </div>
-              )}
+              {renderNextPiece()}
             </div>
           </div>
 
           <div className={styles.beatBar}>
             <div className={styles.beatTarget} />
-            <div className={styles. beatFill} style={{ width: `${beatPhase * 100}%` }} />
+            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
           <div className={styles.controls}>
@@ -958,8 +1103,23 @@ export const Rhythmia: React.FC = () => {
               <button
                 key={action}
                 className={styles.ctrlBtn}
-                onTouchEnd={(e) => { e.preventDefault(); handleControlClick(action); }}
-                onClick={() => handleControlClick(action)}
+                onTouchEnd={(e) => { 
+                  e.preventDefault(); 
+                  if (action === 'left') movePiece(-1, 0);
+                  else if (action === 'right') movePiece(1, 0);
+                  else if (action === 'down') movePiece(0, 1);
+                  else if (action === 'rotate') rotatePiece(1);
+                  else if (action === 'rotateLeft') rotatePiece(-1);
+                  else if (action === 'drop') hardDrop();
+                }}
+                onClick={() => {
+                  if (action === 'left') movePiece(-1, 0);
+                  else if (action === 'right') movePiece(1, 0);
+                  else if (action === 'down') movePiece(0, 1);
+                  else if (action === 'rotate') rotatePiece(1);
+                  else if (action === 'rotateLeft') rotatePiece(-1);
+                  else if (action === 'drop') hardDrop();
+                }}
               >
                 {action === 'rotate' ? '↻' : 
                  action === 'rotateLeft' ? '↺' : 
@@ -968,6 +1128,12 @@ export const Rhythmia: React.FC = () => {
                  action === 'right' ? '→' : '⬇'}
               </button>
             ))}
+          </div>
+
+          {/* Stats Panel */}
+          <div className={styles.statsPanel || 'flex gap-4 mt-4 text-white text-sm'}>
+            <div>LINES: {lines}</div>
+            <div>LEVEL: {level}</div>
           </div>
         </div>
       )}
@@ -979,17 +1145,6 @@ export const Rhythmia: React.FC = () => {
       >
         {judgmentText}
       </div>
-
-      {/* Game Over */}
-      {showGameOver && (
-        <div className={`${styles.gameover} ${styles.show}`}>
-          <h2>GAME OVER</h2>
-          <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-          <button className={styles.restartBtn} onClick={startGame}>もう一度</button>
-        </div>
-      )}
     </div>
   );
-};
-
-export default Rhythmia;
+}
