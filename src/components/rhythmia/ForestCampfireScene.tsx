@@ -8,58 +8,58 @@ import styles from './rhythmia.module.css';
  * Low-poly forest environment with animated campfire and depth blur
  */
 export default function ForestCampfireScene() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const animationFrameRef = useRef<number>();
-    const deviceRef = useRef<GPUDevice | null>(null);
-    const contextRef = useRef<GPUCanvasContext | null>(null);
-    const pipelineRef = useRef<GPURenderPipeline | null>(null);
-    const uniformBufferRef = useRef<GPUBuffer | null>(null);
-    const bindGroupRef = useRef<GPUBindGroup | null>(null);
-    const startTimeRef = useRef<number>(Date.now());
-    const resolutionRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = useRef<number>();
+  const deviceRef = useRef<GPUDevice | null>(null);
+  const contextRef = useRef<GPUCanvasContext | null>(null);
+  const pipelineRef = useRef<GPURenderPipeline | null>(null);
+  const uniformBufferRef = useRef<GPUBuffer | null>(null);
+  const bindGroupRef = useRef<GPUBindGroup | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+  const resolutionRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-        let mounted = true;
-        let cleanupResize: (() => void) | null = null;
+    let mounted = true;
+    let cleanupResize: (() => void) | null = null;
 
-        const init = async () => {
-            // Check for WebGPU support
-            if (!navigator.gpu) {
-                console.log('WebGPU not supported, using CSS fallback');
-                return;
-            }
+    const init = async () => {
+      // Check for WebGPU support
+      if (!navigator.gpu) {
+        console.log('WebGPU not supported, using CSS fallback');
+        return;
+      }
 
-            try {
-                const adapter = await navigator.gpu.requestAdapter();
-                if (!adapter) {
-                    console.log('No WebGPU adapter found');
-                    return;
-                }
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+          console.log('No WebGPU adapter found');
+          return;
+        }
 
-                const device = await adapter.requestDevice();
-                if (!mounted) return;
+        const device = await adapter.requestDevice();
+        if (!mounted) return;
 
-                deviceRef.current = device;
+        deviceRef.current = device;
 
-                const context = canvas.getContext('webgpu');
-                if (!context) {
-                    console.log('Could not get WebGPU context');
-                    return;
-                }
-                contextRef.current = context;
+        const context = canvas.getContext('webgpu');
+        if (!context) {
+          console.log('Could not get WebGPU context');
+          return;
+        }
+        contextRef.current = context;
 
-                const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-                context.configure({
-                    device,
-                    format: presentationFormat,
-                    alphaMode: 'premultiplied',
-                });
+        const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        context.configure({
+          device,
+          format: presentationFormat,
+          alphaMode: 'premultiplied',
+        });
 
-                // Forest Campfire Shader with Low-Poly Aesthetics and Depth Blur
-                const shaderCode = `
+        // Forest Campfire Shader with Low-Poly Aesthetics and Depth Blur
+        const shaderCode = `
           struct Uniforms {
             time: f32,
             _padding: f32,
@@ -267,8 +267,8 @@ export default function ForestCampfireScene() {
             if (blur < 0.3) {
               for (var i = 0; i < 20; i++) {
                 let fi = f32(i);
-                let starPos = hash2(vec2<f32>(fi * 13.7, fi * 7.3));
-                starPos.y = starPos.y * 0.5 + 0.5; // Upper half only
+                let starSeed = hash2(vec2<f32>(fi * 13.7, fi * 7.3));
+                let starPos = vec2<f32>(starSeed.x, starSeed.y * 0.5 + 0.5); // Upper half only
                 let twinkle = 0.5 + 0.5 * sin(time * (2.0 + fi * 0.5));
                 let star = smoothstep(0.003, 0.0, length(uv - starPos)) * twinkle;
                 color += vec3<f32>(0.8, 0.85, 1.0) * star * (1.0 - blur);
@@ -431,150 +431,150 @@ export default function ForestCampfireScene() {
           }
         `;
 
-                const shaderModule = device.createShaderModule({
-                    code: shaderCode,
-                });
+        const shaderModule = device.createShaderModule({
+          code: shaderCode,
+        });
 
-                const uniformBuffer = device.createBuffer({
-                    size: 16,
-                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                });
-                uniformBufferRef.current = uniformBuffer;
+        const uniformBuffer = device.createBuffer({
+          size: 16,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        uniformBufferRef.current = uniformBuffer;
 
-                const bindGroupLayout = device.createBindGroupLayout({
-                    entries: [
-                        {
-                            binding: 0,
-                            visibility: GPUShaderStage.FRAGMENT,
-                            buffer: { type: 'uniform' },
-                        },
-                    ],
-                });
+        const bindGroupLayout = device.createBindGroupLayout({
+          entries: [
+            {
+              binding: 0,
+              visibility: GPUShaderStage.FRAGMENT,
+              buffer: { type: 'uniform' },
+            },
+          ],
+        });
 
-                const bindGroup = device.createBindGroup({
-                    layout: bindGroupLayout,
-                    entries: [
-                        {
-                            binding: 0,
-                            resource: { buffer: uniformBuffer },
-                        },
-                    ],
-                });
-                bindGroupRef.current = bindGroup;
+        const bindGroup = device.createBindGroup({
+          layout: bindGroupLayout,
+          entries: [
+            {
+              binding: 0,
+              resource: { buffer: uniformBuffer },
+            },
+          ],
+        });
+        bindGroupRef.current = bindGroup;
 
-                const pipeline = device.createRenderPipeline({
-                    layout: device.createPipelineLayout({
-                        bindGroupLayouts: [bindGroupLayout],
-                    }),
-                    vertex: {
-                        module: shaderModule,
-                        entryPoint: 'vertexMain',
-                    },
-                    fragment: {
-                        module: shaderModule,
-                        entryPoint: 'fragmentMain',
-                        targets: [
-                            {
-                                format: presentationFormat,
-                                blend: {
-                                    color: {
-                                        srcFactor: 'src-alpha',
-                                        dstFactor: 'one-minus-src-alpha',
-                                        operation: 'add',
-                                    },
-                                    alpha: {
-                                        srcFactor: 'one',
-                                        dstFactor: 'one-minus-src-alpha',
-                                        operation: 'add',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                    primitive: {
-                        topology: 'triangle-list',
-                    },
-                });
-                pipelineRef.current = pipeline;
+        const pipeline = device.createRenderPipeline({
+          layout: device.createPipelineLayout({
+            bindGroupLayouts: [bindGroupLayout],
+          }),
+          vertex: {
+            module: shaderModule,
+            entryPoint: 'vertexMain',
+          },
+          fragment: {
+            module: shaderModule,
+            entryPoint: 'fragmentMain',
+            targets: [
+              {
+                format: presentationFormat,
+                blend: {
+                  color: {
+                    srcFactor: 'src-alpha',
+                    dstFactor: 'one-minus-src-alpha',
+                    operation: 'add',
+                  },
+                  alpha: {
+                    srcFactor: 'one',
+                    dstFactor: 'one-minus-src-alpha',
+                    operation: 'add',
+                  },
+                },
+              },
+            ],
+          },
+          primitive: {
+            topology: 'triangle-list',
+          },
+        });
+        pipelineRef.current = pipeline;
 
-                const handleResize = () => {
-                    if (!canvas || !mounted) return;
-                    const dpr = window.devicePixelRatio || 1;
-                    canvas.width = canvas.clientWidth * dpr;
-                    canvas.height = canvas.clientHeight * dpr;
-                    resolutionRef.current = { width: canvas.width, height: canvas.height };
-                };
-
-                handleResize();
-                window.addEventListener('resize', handleResize);
-
-                cleanupResize = () => {
-                    window.removeEventListener('resize', handleResize);
-                };
-
-                const render = () => {
-                    if (!mounted || !device || !context || !pipeline || !uniformBuffer || !bindGroup) {
-                        return;
-                    }
-
-                    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-
-                    const uniformData = new Float32Array([
-                        elapsed,
-                        0,
-                        resolutionRef.current.width,
-                        resolutionRef.current.height,
-                    ]);
-                    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
-
-                    const commandEncoder = device.createCommandEncoder();
-                    const textureView = context.getCurrentTexture().createView();
-
-                    const renderPass = commandEncoder.beginRenderPass({
-                        colorAttachments: [
-                            {
-                                view: textureView,
-                                clearValue: { r: 0.02, g: 0.03, b: 0.05, a: 1.0 },
-                                loadOp: 'clear',
-                                storeOp: 'store',
-                            },
-                        ],
-                    });
-
-                    renderPass.setPipeline(pipeline);
-                    renderPass.setBindGroup(0, bindGroup);
-                    renderPass.draw(6);
-                    renderPass.end();
-
-                    device.queue.submit([commandEncoder.finish()]);
-
-                    animationFrameRef.current = requestAnimationFrame(render);
-                };
-
-                render();
-            } catch (error) {
-                console.error('WebGPU initialization failed:', error);
-            }
+        const handleResize = () => {
+          if (!canvas || !mounted) return;
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = canvas.clientWidth * dpr;
+          canvas.height = canvas.clientHeight * dpr;
+          resolutionRef.current = { width: canvas.width, height: canvas.height };
         };
 
-        init();
+        handleResize();
+        window.addEventListener('resize', handleResize);
 
-        return () => {
-            mounted = false;
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-            }
-            if (cleanupResize) {
-                cleanupResize();
-            }
+        cleanupResize = () => {
+          window.removeEventListener('resize', handleResize);
         };
-    }, []);
 
-    return (
-        <canvas
-            ref={canvasRef}
-            className={styles.webgpuStage}
-            aria-hidden="true"
-        />
-    );
+        const render = () => {
+          if (!mounted || !device || !context || !pipeline || !uniformBuffer || !bindGroup) {
+            return;
+          }
+
+          const elapsed = (Date.now() - startTimeRef.current) / 1000;
+
+          const uniformData = new Float32Array([
+            elapsed,
+            0,
+            resolutionRef.current.width,
+            resolutionRef.current.height,
+          ]);
+          device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+          const commandEncoder = device.createCommandEncoder();
+          const textureView = context.getCurrentTexture().createView();
+
+          const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [
+              {
+                view: textureView,
+                clearValue: { r: 0.02, g: 0.03, b: 0.05, a: 1.0 },
+                loadOp: 'clear',
+                storeOp: 'store',
+              },
+            ],
+          });
+
+          renderPass.setPipeline(pipeline);
+          renderPass.setBindGroup(0, bindGroup);
+          renderPass.draw(6);
+          renderPass.end();
+
+          device.queue.submit([commandEncoder.finish()]);
+
+          animationFrameRef.current = requestAnimationFrame(render);
+        };
+
+        render();
+      } catch (error) {
+        console.error('WebGPU initialization failed:', error);
+      }
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (cleanupResize) {
+        cleanupResize();
+      }
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={styles.webgpuStage}
+      aria-hidden="true"
+    />
+  );
 }
