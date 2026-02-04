@@ -1,5 +1,7 @@
 # Azuret.me
 
+> **📌 Project Split Planning**: This repository contains documentation for splitting into two focused projects (personal website + Discord bot dashboard). See [SPLIT_SUMMARY.md](./SPLIT_SUMMARY.md) for details. Current status: **Documentation complete, implementation pending**.
+
 様々なページあるので現在の用途を説明.
 Explaining current situation below since there are several pages.
 
@@ -136,4 +138,28 @@ The page will:
 - Query Firestore for matching members
 - Subscribe to real-time updates via `onSnapshot`
 - Display a modern glass-morphic rank card with XP progress
+
+---
+
+## 📂 Project Split Documentation
+
+This repository is being planned for a split into two focused projects for better management:
+
+- **Azuret.me** (Personal Website) - Homepage, portfolio, blog
+- **Discord-Bot-Dashboard** (New Repo) - Discord features, rank cards, role selection
+
+### Split Documentation Files:
+
+1. **[SPLIT_SUMMARY.md](./SPLIT_SUMMARY.md)** - Executive summary and decision points
+2. **[SPLIT_QUICKSTART.md](./SPLIT_QUICKSTART.md)** - Quick implementation guide
+3. **[SPLIT_ARCHITECTURE.md](./SPLIT_ARCHITECTURE.md)** - Visual diagrams and architecture
+4. **[PROJECT_SPLIT_GUIDE.md](./PROJECT_SPLIT_GUIDE.md)** - Detailed 3-phase migration plan
+5. **[SPLIT_CHECKLIST.md](./SPLIT_CHECKLIST.md)** - 100+ item implementation checklist
+
+**Status**: 📝 Documentation complete, implementation pending
+
+**Benefits**: Better security, smaller bundles, independent deployment, clearer organization
+
+**Next Steps**: Review documentation and decide when to implement the split.
+
 
