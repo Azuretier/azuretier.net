@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './VanillaGame.module.css';
 
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
-
 // Tetromino definitions with all 4 rotation states (0, R, 2, L)
 // Using SRS (Super Rotation System) - the standard Tetris rotation system
 const TETROMINOES: Record<string, number[][][]> = {
@@ -50,31 +48,6 @@ const TETROMINOES: Record<string, number[][][]> = {
   ],
 };
 
-// SRS Wall Kick Data
-// Format: [dx, dy] offsets to try when rotation fails
-// Tests are tried in order until one succeeds
-const WALL_KICKS_JLSTZ: Record<string, [number, number][]> = {
-  '0->R': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
-  'R->2': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
-  '2->L': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
-  'L->0': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
-  'R->0': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
-  '2->R': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
-  'L->2': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
-  '0->L': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
-};
-
-const WALL_KICKS_I: Record<string, [number, number][]> = {
-  '0->R': [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
-  'R->2': [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
-  '2->L': [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
-  'L->0': [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
-  'R->0': [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
-  '2->R': [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
-  'L->2': [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
-  '0->L': [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
-};
-
 const COLORS: Record<string, string> = {
   I: '#00f0f0',
   O: '#f0f000',
@@ -110,9 +83,6 @@ const DEFAULT_SDF = 50;
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 
-// Board cell stores piece type or null.
-type PieceCell = PieceType | null;
-
 type Piece = {
   type: PieceType;
   rotation: number;
@@ -129,27 +99,13 @@ type KeyState = {
   pressTime: number;
 };
 
-const rotationNames = ['0', 'R', '2', 'L'];
-
-const createEmptyBoard = (): PieceCell[][] =>
+const createEmptyBoard = (): (PieceType | null)[][] =>
   Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 
 const getRandomPiece = (): PieceType => {
   const pieces: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
   return pieces[Math.floor(Math.random() * pieces.length)];
 };
-
-const SHAPES = [
-  [[1, 1, 1, 1]],        // I
-  [[1, 1], [1, 1]],      // O
-  [[0, 1, 0], [1, 1, 1]], // T
-  [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S - 3x3 for proper center rotation
-  [[1, 1, 0], [0, 1, 1], [0, 0, 0]], // Z - 3x3 for proper center rotation
-  [[1, 0, 0], [1, 1, 1]], // L
-  [[0, 0, 1], [1, 1, 1]], // J
-];
-
-const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
 // SRS Wall Kick Data - Using rotation state names ('0', 'R', '2', 'L')
 // Format: [dx, dy] offsets to try when rotation fails
@@ -181,7 +137,7 @@ const WALL_KICK_I: Record<string, [number, number][]> = {
 };
 
 export default function Rhythmia() {
-  const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
+  const [board, setBoard] = useState<(PieceType | null)[][]>(createEmptyBoard());
   const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
   const [nextPiece, setNextPiece] = useState<string>(getRandomPiece());
   const [score, setScore] = useState(0);
@@ -200,8 +156,6 @@ export default function Rhythmia() {
   const [judgmentColor, setJudgmentColor] = useState('');
   const [showJudgmentAnim, setShowJudgmentAnim] = useState(false);
   const [boardBeat, setBoardBeat] = useState(false);
-  const [boardShake, setBoardShake] = useState(false);
-  const [scorePop, setScorePop] = useState(false);
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
   
   // Refs for accessing current values in callbacks (avoids stale closures)
@@ -210,9 +164,6 @@ export default function Rhythmia() {
   const lastBeatRef = useRef(Date.now());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const nextPieceRef = useRef(nextPiece);
-  const comboRef = useRef(combo);
-  const linesRef = useRef(lines);
-  
   // DAS/ARR/SDF settings (adjustable)
   const [das, setDas] = useState(DEFAULT_DAS);
   const [arr, setArr] = useState(DEFAULT_ARR);
@@ -220,9 +171,7 @@ export default function Rhythmia() {
   
   const lastGravityRef = useRef<number>(0);
   const currentPieceRef = useRef<Piece | null>(null);
-  const boardRef = useRef<(string | null)[][]>(createEmptyBoard());
-  const scoreRef = useRef(0);
-  
+  const boardRef = useRef<(PieceType | null)[][]>(createEmptyBoard());
   // Key states for DAS/ARR
   const keyStatesRef = useRef<Record<string, KeyState>>({
     left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
@@ -238,22 +187,14 @@ export default function Rhythmia() {
   const gameOverRef = useRef(gameOver);
   const isPausedRef = useRef(isPaused);
   const worldIdxRef = useRef(worldIdx);
-  const enemyHPRef = useRef(enemyHP);
   const beatPhaseRef = useRef(beatPhase);
-  const keysPressed = useRef<Set<string>>(new Set());
-  const softDropInterval = useRef<number | null>(null);
-  const moveRepeatTimeout = useRef<number | null>(null);
-  const moveRepeatInterval = useRef<number | null>(null);
+  const comboRef = useRef(combo);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
 
   // Keep refs in sync with state
-  useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
   useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { nextPieceRef.current = nextPiece; }, [nextPiece]);
-  useEffect(() => { scoreRef.current = score; }, [score]);
-  useEffect(() => { comboRef.current = combo; }, [combo]);
-  useEffect(() => { linesRef.current = lines; }, [lines]);
   useEffect(() => { dasRef.current = das; }, [das]);
   useEffect(() => { arrRef.current = arr; }, [arr]);
   useEffect(() => { sdfRef.current = sdf; }, [sdf]);
@@ -261,7 +202,7 @@ export default function Rhythmia() {
   useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
-  useEffect(() => { enemyHPRef.current = enemyHP; }, [enemyHP]);
+  useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
   useEffect(() => { lastRotationRef.current = lastRotationWasSuccessful; }, [lastRotationWasSuccessful]);
 
@@ -303,73 +244,7 @@ export default function Rhythmia() {
     osc.stop(ctx.currentTime + 0.1);
   }, []);
 
-  const playLineClear = useCallback((count: number) => {
-    const freqs = [523, 659, 784, 1047];
-    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
-  }, [playTone]);
-
-  // ===== Particles =====
-  const spawnParticles = useCallback((x: number, y: number, color: string, count = 8) => {
-    for (let i = 0; i < count; i++) {
-      const p = document.createElement('div');
-      p.className = styles.particle;
-      const size = Math.random() * 10 + 5;
-      const angle = (Math.PI * 2 / count) * i;
-      const dist = Math.random() * 80 + 40;
-      p.style.cssText = `
-        left: ${x}px; top: ${y}px;
-        width: ${size}px; height: ${size}px;
-        background:  ${color};
-        box-shadow: 0 0 10px ${color};
-        transition: all 0.5s ease-out;
-      `;
-      document.body.appendChild(p);
-      requestAnimationFrame(() => {
-        p.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px) scale(0)`;
-        p.style.opacity = '0';
-      });
-      setTimeout(() => p.remove(), 500);
-    }
-  }, []);
-
   // ===== Game Logic =====
-  const randomPiece = useCallback((wIdx: number): Piece => {
-    const world = WORLDS[wIdx];
-    const shapeIdx = Math.floor(Math.random() * SHAPES.length);
-    const shape = SHAPES[shapeIdx];
-    const type = PIECE_TYPES[shapeIdx];
-    const color = world.colors[Math.floor(Math.random() * world.colors.length)];
-    return { shape, color, type, rotation: 0 };
-  }, []);
-
-  const collision = useCallback((p: Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
-    return p.shape.some((row, py) =>
-      row.some((val, px) => {
-        if (!val) return false;
-        const nx = x + px, ny = y + py;
-        return nx < 0 || nx >= BOARD_WIDTH || ny >= BOARD_HEIGHT || (ny >= 0 && boardState[ny] && boardState[ny][nx]);
-      })
-    );
-  }, []);
-
-  const rotate = useCallback((p: Piece): Piece => {
-    const newRotation = ((p.rotation + 1) % 4) as 0 | 1 | 2 | 3;
-    return {
-      ...p,
-      shape: p.shape[0].map((_, i) => p.shape.map(row => row[i]).reverse()),
-      rotation: newRotation,
-    };
-  }, []);
-
-  const rotateCCW = useCallback((p: Piece): Piece => {
-    const newRotation = ((p.rotation - 1 + 4) % 4) as 0 | 1 | 2 | 3;
-    return {
-      ...p,
-      shape: p.shape[0].map((_, i) => p.shape.map(row => row[row.length - 1 - i])),
-      rotation: newRotation,
-    };
-  }, []);
-
   const showJudgment = useCallback((text: string, color: string) => {
     setJudgmentText(text);
     setJudgmentColor(color);
@@ -379,32 +254,11 @@ export default function Rhythmia() {
     });
   }, []);
 
-  const updateScore = useCallback((newScore: number) => {
-    setScore(newScore);
-    setScorePop(true);
-    setTimeout(() => setScorePop(false), 100);
-  }, []);
-
-  const nextWorld = useCallback(() => {
-    const newWorldIdx = worldIdxRef.current + 1;
-    if (newWorldIdx >= WORLDS.length) {
-      showJudgment('🎉 CLEAR!', '#FFD700');
-      setTimeout(() => {
-        setWorldIdx(0);
-        setEnemyHP(100);
-      }, 2000);
-    } else {
-      showJudgment('WORLD CLEAR!', '#00FF00');
-      setWorldIdx(newWorldIdx);
-      setEnemyHP(100);
-    }
-  }, [showJudgment]);
-
   const getShape = useCallback((type: string, rotation: number) => {
     return TETROMINOES[type][rotation];
   }, []);
 
-  const isValidPosition = useCallback((piece: Piece, boardState: (string | null)[][]) => {
+  const isValidPosition = useCallback((piece: Piece, boardState: (PieceType | null)[][]) => {
     const shape = getShape(piece.type, piece.rotation);
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
@@ -423,75 +277,7 @@ export default function Rhythmia() {
     return true;
   }, [getShape]);
 
-  const getWallKicks = useCallback((type: string, fromRotation: number, toRotation: number) => {
-    const from = rotationNames[fromRotation];
-    const to = rotationNames[toRotation];
-    const key = `${from}->${to}`;
-    
-    if (type === 'I') {
-      return WALL_KICKS_I[key] || [[0, 0]];
-    } else if (type === 'O') {
-      return [[0, 0]];
-    } else {
-      return WALL_KICKS_JLSTZ[key] || [[0, 0]];
-    }
-  }, []);
-
-  // Check if a T-Spin was performed
-  // A T-Spin is detected when:
-  // 1. The piece is a T piece
-  // 2. The last action was a successful rotation
-  // 3. At least 3 of the 4 corner cells around the T's bottom center are filled or out of bounds
-  const checkTSpin = useCallback((piece: Piece, pos: { x: number; y: number }, board: (PieceCell | null)[][]): 'full' | 'mini' | null => {
-    if (piece.type !== 'T' || !lastRotationRef.current) {
-      return null;
-    }
-    
-    return newPiece;
-  }, [nextPiece, getShape, isValidPosition, board]);
-
-    // Find the bottom center of the T piece for T-spin detection
-    // The T piece rotates around its bottom axis
-    // We find the center cell (the one with 3 neighbors) and use its position
-    // but for T-spin corner checks, we use the bottom row's center as the axis
-    let centerX = -1;
-    let centerY = -1;
-    let bottomY = -1;
-    
-    // First, find the geometric center (cell with 3 neighbors)
-    for (let py = 0; py < piece.shape.length; py++) {
-      for (let px = 0; px < piece.shape[py].length; px++) {
-        if (piece.shape[py][px]) {
-          // Track the bottommost row with filled cells
-          if (pos.y + py > bottomY) {
-            bottomY = pos.y + py;
-          }
-          
-          // Count neighbors
-          let neighbors = 0;
-          // Check up, down, left, right
-          if (py > 0 && piece.shape[py - 1][px]) neighbors++;
-          if (py < piece.shape.length - 1 && piece.shape[py + 1][px]) neighbors++;
-          if (px > 0 && piece.shape[py][px - 1]) neighbors++;
-          if (px < piece.shape[py].length - 1 && piece.shape[py][px + 1]) neighbors++;
-          
-          // The center of T has exactly 3 neighbors
-          if (neighbors === 3) {
-            centerX = pos.x + px;
-            centerY = pos.y + py;
-          }
-        }
-      }
-    }
-    
-    // Use the center X but bottom Y for T-spin axis
-    if (centerX !== -1 && bottomY !== -1) {
-      centerY = bottomY;
-    }
-    return newBoard;
-  }, [getShape]);
-
-  const clearLines = useCallback((boardState: (string | null)[][]) => {
+  const clearLines = useCallback((boardState: (PieceType | null)[][]) => {
     const newBoard = boardState.filter(row => row.some(cell => cell === null));
     const clearedLines = BOARD_HEIGHT - newBoard.length;
     
@@ -501,6 +287,46 @@ export default function Rhythmia() {
     
     return { newBoard, clearedLines };
   }, []);
+
+  // Uses refs/stable setters for next piece/board to avoid extra dependencies (nextPieceRef/boardRef).
+  const spawnPiece = useCallback((): Piece => {
+    const type = nextPieceRef.current;
+    const shape = getShape(type, 0);
+    const newPiece: Piece = {
+      type,
+      rotation: 0,
+      x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
+      y: type === 'I' ? -2 : -1,
+      shape,
+    };
+
+    setNextPiece(getRandomPiece());
+
+    if (!isValidPosition(newPiece, boardRef.current)) {
+      setGameOver(true);
+      setIsPlaying(false);
+    }
+
+    return newPiece;
+  }, [getShape, isValidPosition, getRandomPiece]);
+
+  const lockPiece = useCallback((piece: Piece, boardState: (PieceType | null)[][]) => {
+    const newBoard = boardState.map(row => [...row]);
+    const shape = getShape(piece.type, piece.rotation);
+
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x]) {
+          const boardY = piece.y + y;
+          const boardX = piece.x + x;
+          if (boardY >= 0 && boardY < BOARD_HEIGHT) {
+            newBoard[boardY][boardX] = piece.type;
+          }
+        }
+      }
+    }
+    return newBoard;
+  }, [getShape]);
 
   const movePiece = useCallback((dx: number, dy: number) => {
     if (!currentPiece || gameOver || isPaused) return false;
@@ -584,96 +410,6 @@ export default function Rhythmia() {
     }
   }, [movePiece]);
 
-  const rotatePiece = useCallback((direction: 1 | -1) => {
-    if (!currentPiece || gameOver || isPaused) return;
-    const piece = currentPieceRef.current;
-    if (!piece || gameOverRef.current || isPausedRef.current) return;
-    
-    const rotatedPiece = tryRotation(piece, direction, boardRef.current);
-    if (rotatedPiece) {
-      setCurrentPiece(rotatedPiece);
-      currentPieceRef.current = rotatedPiece;
-    }
-  }, [currentPiece, board, tryRotation, gameOver, isPaused]);
-
-  const hardDrop = useCallback(() => {
-    if (!currentPiece || gameOver || isPaused) return;
-    const piece = currentPieceRef.current;
-    if (!piece || gameOverRef.current || isPausedRef.current) return;
-    
-    let newPiece = { ...piece };
-    let dropDistance = 0;
-    
-    while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
-      newPiece.y++;
-      dropDistance++;
-    }
-
-    // Beat judgment
-    const currentBeatPhase = beatPhaseRef.current;
-    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
-    let mult = 1;
-    
-    if (onBeat) {
-      mult = 2;
-      const newCombo = comboRef.current + 1;
-      setCombo(newCombo);
-      showJudgment('PERFECT!', '#FFD700');
-      playTone(1047, 0.2, 'triangle');
-    } else {
-      setCombo(0);
-    }
-    
-    const newBoard = lockPiece(newPiece, boardRef.current);
-    
-    const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
-    
-    setBoard(clearedBoard);
-
-    // Calculate score with rhythm multiplier
-    const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * (level);
-    const finalScore = baseScore * mult * Math.max(1, comboRef.current);
-    updateScore(scoreRef.current + finalScore);
-    
-    // Enemy damage
-    if (clearedLines > 0) {
-      const damage = clearedLines * 8 * mult;
-      const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
-      setEnemyHP(newEnemyHP);
-      
-      if (newEnemyHP <= 0) {
-        nextWorld();
-      }
-      
-      playLineClear(clearedLines);
-      setBoardShake(true);
-      setTimeout(() => setBoardShake(false), 200);
-    }
-  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard, checkTSpin]);
-
-  const move = useCallback((dx: number, dy: number) => {
-    if (gameOverRef.current || !pieceRef.current) return;
-
-    const currentPiece = pieceRef.current;
-    const currentPos = piecePosRef.current;
-    const currentBoard = boardStateRef.current;
-
-    // Movement resets the rotation flag
-    if (dx !== 0 || dy > 0) {
-      setLastRotationWasSuccessful(false);
-      lastRotationRef.current = false;
-    }
-
-    if (!collision(currentPiece, currentPos.x + dx, currentPos.y + dy, currentBoard)) {
-      const newPos = { x: currentPos.x + dx, y: currentPos.y + dy };
-      setPiecePos(newPos);
-      piecePosRef.current = newPos;
-      if (dx !== 0) playTone(392, 0.05, 'square');
-    } else if (dy > 0) {
-      lock();
-    }
-  }, [collision, playTone, lock]);
-
   // Get wall kicks for a specific rotation transition
   const getWallKicks = useCallback((type: PieceType, fromRotation: number, toRotation: number): [number, number][] => {
     const from = ROTATION_NAMES[fromRotation];
@@ -690,67 +426,81 @@ export default function Rhythmia() {
   }, []);
 
   const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
-    if (gameOverRef.current || !pieceRef.current) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
 
-    const currentPiece = pieceRef.current;
-    const currentPos = piecePosRef.current;
-    const currentBoard = boardStateRef.current;
+    const fromRotation = piece.rotation;
+    const toRotation = (piece.rotation + direction + 4) % 4;
+    const kicks = getWallKicks(piece.type, fromRotation, toRotation);
 
-    // Get the rotated piece
-    const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
-    
-    // Calculate rotation indices
-    const fromRotation = currentPiece.rotation;
-    const toRotation = rotated.rotation;
-    
-    // Get SRS wall kick tests for this rotation
-    const kicks = getWallKicks(currentPiece.type, fromRotation, toRotation);
-
-    // Try each kick offset until one succeeds
     for (const [dx, dy] of kicks) {
-      // SRS uses inverted Y for kicks, so we negate dy
-      const testX = currentPos.x + dx;
-      const testY = currentPos.y - dy;
-      
-      if (!collision(rotated, testX, testY, currentBoard)) {
-        // Success! Update position and piece
-        const newPos = { x: testX, y: testY };
-        
-        setPiece(rotated);
-        pieceRef.current = rotated;
-        setPiecePos(newPos);
-        piecePosRef.current = newPos;
-        
+      const testPiece: Piece = {
+        ...piece,
+        rotation: toRotation,
+        x: piece.x + dx,
+        y: piece.y - dy,
+        shape: getShape(piece.type, toRotation),
+      };
+
+      if (isValidPosition(testPiece, boardRef.current)) {
+        setCurrentPiece(testPiece);
+        currentPieceRef.current = testPiece;
         playTone(direction === 1 ? 523 : 440, 0.08);
         setLastRotationWasSuccessful(true);
-        lastRotationRef.current = true; // For T-Spin detection
-        return; 
+        lastRotationRef.current = true;
+        return;
       }
     }
-    
-    // If we reach here, no kicks worked
+
     setLastRotationWasSuccessful(false);
     lastRotationRef.current = false;
-  }, [rotate, rotateCCW, collision, playTone, getWallKicks]);
+  }, [getWallKicks, getShape, isValidPosition, playTone]);
 
   const hardDrop = useCallback(() => {
-    if (gameOverRef.current || !pieceRef.current) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
 
-    const currentPiece = pieceRef.current;
-    let currentPos = {...piecePosRef.current};
-    const currentBoard = boardStateRef.current;
+    let newPiece = { ...piece };
+    let dropDistance = 0;
 
-    while (!collision(currentPiece, currentPos.x, currentPos.y + 1, currentBoard)) {
-      currentPos.y++;
+    while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
+      newPiece.y++;
+      dropDistance++;
     }
 
-    setPiecePos(currentPos);
-    piecePosRef.current = currentPos;
+    const currentBeatPhase = beatPhaseRef.current;
+    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+    let mult = 1;
+
+    if (onBeat) {
+      mult = 2;
+      const newCombo = comboRef.current + 1;
+      setCombo(newCombo);
+      showJudgment('PERFECT!', '#FFD700');
+      playTone(1047, 0.2, 'triangle');
+    } else {
+      setCombo(0);
+    }
+
+    const newBoard = lockPiece(newPiece, boardRef.current);
+    const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
+
+    setBoard(clearedBoard);
+    boardRef.current = clearedBoard;
+    setScore(prev => prev + dropDistance * 2 + clearedLines * 100 * levelRef.current);
+    setLines(prev => {
+      const newLines = prev + clearedLines;
+      setLevel(Math.floor(newLines / 10) + 1);
+      return newLines;
+    });
+
     playTone(196, 0.1, 'sawtooth');
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
-  }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
+    setLastRotationWasSuccessful(false);
+    lastRotationRef.current = false;
+  }, [isValidPosition, lockPiece, clearLines, spawnPiece, playTone, showJudgment]);
 
   const tick = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
@@ -824,19 +574,11 @@ export default function Rhythmia() {
     const next = getRandomPiece();
     setNextPiece(next);
     
-    const type = getRandomPiece();
-    const shape = getShape(type, 0);
-    
-    const initialPiece = {
-      type,
-      rotation: 0,
-      x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-      y: type === 'I' ? -2 : -1, // Start higher to match new spawn position
-    };
+    const initialPiece = spawnPiece();
     setCurrentPiece(initialPiece);
     currentPieceRef.current = initialPiece;
     lastGravityRef.current = performance.now();
-  }, [getShape]);
+  }, [spawnPiece]);
 
   // Beat timer for rhythm game
   useEffect(() => {
@@ -915,78 +657,94 @@ export default function Rhythmia() {
   // Key handlers with proper DAS/ARR initialization
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent key repeat events
-      if (keysPressed.current.has(e.key)) return;
-      keysPressed.current.add(e.key);
+      if (!isPlaying || gameOver) return;
+      if (e.repeat) return;
+
+      const currentTime = performance.now();
 
       switch (e.key) {
         case 'ArrowLeft':
-          move(-1, 0);
-          // Start repeat interval after 150ms delay
-          moveRepeatTimeout.current = window.setTimeout(() => {
-            moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
-          }, 150);
+          e.preventDefault();
+          if (!keyStatesRef.current.left.pressed) {
+            if (keyStatesRef.current.right.pressed) {
+              keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+            }
+            keyStatesRef.current.left = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            if (!isPaused) movePiece(-1, 0);
+          }
           break;
         case 'ArrowRight':
-          move(1, 0);
-          // Start repeat interval after 150ms delay
-          moveRepeatTimeout.current = window.setTimeout(() => {
-            moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
-          }, 150);
+          e.preventDefault();
+          if (!keyStatesRef.current.right.pressed) {
+            if (keyStatesRef.current.left.pressed) {
+              keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+            }
+            keyStatesRef.current.right = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            if (!isPaused) movePiece(1, 0);
+          }
           break;
         case 'ArrowDown':
-          // Start continuous soft drop without immediate move to prevent instant lock
-          softDropInterval.current = window.setInterval(() => move(0, 1), 50);
+          e.preventDefault();
+          if (!keyStatesRef.current.down.pressed) {
+            keyStatesRef.current.down = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            if (!isPaused && movePiece(0, 1)) {
+              setScore(prev => prev + 1);
+            }
+          }
           break;
         case 'ArrowUp':
-          rotatePiece(1);
+        case 'x':
+        case 'X':
+          e.preventDefault();
+          if (!isPaused) rotatePiece(1);
           break;
         case 'z':
         case 'Z':
-          rotatePiece(-1);
+        case 'Control':
+          e.preventDefault();
+          if (!isPaused) rotatePiece(-1);
           break;
         case ' ':
           e.preventDefault();
-          hardDrop();
+          if (!isPaused) hardDrop();
+          break;
+        case 'p':
+        case 'P':
+        case 'Escape':
+          e.preventDefault();
+          setIsPaused(prev => !prev);
           break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysPressed.current.delete(e.key);
-
       switch (e.key) {
         case 'ArrowLeft':
+          keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          break;
         case 'ArrowRight':
-          if (moveRepeatTimeout.current) {
-            clearTimeout(moveRepeatTimeout.current);
-            moveRepeatTimeout.current = null;
-          }
-          if (moveRepeatInterval.current) {
-            clearInterval(moveRepeatInterval.current);
-            moveRepeatInterval.current = null;
-          }
+          keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
           break;
         case 'ArrowDown':
-          if (softDropInterval.current) {
-            clearInterval(softDropInterval.current);
-            softDropInterval.current = null;
-          }
+          keyStatesRef.current.down = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
           break;
       }
     };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-      if (softDropInterval.current) clearInterval(softDropInterval.current);
-      if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
-      if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
-    };
-  }, [move, rotatePiece, hardDrop]);
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -1081,7 +839,7 @@ export default function Rhythmia() {
         <div className={styles.game}>
           <div className={styles.worldDisplay}>{world.name}</div>
 
-          <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
+          <div className={styles.scoreDisplay}>
             {score.toLocaleString()}
           </div>
 
@@ -1095,7 +853,7 @@ export default function Rhythmia() {
           </div>
 
           <div className={styles.gameArea}>
-            <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}>
+            <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''}`}>
               <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}>
                 {displayBoard.flat().map((cell, i) => {
                   const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
