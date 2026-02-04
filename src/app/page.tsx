@@ -5,7 +5,7 @@ import styles from '../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../components/rhythmia/tetris';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
 import LifeJourney from '../components/rhythmia/LifeJourney';
-import ParticleSystem from '../components/rhythmia/ParticleSystem';
+import ForestCampfireScene from '../components/rhythmia/ForestCampfireScene';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
 
@@ -89,47 +89,38 @@ export default function RhythmiaPage() {
 
   return (
     <div className={styles.page}>
-      {/* Particle System Background */}
-      <ParticleSystem />
-      
-      {/* CSS Fallback Background effects */}
-      <div className={styles.bgGrid}></div>
-      <div className={`${styles.bgGlow} ${styles.glow1}`}></div>
-      <div className={`${styles.bgGlow} ${styles.glow2}`}></div>
-      <div className={`${styles.bgGlow} ${styles.glow3}`}></div>
-      <div className={styles.lunarHalo}></div>
-      <div className={styles.lunarRim}></div>
-      <div className={styles.lunarWall}></div>
+      {/* WebGPU Forest Campfire Background */}
+      <ForestCampfireScene />
 
       {/* Loading overlay */}
-      <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>  
+      <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>
         <div className={styles.loader}></div>
         <div className={styles.loadingText}>INITIALIZING...</div>
       </div>
 
-      <div className={styles.container}>  
-        <header className={styles.header}>  
-          <div className={styles.logo}>RHYTHMIA</div>  
-          <div className={styles.statusBar}>  
-            <div className={styles.statusItem}>  
-              <span className={styles.statusDot}></span>  
-              <span>サーバー接続中</span>  
-            </div>  
-            <div className={styles.statusItem}>  
-              <span>v2.5.0</span>  
-            </div>  
-          </div>  
-        </header>  
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div className={styles.logo}>RHYTHMIA</div>
+          <div className={styles.statusBar}>
+            <div className={styles.statusItem}>
+              <span className={styles.statusDot}></span>
+              <span>サーバー接続中</span>
+            </div>
+            <div className={styles.statusItem}>
+              <span>v2.5.0</span>
+            </div>
+          </div>
+        </header>
 
-        <main className={styles.main}>  
-          <div className={styles.heroText}>  
-            <h1>SELECT SERVER</h1>  
-            <p>サーバーを選択してプレイ開始</p>  
-          </div>  
+        <main className={styles.main}>
+          <div className={styles.heroText}>
+            <h1>SELECT SERVER</h1>
+            <p>サーバーを選択してプレイ開始</p>
+          </div>
 
-          <div className={styles.serverGrid}>  
-            {/* Vanilla Server */}  
-            <div   
+          <div className={styles.serverGrid}>
+            {/* Vanilla Server */}
+            <div
               className={`${styles.serverCard} ${styles.vanilla}`}
               onClick={() => launchGame('vanilla')}
             >
@@ -162,8 +153,8 @@ export default function RhythmiaPage() {
               <button className={styles.playButton}>▶ PLAY NOW</button>
             </div>
 
-            {/* Multiplayer Server */}  
-            <div   
+            {/* Multiplayer Server */}
+            <div
               className={`${styles.serverCard} ${styles.multiplayer}`}
               onClick={() => launchGame('multiplayer')}
             >
@@ -201,8 +192,8 @@ export default function RhythmiaPage() {
               <button className={styles.playButton}>⚔️ BATTLE NOW</button>
             </div>
 
-            {/* Modded Server */}  
-            <div   
+            {/* Modded Server */}
+            <div
               className={`${styles.serverCard} ${styles.modded} ${styles.desktopTab}`}
               onClick={() => launchGame('modded')}
             >
@@ -248,7 +239,7 @@ export default function RhythmiaPage() {
           </div>
         </main>
 
-        <footer className={styles.footer}>  
+        <footer className={styles.footer}>
           RHYTHMIA NEXUS © 2025 — PLAY YOUR RHYTHM
         </footer>
       </div>
