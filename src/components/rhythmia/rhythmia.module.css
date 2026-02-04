@@ -254,11 +254,19 @@
 .container {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
-  max-width: 100%;
-  overflow-x: hidden;
+  min-height: 100%;
+  overflow: hidden;
+  /* Standard */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* Header */
