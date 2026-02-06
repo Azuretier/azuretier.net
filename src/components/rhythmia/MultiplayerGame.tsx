@@ -90,6 +90,9 @@ export default function MultiplayerGame() {
       case 'room_created':
         playerIdRef.current = msg.playerId;
         reconnectTokenRef.current = msg.reconnectToken;
+        setRoomState(msg.roomState);
+        setMode('waiting-room');
+        setError(null);
         break;
 
       case 'joined_room':
@@ -217,7 +220,6 @@ export default function MultiplayerGame() {
       roomName: newRoomName.trim() || undefined,
       isPublic: true,
     });
-    setMode('waiting-room');
   }, [send, playerName, newRoomName]);
 
   const joinRoomByCode = useCallback(() => {

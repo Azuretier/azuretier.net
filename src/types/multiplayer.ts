@@ -107,6 +107,7 @@ export interface RoomCreatedMessage {
   type: 'room_created';
   roomCode: string;
   playerId: string;
+  roomState: RoomState;
   reconnectToken: string;
 }
 

@@ -175,10 +175,13 @@ function handleMessage(playerId: string, raw: string): void {
 
       const reconnectToken = issueReconnectToken(playerId);
 
+      const roomState = roomManager.getRoomState(roomCode);
+
       sendToPlayer(playerId, {
         type: 'room_created',
         roomCode,
         playerId: player.id,
+        roomState: roomState!,
         reconnectToken,
       });
 
