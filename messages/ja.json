@@ -1,0 +1,60 @@
+{
+    "meta": {
+        "title": "Azuretia - azuretier.netでAzuretiaをプレイ",
+        "description": "Azuretierが作成したウェブサイト。RHYTHMIAやその他のリズムゲームをプレイしよう。",
+        "ogTitle": "Azuretia - azuretier.netでAzuretiaをプレイ",
+        "ogDescription": "azuretier.netでRHYTHMIAやその他のリズムゲームをプレイ"
+    },
+    "lobby": {
+        "loading": "読み込み中",
+        "selectServer": "サーバーを選択",
+        "chooseMode": "モードを選択してください",
+        "play": "プレイ",
+        "battle": "バトル",
+        "back": "← 戻る",
+        "online": "オンライン",
+        "onlineCount": "{count} オンライン"
+    },
+    "vanilla": {
+        "badge": "公式",
+        "title": "VANILLA",
+        "gameTitle": "RHYTHMIA — VANILLA",
+        "subtitle": "オリジナル体験",
+        "description": "クラシックなRHYTHMIAゲームプレイ。リズムに合わせてブロックを積み上げ、世界を制覇しよう。",
+        "features": {
+            "worlds": "5つの世界",
+            "rhythm": "リズム",
+            "solo": "ソロ"
+        },
+        "stats": {
+            "bpmStart": "開始BPM",
+            "bpmMax": "最大BPM",
+            "levels": "レベル"
+        }
+    },
+    "multiplayer": {
+        "badge": "1v1",
+        "title": "BATTLE ARENA",
+        "gameTitle": "BATTLE ARENA — 1v1",
+        "subtitle": "マルチプレイヤー 1v1",
+        "description": "リアルタイム1v1バトル。相手にお邪魔ラインを送り込もう。最後まで立っていた者が勝利。",
+        "features": {
+            "vs": "1v1",
+            "websocket": "WebSocket",
+            "ranked": "ランク戦"
+        },
+        "stats": {
+            "mode": "モード",
+            "battle": "バトル",
+            "status": "状態"
+        }
+    },
+    "footer": {
+        "copyright": "RHYTHMIA © 2025"
+    },
+    "localeSwitcher": {
+        "label": "言語",
+        "en": "English",
+        "ja": "日本語"
+    }
+}
