@@ -89,13 +89,20 @@ interface BeatBarProps {
 }
 
 /**
- * Beat timing indicator bar
+ * Beat timing indicator bar — cursor sweeps left→right each beat interval.
+ * Two highlighted zones show the on-beat window (phase > 0.75 or < 0.15).
+ * Cursor glows gold when inside the window for clear visual feedback.
  */
 export function BeatBar({ beatPhase }: BeatBarProps) {
+    const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
     return (
         <div className={styles.beatBar}>
-            <div className={styles.beatTarget} />
-            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
+            <div className={styles.beatTargetLeft} />
+            <div className={styles.beatTargetRight} />
+            <div
+                className={`${styles.beatCursor} ${onBeat ? styles.onBeat : ''}`}
+                style={{ left: `${beatPhase * 100}%` }}
+            />
         </div>
     );
 }

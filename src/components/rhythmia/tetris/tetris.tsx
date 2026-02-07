@@ -535,7 +535,8 @@ export default function Rhythmia() {
     };
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx]);
 
-  // Beat phase animation
+  // Beat phase animation — updates ref directly for precise game-logic judgments,
+  // and sets React state so the BeatBar component re-renders with the current phase.
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
@@ -546,6 +547,7 @@ export default function Rhythmia() {
         const interval = 60000 / world.bpm;
         const elapsed = Date.now() - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
+        beatPhaseRef.current = phase;  // direct ref update for frame-precise judgments
         setBeatPhase(phase);
         animFrame = requestAnimationFrame(updateBeat);
       }
@@ -553,7 +555,7 @@ export default function Rhythmia() {
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {
