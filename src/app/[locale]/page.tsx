@@ -9,6 +9,7 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import AnimeCharacter from '../../components/character/AnimeCharacter';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -165,6 +166,16 @@ export default function RhythmiaPage() {
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
+                    </motion.div>
+
+                    {/* Mascot character */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: isLoading ? 0 : 1 }}
+                        transition={{ duration: 0.8, delay: 0.25 }}
+                        style={{ marginBottom: '24px' }}
+                    >
+                        <AnimeCharacter size={260} />
                     </motion.div>
 
                     <div className={styles.serverGrid}>
