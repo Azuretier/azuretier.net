@@ -33,9 +33,16 @@ export type GameState = {
     isPlaying: boolean;
 };
 
+// Terrain cell: color string when block is present, null when destroyed
+export type TerrainCell = string | null;
+export type TerrainGrid = TerrainCell[][];
+
 export type RhythmState = {
     worldIdx: number;
-    enemyHP: number;
+    terrainGrid: TerrainGrid;
+    terrainTotal: number;
+    terrainRemaining: number;
+    stageNumber: number;
     beatPhase: number;
     judgmentText: string;
     judgmentColor: string;

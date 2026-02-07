@@ -1,5 +1,6 @@
 import React from 'react';
-import { WORLDS, ColorTheme } from '../constants';
+import { WORLDS, ColorTheme, TERRAIN_COLS, TERRAIN_ROWS } from '../constants';
+import type { TerrainGrid } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
@@ -63,21 +64,48 @@ export function ComboDisplay({ combo }: ComboDisplayProps) {
     );
 }
 
-interface EnemyBarProps {
-    enemyHP: number;
+interface TerrainProgressProps {
+    terrainRemaining: number;
+    terrainTotal: number;
+    stageNumber: number;
 }
 
 /**
- * Enemy HP bar display
+ * Terrain destruction progress bar
  */
-export function EnemyBar({ enemyHP }: EnemyBarProps) {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }: TerrainProgressProps) {
+    const percent = terrainTotal > 0 ? (terrainRemaining / terrainTotal) * 100 : 0;
     return (
         <>
-            <div className={styles.enemyLabel}>👻 ノイズリング</div>
-            <div className={styles.enemyBar}>
-                <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — 地形破壊</div>
+            <div className={styles.terrainBar}>
+                <div className={styles.terrainFill} style={{ width: `${percent}%` }} />
             </div>
         </>
+    );
+}
+
+interface TerrainDisplayProps {
+    terrainGrid: TerrainGrid;
+}
+
+/**
+ * Renders the terrain grid behind/around the game board
+ */
+export function TerrainDisplay({ terrainGrid }: TerrainDisplayProps) {
+    return (
+        <div className={styles.terrainGrid} style={{ gridTemplateColumns: `repeat(${TERRAIN_COLS}, 1fr)` }}>
+            {terrainGrid.flat().map((cell, i) => (
+                <div
+                    key={i}
+                    className={`${styles.terrainCell} ${cell ? styles.terrainFilled : ''}`}
+                    style={cell ? {
+                        backgroundColor: cell,
+                        boxShadow: `0 0 4px ${cell}40`,
+                    } : undefined}
+                />
+            ))}
+        </div>
     );
 }
 

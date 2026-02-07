@@ -403,8 +403,8 @@
   color: #000000;
 }
 
-/* Enemy HP */
-.enemyBar {
+/* Terrain Progress Bar */
+.terrainBar {
   width: min(250px, 70vw);
   height: 8px;
   background: rgba(255, 255, 255, 0.06);
@@ -412,17 +412,52 @@
   overflow: hidden;
 }
 
-.enemyFill {
+.terrainFill {
   height: 100%;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
   transition: width 0.3s;
 }
 
-.enemyLabel {
+.terrainLabel {
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.7rem;
   text-align: center;
   letter-spacing: 0.1em;
+}
+
+/* Terrain Grid Backdrop */
+.terrainBackdrop {
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.terrainGrid {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.terrainCell {
+  width: 100%;
+  height: 100%;
+  border-radius: 1px;
+  transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+.terrainFilled {
+  opacity: 1;
+}
+
+.terrainCell:not(.terrainFilled) {
+  opacity: 0;
+  transform: scale(0);
 }
 
 /* Game over */
@@ -592,7 +627,7 @@
     height: 14px;
   }
 
-  .enemyBar {
+  .terrainBar {
     width: min(200px, 80vw);
     height: 6px;
   }
