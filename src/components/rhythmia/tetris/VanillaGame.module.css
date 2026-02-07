@@ -284,7 +284,7 @@
   border-radius: 0 8px 8px 0;
 }
 
-/* Moving cursor — no transition for frame-precise positioning */
+/* Moving cursor — positioned via CSS custom property set by rAF (no React re-render needed) */
 .beatCursor {
   position: absolute;
   top: 2px;
@@ -294,10 +294,11 @@
   border-radius: 2px;
   z-index: 2;
   transform: translateX(-50%);
+  left: calc(var(--beat-phase, 0) * 100%);
 }
 
-/* Glow when cursor is inside the on-beat window */
-.beatCursor.onBeat {
+/* On-beat glow — driven by data-onbeat attribute set in rAF loop */
+.beatBar[data-onbeat] .beatCursor {
   background: #FFD700;
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 215, 0, 0.3);
   width: 6px;

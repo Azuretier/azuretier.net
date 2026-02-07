@@ -92,6 +92,7 @@ export default function Rhythmia() {
   const audio = useAudio();
   const vfx = useRhythmVFX();
   const boardElRef = useRef<HTMLDivElement>(null);
+  const beatBarRef = useRef<HTMLDivElement>(null);
 
   const {
     board,
@@ -535,20 +536,39 @@ export default function Rhythmia() {
     };
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx]);
 
-  // Beat phase animation — updates ref directly for precise game-logic judgments,
-  // and sets React state so the BeatBar component re-renders with the current phase.
+  // Beat phase animation — drives cursor via direct DOM manipulation (CSS var + data attr)
+  // to avoid React re-render batching issues that cause inconsistent/missing animation on
+  // some browsers. React state is updated at a throttled rate for Board's fever rainbow effect.
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
     let animFrame: number;
+    let lastStateUpdate = 0;
     const updateBeat = () => {
       if (!gameOverRef.current) {
         const world = WORLDS[worldIdxRef.current];
         const interval = 60000 / world.bpm;
-        const elapsed = Date.now() - lastBeatRef.current;
+        const now = Date.now();
+        const elapsed = now - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
-        beatPhaseRef.current = phase;  // direct ref update for frame-precise judgments
-        setBeatPhase(phase);
+        beatPhaseRef.current = phase;
+
+        // Direct DOM update — bypasses React for smooth cross-browser animation
+        if (beatBarRef.current) {
+          beatBarRef.current.style.setProperty('--beat-phase', String(phase));
+          if (phase > 0.75 || phase < 0.15) {
+            beatBarRef.current.setAttribute('data-onbeat', '');
+          } else {
+            beatBarRef.current.removeAttribute('data-onbeat');
+          }
+        }
+
+        // Throttled React state update (~30fps) for Board fever rainbow effect
+        if (now - lastStateUpdate > 33) {
+          setBeatPhase(phase);
+          lastStateUpdate = now;
+        }
+
         animFrame = requestAnimationFrame(updateBeat);
       }
     };
@@ -801,7 +821,7 @@ export default function Rhythmia() {
             </div>
           </div>
 
-          <BeatBar beatPhase={beatPhase} />
+          <BeatBar containerRef={beatBarRef} />
 
           <TouchControls
             onMoveLeft={() => movePiece(-1, 0)}

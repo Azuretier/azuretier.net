@@ -85,24 +85,24 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }:
 }
 
 interface BeatBarProps {
-    beatPhase: number;
+    /** Ref attached to the container div — parent's rAF loop sets
+     *  --beat-phase CSS var and data-onbeat attribute directly on this element
+     *  to bypass React re-render batching for smooth cross-browser animation. */
+    containerRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
  * Beat timing indicator bar — cursor sweeps left→right each beat interval.
- * Two highlighted zones show the on-beat window (phase > 0.75 or < 0.15).
- * Cursor glows gold when inside the window for clear visual feedback.
+ * Cursor position is driven by a CSS custom property (--beat-phase) and
+ * the on-beat glow by a data-onbeat attribute, both set from the parent's
+ * requestAnimationFrame loop for frame-precise, re-render-free animation.
  */
-export function BeatBar({ beatPhase }: BeatBarProps) {
-    const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
+export function BeatBar({ containerRef }: BeatBarProps) {
     return (
-        <div className={styles.beatBar}>
+        <div ref={containerRef} className={styles.beatBar}>
             <div className={styles.beatTargetLeft} />
             <div className={styles.beatTargetRight} />
-            <div
-                className={`${styles.beatCursor} ${onBeat ? styles.onBeat : ''}`}
-                style={{ left: `${beatPhase * 100}%` }}
-            />
+            <div className={styles.beatCursor} />
         </div>
     );
 }
