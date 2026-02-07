@@ -425,41 +425,6 @@
   letter-spacing: 0.1em;
 }
 
-/* Terrain Grid Backdrop */
-.terrainBackdrop {
-  position: absolute;
-  inset: -10px;
-  z-index: -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-.terrainGrid {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  height: 100%;
-}
-
-.terrainCell {
-  width: 100%;
-  height: 100%;
-  border-radius: 1px;
-  transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
-}
-
-.terrainFilled {
-  opacity: 1;
-}
-
-.terrainCell:not(.terrainFilled) {
-  opacity: 0;
-  transform: scale(0);
-}
-
 /* Game over */
 .gameover {
   position: fixed;

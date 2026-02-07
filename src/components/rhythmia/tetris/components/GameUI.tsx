@@ -1,6 +1,5 @@
 import React from 'react';
-import { WORLDS, ColorTheme, TERRAIN_COLS, TERRAIN_ROWS } from '../constants';
-import type { TerrainGrid } from '../types';
+import { WORLDS, ColorTheme } from '../constants';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
@@ -82,30 +81,6 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }:
                 <div className={styles.terrainFill} style={{ width: `${percent}%` }} />
             </div>
         </>
-    );
-}
-
-interface TerrainDisplayProps {
-    terrainGrid: TerrainGrid;
-}
-
-/**
- * Renders the terrain grid behind/around the game board
- */
-export function TerrainDisplay({ terrainGrid }: TerrainDisplayProps) {
-    return (
-        <div className={styles.terrainGrid} style={{ gridTemplateColumns: `repeat(${TERRAIN_COLS}, 1fr)` }}>
-            {terrainGrid.flat().map((cell, i) => (
-                <div
-                    key={i}
-                    className={`${styles.terrainCell} ${cell ? styles.terrainFilled : ''}`}
-                    style={cell ? {
-                        backgroundColor: cell,
-                        boxShadow: `0 0 4px ${cell}40`,
-                    } : undefined}
-                />
-            ))}
-        </div>
     );
 }
 

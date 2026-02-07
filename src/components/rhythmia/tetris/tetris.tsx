@@ -36,7 +36,6 @@ import {
   ScoreDisplay,
   ComboDisplay,
   TerrainProgress,
-  TerrainDisplay,
   BeatBar,
   StatsPanel,
   ThemeNav,
@@ -97,9 +96,9 @@ export default function Rhythmia() {
     isPlaying,
     worldIdx,
     stageNumber,
-    terrainGrid,
+    terrainSeed,
+    terrainDestroyedCount,
     terrainTotal,
-    terrainRemaining,
     beatPhase,
     judgmentText,
     judgmentColor,
@@ -123,7 +122,8 @@ export default function Rhythmia() {
     isPausedRef,
     worldIdxRef,
     stageNumberRef,
-    terrainGridRef,
+    terrainDestroyedCountRef,
+    terrainTotalRef,
     beatPhaseRef,
     keyStatesRef,
     gameLoopRef,
@@ -141,8 +141,6 @@ export default function Rhythmia() {
     setLevel,
     setIsPaused,
     setWorldIdx,
-    setTerrainGrid,
-    setTerrainRemaining,
     setBeatPhase,
     setBoardBeat,
     setColorTheme,
@@ -151,6 +149,7 @@ export default function Rhythmia() {
     updateScore,
     triggerBoardShake,
     initGame,
+    handleTerrainReady,
     destroyTerrain,
     startNewStage,
   } = gameState;
@@ -278,10 +277,7 @@ export default function Rhythmia() {
     // Terrain destruction
     if (clearedLines > 0) {
       const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult;
-      const { grid: newGrid, remaining } = destroyTerrain(damage);
-      setTerrainGrid(newGrid);
-      terrainGridRef.current = newGrid;
-      setTerrainRemaining(remaining);
+      const remaining = destroyTerrain(damage);
 
       if (remaining <= 0) {
         // All terrain destroyed — advance stage
@@ -298,7 +294,7 @@ export default function Rhythmia() {
         }
 
         setTimeout(() => {
-          startNewStage(newStageNumber, newWorldIdx);
+          startNewStage(newStageNumber);
         }, 800);
       }
 
@@ -316,8 +312,9 @@ export default function Rhythmia() {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, worldIdxRef, stageNumberRef, terrainGridRef,
-    setCombo, setBoard, setTerrainGrid, setTerrainRemaining, setWorldIdx, setLines, setLevel, setCurrentPiece,
+    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, worldIdxRef, stageNumberRef,
+    terrainDestroyedCountRef, terrainTotalRef,
+    setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, destroyTerrain, startNewStage,
   ]);
@@ -586,8 +583,12 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={responsiveCSSVars}
     >
-      {/* Voxel World Background */}
-      <VoxelWorldBackground />
+      {/* Voxel World Background — destructible terrain */}
+      <VoxelWorldBackground
+        seed={terrainSeed}
+        destroyedCount={terrainDestroyedCount}
+        onTerrainReady={handleTerrainReady}
+      />
 
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
@@ -604,13 +605,9 @@ export default function Rhythmia() {
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
-          <TerrainProgress terrainRemaining={terrainRemaining} terrainTotal={terrainTotal} stageNumber={stageNumber} />
+          <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
 
           <div className={styles.gameArea}>
-            {/* Terrain grid behind the board */}
-            <div className={styles.terrainBackdrop}>
-              <TerrainDisplay terrainGrid={terrainGrid} />
-            </div>
             <div className={styles.nextWrap}>
               <div className={styles.nextLabel}>HOLD (C)</div>
               <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />

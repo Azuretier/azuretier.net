@@ -1,53 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, TerrainGrid } from '../types';
-import { BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme, TERRAIN_COLS, TERRAIN_ROWS, WORLDS } from '../constants';
+import type { Piece, Board, KeyState } from '../types';
+import { BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
-
-// Seeded random for deterministic terrain generation
-function seededRandom(seed: number) {
-    let s = seed;
-    return () => {
-        s = (s * 16807 + 0) % 2147483647;
-        return (s - 1) / 2147483646;
-    };
-}
-
-// Generate terrain grid for a given stage
-function generateTerrain(stageNumber: number, worldIdx: number): TerrainGrid {
-    const rand = seededRandom(stageNumber * 7919 + 42);
-    const world = WORLDS[worldIdx];
-    const grid: TerrainGrid = [];
-
-    // Fill density increases with stage number (60% base, up to 90%)
-    const density = Math.min(0.9, 0.6 + stageNumber * 0.03);
-
-    for (let row = 0; row < TERRAIN_ROWS; row++) {
-        const gridRow: (string | null)[] = [];
-        for (let col = 0; col < TERRAIN_COLS; col++) {
-            if (rand() < density) {
-                // Pick a color from the world palette
-                const colorIdx = Math.floor(rand() * world.colors.length);
-                gridRow.push(world.colors[colorIdx]);
-            } else {
-                gridRow.push(null);
-            }
-        }
-        grid.push(gridRow);
-    }
-
-    return grid;
-}
-
-// Count remaining blocks in terrain
-function countTerrainBlocks(grid: TerrainGrid): number {
-    let count = 0;
-    for (const row of grid) {
-        for (const cell of row) {
-            if (cell !== null) count++;
-        }
-    }
-    return count;
-}
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -71,9 +25,9 @@ export function useGameState() {
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
     const [stageNumber, setStageNumber] = useState(1);
-    const [terrainGrid, setTerrainGrid] = useState<TerrainGrid>(() => generateTerrain(1, 0));
-    const [terrainTotal, setTerrainTotal] = useState(() => countTerrainBlocks(generateTerrain(1, 0)));
-    const [terrainRemaining, setTerrainRemaining] = useState(() => countTerrainBlocks(generateTerrain(1, 0)));
+    const [terrainSeed, setTerrainSeed] = useState(42);
+    const [terrainDestroyedCount, setTerrainDestroyedCount] = useState(0);
+    const [terrainTotal, setTerrainTotal] = useState(0);
     const [beatPhase, setBeatPhase] = useState(0);
     const [judgmentText, setJudgmentText] = useState('');
     const [judgmentColor, setJudgmentColor] = useState('');
@@ -114,7 +68,8 @@ export function useGameState() {
     const isPausedRef = useRef(isPaused);
     const worldIdxRef = useRef(worldIdx);
     const stageNumberRef = useRef(stageNumber);
-    const terrainGridRef = useRef<TerrainGrid>(terrainGrid);
+    const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
+    const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
 
     // Key states for DAS/ARR
@@ -142,7 +97,8 @@ export function useGameState() {
     useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
     useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
     useEffect(() => { stageNumberRef.current = stageNumber; }, [stageNumber]);
-    useEffect(() => { terrainGridRef.current = terrainGrid; }, [terrainGrid]);
+    useEffect(() => { terrainDestroyedCountRef.current = terrainDestroyedCount; }, [terrainDestroyedCount]);
+    useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
 
     // Get next piece from seven-bag system
@@ -205,42 +161,32 @@ export function useGameState() {
         };
     }, []);
 
-    // Destroy random blocks in terrain, returns new grid and remaining count
-    const destroyTerrain = useCallback((count: number): { grid: TerrainGrid; remaining: number } => {
-        const grid = terrainGridRef.current.map(row => [...row]);
-        const filled: [number, number][] = [];
-        for (let r = 0; r < TERRAIN_ROWS; r++) {
-            for (let c = 0; c < TERRAIN_COLS; c++) {
-                if (grid[r][c] !== null) filled.push([r, c]);
-            }
-        }
+    // Called by VoxelWorldBackground when terrain is generated/regenerated
+    const handleTerrainReady = useCallback((totalBlocks: number) => {
+        setTerrainTotal(totalBlocks);
+        terrainTotalRef.current = totalBlocks;
+    }, []);
 
-        // Shuffle and destroy up to count blocks
-        for (let i = filled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [filled[i], filled[j]] = [filled[j], filled[i]];
-        }
-
-        const toDestroy = Math.min(count, filled.length);
-        for (let i = 0; i < toDestroy; i++) {
-            const [r, c] = filled[i];
-            grid[r][c] = null;
-        }
-
-        const remaining = filled.length - toDestroy;
-        return { grid, remaining };
+    // Destroy terrain blocks by incrementing the destroyed count
+    const destroyTerrain = useCallback((count: number): number => {
+        const newDestroyed = Math.min(
+            terrainDestroyedCountRef.current + count,
+            terrainTotalRef.current
+        );
+        setTerrainDestroyedCount(newDestroyed);
+        terrainDestroyedCountRef.current = newDestroyed;
+        const remaining = terrainTotalRef.current - newDestroyed;
+        return remaining;
     }, []);
 
     // Start a new terrain stage
-    const startNewStage = useCallback((newStageNumber: number, newWorldIdx: number) => {
-        const newTerrain = generateTerrain(newStageNumber, newWorldIdx);
-        const total = countTerrainBlocks(newTerrain);
-        setTerrainGrid(newTerrain);
-        terrainGridRef.current = newTerrain;
-        setTerrainTotal(total);
-        setTerrainRemaining(total);
+    const startNewStage = useCallback((newStageNumber: number) => {
         setStageNumber(newStageNumber);
         stageNumberRef.current = newStageNumber;
+        // New seed triggers VoxelWorldBackground regeneration
+        setTerrainSeed(newStageNumber * 7919 + 42);
+        setTerrainDestroyedCount(0);
+        terrainDestroyedCountRef.current = 0;
     }, []);
 
     // Initialize/reset game
@@ -254,14 +200,11 @@ export function useGameState() {
         setWorldIdx(0);
 
         // Initialize terrain for stage 1
-        const initialTerrain = generateTerrain(1, 0);
-        const total = countTerrainBlocks(initialTerrain);
-        setTerrainGrid(initialTerrain);
-        terrainGridRef.current = initialTerrain;
-        setTerrainTotal(total);
-        setTerrainRemaining(total);
         setStageNumber(1);
         stageNumberRef.current = 1;
+        setTerrainSeed(42);
+        setTerrainDestroyedCount(0);
+        terrainDestroyedCountRef.current = 0;
 
         setGameOver(false);
         setIsPaused(false);
@@ -310,9 +253,9 @@ export function useGameState() {
         isPlaying,
         worldIdx,
         stageNumber,
-        terrainGrid,
+        terrainSeed,
+        terrainDestroyedCount,
         terrainTotal,
-        terrainRemaining,
         beatPhase,
         judgmentText,
         judgmentColor,
@@ -340,10 +283,6 @@ export function useGameState() {
         setIsPaused,
         setIsPlaying,
         setWorldIdx,
-        setStageNumber,
-        setTerrainGrid,
-        setTerrainTotal,
-        setTerrainRemaining,
         setBeatPhase,
         setBoardBeat,
         setDas,
@@ -369,7 +308,8 @@ export function useGameState() {
         isPausedRef,
         worldIdxRef,
         stageNumberRef,
-        terrainGridRef,
+        terrainDestroyedCountRef,
+        terrainTotalRef,
         beatPhaseRef,
         keyStatesRef,
         gameLoopRef,
@@ -384,6 +324,7 @@ export function useGameState() {
         triggerBoardShake,
         resetKeyStates,
         initGame,
+        handleTerrainReady,
         destroyTerrain,
         startNewStage,
     };

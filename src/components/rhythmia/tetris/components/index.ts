@@ -7,7 +7,6 @@ export {
     ScoreDisplay,
     ComboDisplay,
     TerrainProgress,
-    TerrainDisplay,
     BeatBar,
     StatsPanel,
     ThemeNav,
