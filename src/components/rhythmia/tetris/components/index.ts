@@ -13,3 +13,4 @@ export {
     JudgmentDisplay,
     TouchControls,
 } from './GameUI';
+export { RhythmVFX } from './RhythmVFX';

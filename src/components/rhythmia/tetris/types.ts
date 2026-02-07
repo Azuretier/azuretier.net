@@ -47,3 +47,16 @@ export type RhythmState = {
     boardShake: boolean;
     scorePop: boolean;
 };
+
+// ===== VFX Event Types =====
+
+export type VFXEvent =
+    | { type: 'beat'; bpm: number; intensity: number }
+    | { type: 'lineClear'; rows: number[]; count: number; onBeat: boolean; combo: number }
+    | { type: 'rotation'; pieceType: string; boardX: number; boardY: number; fromRotation: number; toRotation: number }
+    | { type: 'hardDrop'; pieceType: string; boardX: number; boardY: number; dropDistance: number }
+    | { type: 'comboChange'; combo: number; onBeat: boolean }
+    | { type: 'feverStart'; combo: number }
+    | { type: 'feverEnd' };
+
+export type VFXEmitter = (event: VFXEvent) => void;
