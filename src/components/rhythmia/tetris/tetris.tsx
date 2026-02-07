@@ -834,10 +834,11 @@ export default function Rhythmia() {
               <div className={styles.nextLabel}>NEXT</div>
               {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
             </div>
+
+            <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />
           </div>
 
           <BeatBar beatPhase={beatPhase} />
-          <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />
 
           <TouchControls
             onMoveLeft={() => movePiece(-1, 0)}

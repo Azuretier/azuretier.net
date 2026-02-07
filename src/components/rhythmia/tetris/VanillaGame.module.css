@@ -1563,213 +1563,160 @@
   }
 }
 
-/* ===== Health / Mana HUD Globes ===== */
-.hudContainer {
+/* ===== Damage Vignette ===== */
+.damageVignette {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-  z-index: 95;
+  inset: 0;
   pointer-events: none;
+  z-index: 200;
+  box-shadow: inset 0 0 80px 30px rgba(200, 0, 0, 0.5);
+  animation: vignetteFlash 0.4s ease-out forwards;
 }
 
-.hudGlobe {
+@keyframes vignetteFlash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.lowHealthVignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 199;
+  box-shadow: inset 0 0 60px 15px rgba(150, 0, 0, 0.25);
+  animation: lowHealthPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes lowHealthPulse {
+  0% { box-shadow: inset 0 0 40px 10px rgba(150, 0, 0, 0.15); }
+  100% { box-shadow: inset 0 0 70px 20px rgba(200, 0, 0, 0.3); }
+}
+
+/* ===== Vertical HP / MP Bars ===== */
+.verticalBars {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 10px 4px;
+}
+
+.vBar {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.hudGlobeFrame {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid rgba(180, 50, 50, 0.6);
-  box-shadow:
-    0 0 10px rgba(180, 50, 50, 0.3),
-    inset 0 0 10px rgba(0, 0, 0, 0.5);
+.vBarLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.15em;
+}
+
+.vBarTrack {
+  width: 14px;
+  height: 180px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
   position: relative;
   overflow: hidden;
-  background: rgba(20, 5, 5, 0.85);
 }
 
-.hudManaFrame {
-  border-color: rgba(50, 100, 180, 0.6);
-  box-shadow:
-    0 0 10px rgba(50, 100, 180, 0.3),
-    inset 0 0 10px rgba(0, 0, 0, 0.5);
-  background: rgba(5, 5, 20, 0.85);
+.vBarHpTrack {
+  border-color: rgba(200, 50, 50, 0.25);
 }
 
-.hudGlobeInner {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  position: relative;
+.vBarMpTrack {
+  border-color: rgba(50, 100, 200, 0.25);
 }
 
-.hudGlobeFill {
+.vBarFill {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hudHealthFill {
-  animation: healthBubble 3s ease-in-out infinite;
+.vBarHpFill {
+  background: linear-gradient(0deg, #b71c1c, #e53935);
+  box-shadow: 0 0 6px rgba(229, 57, 53, 0.3);
 }
 
-.hudManaFill {
-  animation: manaBubble 4s ease-in-out infinite;
+.vBarHpLow {
+  animation: hpBarPulse 0.6s ease-in-out infinite alternate;
 }
 
-@keyframes healthBubble {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+@keyframes hpBarPulse {
+  0% { box-shadow: 0 0 4px rgba(229, 57, 53, 0.3); }
+  100% { box-shadow: 0 0 12px rgba(255, 50, 50, 0.6); }
 }
 
-@keyframes manaBubble {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
+.vBarMpFill {
+  background: linear-gradient(0deg, #0d47a1, #42a5f5);
+  box-shadow: 0 0 6px rgba(66, 165, 245, 0.3);
 }
 
-.hudGlobeShine {
+.vBarMpFever {
+  background: linear-gradient(0deg, #ff6f00, #ffd54f);
+  box-shadow: 0 0 10px rgba(255, 180, 0, 0.4);
+  animation: manaFeverPulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes manaFeverPulse {
+  0% { box-shadow: 0 0 6px rgba(255, 180, 0, 0.3); }
+  100% { box-shadow: 0 0 14px rgba(255, 200, 0, 0.6); }
+}
+
+.vBarTicks {
   position: absolute;
-  top: 8%;
-  left: 15%;
-  width: 30%;
-  height: 20%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.25), transparent);
+  inset: 0;
   pointer-events: none;
 }
 
-.hudGlobeLowPulse {
+.vBarTick {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4);
-  animation: lowHealthPulse 0.8s ease-in-out infinite alternate;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-@keyframes lowHealthPulse {
-  0% { box-shadow: inset 0 0 15px rgba(255, 0, 0, 0.2); }
-  100% { box-shadow: inset 0 0 25px rgba(255, 0, 0, 0.5); }
+.vBarValue {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-.hudGlobeOrnament {
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #d32f2f, #7f0000);
-  border: 1px solid rgba(255, 100, 100, 0.4);
-  box-shadow: 0 0 6px rgba(255, 50, 50, 0.3);
-}
-
-.hudManaOrnament {
-  background: radial-gradient(circle, #1976d2, #0d47a1);
-  border-color: rgba(100, 150, 255, 0.4);
-  box-shadow: 0 0 6px rgba(50, 100, 255, 0.3);
-}
-
-.hudGlobeLabel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-}
-
-.hudGlobeValue {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.hudGlobeCaption {
-  font-size: 0.5rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.15em;
-}
-
-/* Center chain between globes */
-.hudCenterChain {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 0 6px;
-  padding-bottom: 24px;
-  position: relative;
-}
-
-.hudChainLink {
-  width: 8px;
-  height: 12px;
-  border: 1.5px solid rgba(200, 180, 120, 0.4);
-  border-radius: 4px;
-}
-
-.hudFeverGem {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffd54f, #ff6f00);
-  border: 1.5px solid rgba(255, 215, 0, 0.6);
-  box-shadow: 0 0 12px rgba(255, 180, 0, 0.5);
-  animation: feverGemPulse 0.6s ease-in-out infinite alternate;
-  position: absolute;
-  bottom: 28px;
-}
-
-@keyframes feverGemPulse {
-  0% { box-shadow: 0 0 8px rgba(255, 180, 0, 0.3); transform: scale(1); }
-  100% { box-shadow: 0 0 18px rgba(255, 180, 0, 0.7); transform: scale(1.15); }
-}
-
-/* Responsive HUD */
+/* Responsive vertical bars */
 @media screen and (max-width: 480px) {
-  .hudContainer {
-    bottom: 10px;
-  }
-
-  .hudGlobeFrame {
-    width: 56px;
-    height: 56px;
-  }
-
-  .hudGlobeValue {
-    font-size: 0.65rem;
-  }
-
-  .hudGlobeOrnament {
+  .vBarTrack {
     width: 10px;
-    height: 10px;
-    top: -3px;
+    height: 120px;
+  }
+
+  .vBarLabel {
+    font-size: 0.5rem;
+  }
+
+  .vBarValue {
+    font-size: 0.5rem;
   }
 }
 
 @media screen and (max-height: 480px) and (min-width: 481px) {
-  .hudContainer {
-    bottom: 8px;
+  .vBarTrack {
+    width: 10px;
+    height: 100px;
   }
 
-  .hudGlobeFrame {
-    width: 48px;
-    height: 48px;
-  }
-
-  .hudGlobeValue {
-    font-size: 0.6rem;
+  .vBarLabel {
+    font-size: 0.5rem;
   }
 }
