@@ -113,7 +113,7 @@
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.25);
   transition: box-shadow 0.1s, transform 0.1s, border-color 0.1s;
   overflow: visible;
 }
@@ -161,7 +161,7 @@
 .cell {
   width: clamp(16px, 4vw, 28px);
   height: clamp(16px, 4vw, 28px);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.01);
   border-radius: 0;
   transition: all 0.1s;
   image-rendering: pixelated;

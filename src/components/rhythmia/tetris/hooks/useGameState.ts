@@ -337,9 +337,9 @@ export function useGameState() {
             newEnemies.push({
                 id: nextEnemyId++,
                 x: Math.cos(angle) * spawnDist,
-                y: 5 + Math.random() * 3,
+                y: 0.5,
                 z: Math.sin(angle) * spawnDist,
-                speed: ENEMY_BASE_SPEED + Math.random() * 0.02,
+                speed: ENEMY_BASE_SPEED + Math.random() * 0.03,
                 health: 1,
                 alive: true,
                 spawnTime: Date.now(),

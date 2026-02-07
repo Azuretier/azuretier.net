@@ -39,22 +39,23 @@ function smoothNoise(x: number, z: number, seed: number): number {
   return nx0 + sz * (nx1 - nx0);
 }
 
-function terrainHeight(x: number, z: number, seed: number): number {
-  let height = 0;
-  height += smoothNoise(x * 0.05, z * 0.05, seed) * 8;
-  height += smoothNoise(x * 0.1, z * 0.1, seed + 1000) * 4;
-  height += smoothNoise(x * 0.2, z * 0.2, seed + 2000) * 2;
-  return Math.floor(height);
+function terrainHeight(_x: number, _z: number, _seed: number): number {
+  // Flat terrain for board-game look
+  return 1;
 }
 
-// Block color based on height
-function blockColor(y: number, maxY: number): THREE.Color {
-  const ratio = y / Math.max(maxY, 1);
-  if (ratio > 0.8) return new THREE.Color(0.95, 0.95, 0.95);
-  if (ratio > 0.6) return new THREE.Color(0.45, 0.45, 0.45);
-  if (ratio > 0.3) return new THREE.Color(0.25, 0.55, 0.2);
-  if (ratio > 0.1) return new THREE.Color(0.4, 0.28, 0.15);
-  return new THREE.Color(0.3, 0.3, 0.35);
+// Block color — checkerboard board-game pattern for flat terrain
+function blockColor(_y: number, _maxY: number, x?: number, z?: number): THREE.Color {
+  if (x !== undefined && z !== undefined) {
+    // Checkerboard pattern
+    const isLight = ((Math.abs(x) + Math.abs(z)) % 2) === 0;
+    if (isLight) {
+      return new THREE.Color(0.30, 0.50, 0.25); // dark green
+    } else {
+      return new THREE.Color(0.38, 0.60, 0.32); // light green
+    }
+  }
+  return new THREE.Color(0.34, 0.55, 0.28);
 }
 
 // Procedural detail texture
@@ -199,25 +200,16 @@ interface VoxelData {
 
 function generateVoxelWorld(seed: number, size: number): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
-  let maxY = 0;
 
-  const heights: number[][] = [];
-  for (let x = -size; x <= size; x++) {
-    heights[x + size] = [];
-    for (let z = -size; z <= size; z++) {
-      const h = terrainHeight(x, z, seed);
-      heights[x + size][z + size] = h;
-      if (h > maxY) maxY = h;
-    }
-  }
-
+  // Flat single-layer terrain (board-game style)
   for (let x = -size; x <= size; x++) {
     for (let z = -size; z <= size; z++) {
-      const h = heights[x + size][z + size];
-      for (let y = Math.max(0, h - 2); y <= h; y++) {
-        const color = blockColor(y, maxY);
-        blocks.push({ x, y, z, color });
-      }
+      // Circular boundary for a round board
+      const dist = Math.sqrt(x * x + z * z);
+      if (dist > size + 0.5) continue;
+
+      const color = blockColor(0, 1, x, z);
+      blocks.push({ x, y: 0, z, color });
     }
   }
 
@@ -451,11 +443,9 @@ export default function VoxelWorldBackground({
     ss.scene.add(mesh);
     ss.instancedMesh = mesh;
 
-    // Place tower at terrain center
+    // Place tower at terrain center (flat terrain, y=0 surface)
     const towerGroup = createTowerModel();
-    // Get terrain height at center (0,0)
-    const centerHeight = terrainHeight(0, 0, terrainSeed);
-    towerGroup.position.set(0, centerHeight, 0);
+    towerGroup.position.set(0, 0.5, 0);
     ss.scene.add(towerGroup);
     ss.towerGroup = towerGroup;
 
@@ -507,15 +497,15 @@ export default function VoxelWorldBackground({
       roughnessMap: roughnessMap,
     });
 
-    // Enemy instanced mesh
-    const enemyGeo = new THREE.BoxGeometry(1.2, 1.8, 1.2);
+    // Enemy instanced mesh — bright and visible
+    const enemyGeo = new THREE.BoxGeometry(1.5, 2.2, 1.5);
     const enemyMat = new THREE.MeshStandardMaterial({
-      color: 0xFF2222,
-      roughness: 0.6,
-      metalness: 0.2,
+      color: 0xFF3333,
+      roughness: 0.4,
+      metalness: 0.3,
       flatShading: true,
-      emissive: 0x440000,
-      emissiveIntensity: 0.3,
+      emissive: 0xFF0000,
+      emissiveIntensity: 0.6,
     });
     const enemyMesh = new THREE.InstancedMesh(enemyGeo, enemyMat, MAX_ENEMIES);
     enemyMesh.count = 0;
@@ -581,18 +571,19 @@ export default function VoxelWorldBackground({
             const rx = e.x * cosR - e.z * sinR;
             const rz = e.x * sinR + e.z * cosR;
 
-            dummy.position.set(rx, e.y + 0.9, rz);
-            // Face toward center
-            dummy.lookAt(0, e.y + 0.9, 0);
-            // Bobbing animation
-            dummy.position.y += Math.sin(time * 0.005 + e.id) * 0.3;
+            // Place on flat terrain surface with bobbing
+            const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
+            dummy.position.set(rx, bobY, rz);
             dummy.scale.set(1, 1, 1);
+            // Reset rotation then face center
+            dummy.rotation.set(0, 0, 0);
+            dummy.lookAt(new THREE.Vector3(0, bobY, 0));
             dummy.updateMatrix();
             ss.enemyMesh.setMatrixAt(i, dummy.matrix);
 
-            // Color varies slightly by enemy id
-            const hue = (e.id * 0.1) % 1;
-            enemyColor.setHSL(hue * 0.1, 0.9, 0.45); // red-orange spectrum
+            // Color: red-orange spectrum by enemy id
+            const hue = (e.id * 0.07) % 1;
+            enemyColor.setHSL(hue * 0.08 + 0.0, 0.95, 0.5);
             ss.enemyMesh.setColorAt(i, enemyColor);
           }
 
@@ -661,7 +652,7 @@ export default function VoxelWorldBackground({
         height: '100%',
         zIndex: 0,
         pointerEvents: 'none',
-        opacity: 0.35,
+        opacity: 0.6,
       }}
     >
       <canvas

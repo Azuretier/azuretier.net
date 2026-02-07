@@ -253,7 +253,7 @@ export const TERRAIN_PARTICLE_LIFETIME = 600;
 
 // ===== Tower Defense Settings =====
 export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn
-export const ENEMY_BASE_SPEED = 0.08;    // Base movement speed toward tower per tick
+export const ENEMY_BASE_SPEED = 0.5;     // Base movement speed toward tower per tick
 export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower
 export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
 export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
