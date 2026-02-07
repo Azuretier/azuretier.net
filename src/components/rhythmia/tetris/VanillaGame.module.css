@@ -100,12 +100,31 @@
   color: #ffffff;
 }
 
-/* Game area */
+/* Game area — three-column layout: sidebar | board+beatbar | sidebar */
 .gameArea {
   position: relative;
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  justify-content: center;
+}
+
+/* Side panels (left: hold+inventory, right: next) */
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+/* Center column: board + beat bar + stats, all aligned */
+.centerColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Board */
@@ -227,6 +246,9 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .nextLabel {
@@ -241,17 +263,20 @@
 .next {
   display: grid;
   gap: 1px;
+  justify-content: center;
 }
 
 .nextCell {
   width: clamp(12px, 3vw, 20px);
   height: clamp(12px, 3vw, 20px);
   border-radius: 1px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* Beat indicator — cursor sweeps left→right, target zones mark the on-beat window */
 .beatBar {
-  width: min(300px, 80vw);
+  width: 100%;
+  max-width: 100%;
   height: 20px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
@@ -528,6 +553,16 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
+/* Stats panel */
+.statsPanel {
+  display: flex;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+}
+
 /* Particles */
 .particle {
   position: fixed;
@@ -588,6 +623,16 @@
     gap: 8px;
   }
 
+  .sidePanel {
+    flex-direction: row;
+    width: auto;
+    gap: 6px;
+  }
+
+  .centerColumn {
+    gap: 6px;
+  }
+
   .cell {
     width: var(--cell-size, 14px);
     height: var(--cell-size, 14px);
@@ -599,7 +644,6 @@
   }
 
   .nextWrap {
-    flex-direction: row;
     padding: 6px 12px;
   }
 
@@ -644,7 +688,6 @@
   }
 
   .beatBar {
-    width: min(250px, 90vw);
     height: 18px;
   }
 
@@ -669,6 +712,14 @@
 
   .gameArea {
     flex-direction: row;
+  }
+
+  .sidePanel {
+    width: 70px;
+  }
+
+  .centerColumn {
+    gap: 4px;
   }
 
   .cell {
@@ -704,7 +755,6 @@
   }
 
   .beatBar {
-    width: 180px;
     height: 14px;
   }
 
@@ -904,13 +954,15 @@
   background: rgba(10, 10, 20, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
-  padding: 10px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 140px;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
   backdrop-filter: blur(16px);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .itemSlotsHeader {
@@ -943,8 +995,8 @@
 
 .itemSlotsGrid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* Modern item card — glass morphism with accent, large count, SVG icon */
@@ -953,11 +1005,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 58px;
-  padding: 6px 4px 5px;
+  width: 100%;
+  padding: 5px 4px 4px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
@@ -1022,9 +1074,9 @@
 
 /* Empty slot */
 .itemSlotEmpty {
-  width: 58px;
-  height: 72px;
-  border-radius: 8px;
+  width: 100%;
+  height: 48px;
+  border-radius: 6px;
   border: 1px dashed rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;

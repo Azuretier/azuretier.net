@@ -117,7 +117,7 @@ interface StatsProps {
  */
 export function StatsPanel({ lines, level }: StatsProps) {
     return (
-        <div className={styles.statsPanel || 'flex gap-4 mt-4 text-white text-sm'}>
+        <div className={styles.statsPanel}>
             <div>LINES: {lines}</div>
             <div>LEVEL: {level}</div>
         </div>
