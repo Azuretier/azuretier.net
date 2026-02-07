@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MANA_PER_LINE, MANA_PER_COMBO, MANA_COST_FEVER, HEALTH_REGEN_FEVER, MAX_MANA, MAX_HEALTH } from './constants';
 import type { Piece } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -48,6 +48,7 @@ import {
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
+  HealthManaHUD,
 } from './components';
 
 /**
@@ -132,6 +133,8 @@ export default function Rhythmia() {
     // Tower defense
     enemies,
     hasHadCombo,
+    towerHealth,
+    mana,
     // Refs
     boardRef,
     currentPieceRef,
@@ -189,6 +192,10 @@ export default function Rhythmia() {
     killEnemies,
     setHasHadCombo,
     setGameOver,
+    setTowerHealth,
+    setMana,
+    towerHealthRef,
+    manaRef,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
@@ -198,6 +205,12 @@ export default function Rhythmia() {
   spawnEnemiesRef.current = spawnEnemies;
   const updateEnemiesRef = useRef(updateEnemies);
   updateEnemiesRef.current = updateEnemies;
+  const setTowerHealthRef = useRef(setTowerHealth);
+  setTowerHealthRef.current = setTowerHealth;
+  const setManaRef = useRef(setMana);
+  setManaRef.current = setMana;
+  const setGameOverRef = useRef(setGameOver);
+  setGameOverRef.current = setGameOver;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -327,6 +340,9 @@ export default function Rhythmia() {
         setHasHadCombo(true);
       }
 
+      // Mana gain from combo
+      setMana(prev => Math.min(MAX_MANA, prev + MANA_PER_COMBO));
+
       // VFX: combo change event
       vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
 
@@ -376,6 +392,9 @@ export default function Rhythmia() {
       const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
       killEnemies(killCount);
 
+      // Mana gain from line clears
+      setMana(prev => Math.min(MAX_MANA, prev + clearedLines * MANA_PER_LINE));
+
       // VFX: line clear equalizer bars + glitch particles
       vfx.emit({
         type: 'lineClear',
@@ -407,7 +426,7 @@ export default function Rhythmia() {
     currentPieceRef.current = spawned;
   }, [
     beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, hasHadComboRef,
-    setCombo, setBoard, setLines, setLevel, setCurrentPiece,
+    setCombo, setBoard, setLines, setLevel, setCurrentPiece, setMana,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, setHasHadCombo, setGameOver,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
@@ -520,8 +539,26 @@ export default function Rhythmia() {
       // Tower Defense: spawn enemies on each beat
       spawnEnemiesRef.current(ENEMIES_PER_BEAT);
 
-      // Move enemies toward tower
-      updateEnemiesRef.current();
+      // Move enemies toward tower — returns count that reached it
+      const reached = updateEnemiesRef.current();
+
+      // Apply damage when enemies reach the tower
+      if (reached > 0) {
+        const damage = reached * ENEMY_REACH_DAMAGE;
+        setTowerHealthRef.current(prev => {
+          const newHealth = Math.max(0, prev - damage);
+          if (newHealth <= 0) {
+            setGameOverRef.current(true);
+          }
+          return newHealth;
+        });
+      }
+
+      // Fever mode: drain mana, regen health
+      if (comboRef.current >= 10) {
+        setManaRef.current(prev => Math.max(0, prev - MANA_COST_FEVER));
+        setTowerHealthRef.current(prev => Math.min(MAX_HEALTH, prev + HEALTH_REGEN_FEVER));
+      }
 
       // VFX: beat pulse ring — intensity scales with BPM
       const intensity = Math.min(1, (world.bpm - 80) / 100);
@@ -800,6 +837,7 @@ export default function Rhythmia() {
           </div>
 
           <BeatBar beatPhase={beatPhase} />
+          <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />
 
           <TouchControls
             onMoveLeft={() => movePiece(-1, 0)}

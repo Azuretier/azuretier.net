@@ -1562,3 +1562,214 @@
     height: 36px;
   }
 }
+
+/* ===== Health / Mana HUD Globes ===== */
+.hudContainer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  z-index: 95;
+  pointer-events: none;
+}
+
+.hudGlobe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hudGlobeFrame {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(180, 50, 50, 0.6);
+  box-shadow:
+    0 0 10px rgba(180, 50, 50, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  background: rgba(20, 5, 5, 0.85);
+}
+
+.hudManaFrame {
+  border-color: rgba(50, 100, 180, 0.6);
+  box-shadow:
+    0 0 10px rgba(50, 100, 180, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.5);
+  background: rgba(5, 5, 20, 0.85);
+}
+
+.hudGlobeInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+}
+
+.hudGlobeFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hudHealthFill {
+  animation: healthBubble 3s ease-in-out infinite;
+}
+
+.hudManaFill {
+  animation: manaBubble 4s ease-in-out infinite;
+}
+
+@keyframes healthBubble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes manaBubble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+.hudGlobeShine {
+  position: absolute;
+  top: 8%;
+  left: 15%;
+  width: 30%;
+  height: 20%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.25), transparent);
+  pointer-events: none;
+}
+
+.hudGlobeLowPulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4);
+  animation: lowHealthPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes lowHealthPulse {
+  0% { box-shadow: inset 0 0 15px rgba(255, 0, 0, 0.2); }
+  100% { box-shadow: inset 0 0 25px rgba(255, 0, 0, 0.5); }
+}
+
+.hudGlobeOrnament {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #d32f2f, #7f0000);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  box-shadow: 0 0 6px rgba(255, 50, 50, 0.3);
+}
+
+.hudManaOrnament {
+  background: radial-gradient(circle, #1976d2, #0d47a1);
+  border-color: rgba(100, 150, 255, 0.4);
+  box-shadow: 0 0 6px rgba(50, 100, 255, 0.3);
+}
+
+.hudGlobeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.hudGlobeValue {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.hudGlobeCaption {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+}
+
+/* Center chain between globes */
+.hudCenterChain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+.hudChainLink {
+  width: 8px;
+  height: 12px;
+  border: 1.5px solid rgba(200, 180, 120, 0.4);
+  border-radius: 4px;
+}
+
+.hudFeverGem {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd54f, #ff6f00);
+  border: 1.5px solid rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 12px rgba(255, 180, 0, 0.5);
+  animation: feverGemPulse 0.6s ease-in-out infinite alternate;
+  position: absolute;
+  bottom: 28px;
+}
+
+@keyframes feverGemPulse {
+  0% { box-shadow: 0 0 8px rgba(255, 180, 0, 0.3); transform: scale(1); }
+  100% { box-shadow: 0 0 18px rgba(255, 180, 0, 0.7); transform: scale(1.15); }
+}
+
+/* Responsive HUD */
+@media screen and (max-width: 480px) {
+  .hudContainer {
+    bottom: 10px;
+  }
+
+  .hudGlobeFrame {
+    width: 56px;
+    height: 56px;
+  }
+
+  .hudGlobeValue {
+    font-size: 0.65rem;
+  }
+
+  .hudGlobeOrnament {
+    width: 10px;
+    height: 10px;
+    top: -3px;
+  }
+}
+
+@media screen and (max-height: 480px) and (min-width: 481px) {
+  .hudContainer {
+    bottom: 8px;
+  }
+
+  .hudGlobeFrame {
+    width: 48px;
+    height: 48px;
+  }
+
+  .hudGlobeValue {
+    font-size: 0.6rem;
+  }
+}

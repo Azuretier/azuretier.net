@@ -7,6 +7,7 @@ import {
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
+    MAX_HEALTH, MAX_MANA, ENEMY_REACH_DAMAGE,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -82,6 +83,8 @@ export function useGameState() {
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
     const [hasHadCombo, setHasHadCombo] = useState(false);
+    const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
+    const [mana, setMana] = useState(0);
 
     // Computed: total damage multiplier from all crafted cards
     const damageMultiplier = craftedCards.reduce((mult, card) => {
@@ -119,6 +122,8 @@ export function useGameState() {
     const damageMultiplierRef = useRef(damageMultiplier);
     const enemiesRef = useRef<Enemy[]>(enemies);
     const hasHadComboRef = useRef(hasHadCombo);
+    const towerHealthRef = useRef(towerHealth);
+    const manaRef = useRef(mana);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -151,6 +156,8 @@ export function useGameState() {
     useEffect(() => { damageMultiplierRef.current = damageMultiplier; }, [damageMultiplier]);
     useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
     useEffect(() => { hasHadComboRef.current = hasHadCombo; }, [hasHadCombo]);
+    useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
+    useEffect(() => { manaRef.current = mana; }, [mana]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -497,6 +504,10 @@ export function useGameState() {
         enemiesRef.current = [];
         setHasHadCombo(false);
         hasHadComboRef.current = false;
+        setTowerHealth(MAX_HEALTH);
+        towerHealthRef.current = MAX_HEALTH;
+        setMana(0);
+        manaRef.current = 0;
         nextEnemyId = 0;
 
         setHoldPiece(null);
@@ -573,6 +584,8 @@ export function useGameState() {
         // Tower defense
         enemies,
         hasHadCombo,
+        towerHealth,
+        mana,
 
         // Setters
         setBoard,
@@ -653,5 +666,9 @@ export function useGameState() {
         killEnemies,
         setHasHadCombo,
         setEnemies,
+        setTowerHealth,
+        setMana,
+        towerHealthRef,
+        manaRef,
     };
 }
