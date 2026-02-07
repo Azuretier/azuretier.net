@@ -140,6 +140,117 @@ export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
+// ===== Item Definitions =====
+import type { ItemType, WeaponCard } from './types';
+
+export const ITEMS: ItemType[] = [
+    { id: 'stone',    name: 'Stone Fragment',  nameJa: '石片',     icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',    dropWeight: 40 },
+    { id: 'iron',     name: 'Iron Ore',        nameJa: '鉄鉱石',   icon: '⛏️', color: '#B87333', glowColor: '#D4956B', rarity: 'common',    dropWeight: 30 },
+    { id: 'crystal',  name: 'Crystal Shard',   nameJa: '水晶片',   icon: '💎', color: '#4FC3F7', glowColor: '#81D4FA', rarity: 'uncommon',  dropWeight: 15 },
+    { id: 'gold',     name: 'Gold Nugget',     nameJa: '金塊',     icon: '✨', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',      dropWeight: 8 },
+    { id: 'obsidian', name: 'Obsidian Core',   nameJa: '黒曜核',   icon: '🔮', color: '#9C27B0', glowColor: '#CE93D8', rarity: 'epic',      dropWeight: 5 },
+    { id: 'star',     name: 'Star Fragment',   nameJa: '星の欠片', icon: '⭐', color: '#E0E0E0', glowColor: '#FFFFFF', rarity: 'legendary', dropWeight: 2 },
+];
+
+export const ITEM_MAP: Record<string, ItemType> = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+
+// Total drop weight for probability calculation
+export const TOTAL_DROP_WEIGHT = ITEMS.reduce((sum, item) => sum + item.dropWeight, 0);
+
+// ===== Weapon Card Definitions =====
+export const WEAPON_CARDS: WeaponCard[] = [
+    {
+        id: 'stone_blade',
+        name: 'Stone Blade',
+        nameJa: '石の刃',
+        icon: '🗡️',
+        color: '#9E9E9E',
+        glowColor: '#BDBDBD',
+        description: '+10% terrain damage',
+        descriptionJa: '地形ダメージ+10%',
+        damageMultiplier: 1.1,
+        recipe: [{ itemId: 'stone', count: 3 }],
+    },
+    {
+        id: 'iron_pickaxe',
+        name: 'Iron Pickaxe',
+        nameJa: '鉄のピッケル',
+        icon: '⛏️',
+        color: '#B87333',
+        glowColor: '#D4956B',
+        description: '+20% terrain damage',
+        descriptionJa: '地形ダメージ+20%',
+        damageMultiplier: 1.2,
+        recipe: [{ itemId: 'iron', count: 3 }],
+    },
+    {
+        id: 'crystal_wand',
+        name: 'Crystal Wand',
+        nameJa: '水晶の杖',
+        icon: '🪄',
+        color: '#4FC3F7',
+        glowColor: '#81D4FA',
+        description: '+30% damage, wider beat window',
+        descriptionJa: 'ダメージ+30%、ビート判定拡大',
+        damageMultiplier: 1.3,
+        specialEffect: 'wide_beat',
+        recipe: [{ itemId: 'crystal', count: 2 }, { itemId: 'stone', count: 2 }],
+    },
+    {
+        id: 'gold_hammer',
+        name: 'Gold Hammer',
+        nameJa: '黄金のハンマー',
+        icon: '🔨',
+        color: '#FFD700',
+        glowColor: '#FFECB3',
+        description: '+40% terrain damage',
+        descriptionJa: '地形ダメージ+40%',
+        damageMultiplier: 1.4,
+        recipe: [{ itemId: 'gold', count: 2 }, { itemId: 'iron', count: 2 }],
+    },
+    {
+        id: 'obsidian_edge',
+        name: 'Obsidian Edge',
+        nameJa: '黒曜の刃',
+        icon: '🌑',
+        color: '#9C27B0',
+        glowColor: '#CE93D8',
+        description: '+60% damage, shatter effect',
+        descriptionJa: 'ダメージ+60%、粉砕効果',
+        damageMultiplier: 1.6,
+        specialEffect: 'shatter',
+        recipe: [{ itemId: 'obsidian', count: 1 }, { itemId: 'iron', count: 2 }],
+    },
+    {
+        id: 'star_cannon',
+        name: 'Star Cannon',
+        nameJa: '星砲',
+        icon: '💫',
+        color: '#E0E0E0',
+        glowColor: '#FFFFFF',
+        description: '+80% damage, burst particles',
+        descriptionJa: 'ダメージ+80%、爆発効果',
+        damageMultiplier: 1.8,
+        specialEffect: 'burst',
+        recipe: [{ itemId: 'star', count: 1 }, { itemId: 'crystal', count: 2 }],
+    },
+];
+
+export const WEAPON_CARD_MAP: Record<string, WeaponCard> = Object.fromEntries(WEAPON_CARDS.map(c => [c.id, c]));
+
+// Items dropped per terrain damage unit
+export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
+
+// Max floating items on screen at once
+export const MAX_FLOATING_ITEMS = 12;
+
+// Floating item animation duration (ms)
+export const FLOAT_DURATION = 800;
+
+// Terrain particle settings
+export const TERRAIN_PARTICLES_PER_LINE = 15;
+export const TERRAIN_PARTICLE_LIFETIME = 600;
+
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
