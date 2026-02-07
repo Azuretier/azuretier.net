@@ -1,0 +1,31 @@
+.switcher {
+    display: flex;
+    gap: 4px;
+    margin-left: 12px;
+}
+
+.localeButton {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.localeButton:hover {
+    background: rgba(255, 189, 67, 0.2);
+    border-color: rgba(255, 189, 67, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.localeButton.active {
+    background: rgba(255, 189, 67, 0.3);
+    border-color: #ffbd43;
+    color: #ffbd43;
+}

@@ -1,0 +1,60 @@
+{
+    "meta": {
+        "title": "Azuretia - Play Azuretia from azuretier.net",
+        "description": "A website created by Azuretier. Play RHYTHMIA and other rhythm games.",
+        "ogTitle": "Azuretia - Play Azuretia from azuretier.net",
+        "ogDescription": "Play RHYTHMIA and other rhythm games from azuretier.net"
+    },
+    "lobby": {
+        "loading": "LOADING",
+        "selectServer": "SELECT SERVER",
+        "chooseMode": "Choose your mode",
+        "play": "PLAY",
+        "battle": "BATTLE",
+        "back": "← Back",
+        "online": "Online",
+        "onlineCount": "{count} online"
+    },
+    "vanilla": {
+        "badge": "OFFICIAL",
+        "title": "VANILLA",
+        "gameTitle": "RHYTHMIA — VANILLA",
+        "subtitle": "Original Experience",
+        "description": "Classic RHYTHMIA gameplay. Stack blocks to the rhythm and conquer worlds.",
+        "features": {
+            "worlds": "5 Worlds",
+            "rhythm": "Rhythm",
+            "solo": "Solo"
+        },
+        "stats": {
+            "bpmStart": "BPM Start",
+            "bpmMax": "BPM Max",
+            "levels": "Levels"
+        }
+    },
+    "multiplayer": {
+        "badge": "1v1",
+        "title": "BATTLE ARENA",
+        "gameTitle": "BATTLE ARENA — 1v1",
+        "subtitle": "Multiplayer 1v1",
+        "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
+        "features": {
+            "vs": "1v1",
+            "websocket": "WebSocket",
+            "ranked": "Ranked"
+        },
+        "stats": {
+            "mode": "Mode",
+            "battle": "Battle",
+            "status": "Status"
+        }
+    },
+    "footer": {
+        "copyright": "RHYTHMIA © 2025"
+    },
+    "localeSwitcher": {
+        "label": "Language",
+        "en": "English",
+        "ja": "日本語"
+    }
+}
