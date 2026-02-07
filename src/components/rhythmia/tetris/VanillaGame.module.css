@@ -249,33 +249,59 @@
   border-radius: 1px;
 }
 
-/* Beat indicator */
+/* Beat indicator — cursor sweeps left→right, target zones mark the on-beat window */
 .beatBar {
   width: min(300px, 80vw);
-  height: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.beatFill {
-  height: 100%;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.7));
-  border-radius: 8px;
-  transition: width 0.05s linear;
-}
-
-.beatTarget {
+/* On-beat zone: left edge (phase 0–15%, just after beat fires) */
+.beatTargetLeft {
   position: absolute;
-  right: 10%;
+  left: 0;
   top: 0;
   bottom: 0;
   width: 15%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  background: rgba(255, 215, 0, 0.08);
+  border-right: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px 0 0 8px;
+}
+
+/* On-beat zone: right edge (phase 75–100%, approaching next beat) */
+.beatTargetRight {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 25%;
+  background: rgba(255, 215, 0, 0.08);
+  border-left: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Moving cursor — positioned via CSS custom property set by rAF (no React re-render needed) */
+.beatCursor {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  z-index: 2;
+  transform: translateX(-50%);
+  left: calc(var(--beat-phase, 0) * 100%);
+}
+
+/* On-beat glow — driven by data-onbeat attribute set in rAF loop */
+.beatBar[data-onbeat] .beatCursor {
+  background: #FFD700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 215, 0, 0.3);
+  width: 6px;
 }
 
 /* Judgment display */
@@ -619,7 +645,7 @@
 
   .beatBar {
     width: min(250px, 90vw);
-    height: 14px;
+    height: 18px;
   }
 
   .terrainBar {
@@ -679,7 +705,7 @@
 
   .beatBar {
     width: 180px;
-    height: 10px;
+    height: 14px;
   }
 
   .themeNav {

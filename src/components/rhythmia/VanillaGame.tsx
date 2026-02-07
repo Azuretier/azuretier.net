@@ -743,7 +743,7 @@ export const Rhythmia: React.FC = () => {
     };
   }, [gameStarted, gameOver, worldIdx, playDrum]);
 
-  // Beat phase animation
+  // Beat phase animation — ref is updated directly for frame-precise judgments
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
@@ -754,8 +754,8 @@ export const Rhythmia: React.FC = () => {
         const interval = 60000 / world.bpm;
         const elapsed = Date.now() - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
-        setBeatPhase(phase);
         beatPhaseRef.current = phase;
+        setBeatPhase(phase);
         animFrame = requestAnimationFrame(updateBeat);
       }
     };
@@ -1015,8 +1015,12 @@ export const Rhythmia: React.FC = () => {
           </div>
 
           <div className={styles.beatBar}>
-            <div className={styles.beatTarget} />
-            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
+            <div className={styles.beatTargetLeft} />
+            <div className={styles.beatTargetRight} />
+            <div
+              className={`${styles.beatCursor} ${(beatPhase > 0.75 || beatPhase < 0.15) ? styles.onBeat : ''}`}
+              style={{ left: `${beatPhase * 100}%` }}
+            />
           </div>
 
           {isMobile && (
