@@ -93,6 +93,10 @@ export default function Rhythmia() {
   const vfx = useRhythmVFX();
   const boardElRef = useRef<HTMLDivElement>(null);
 
+  // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
+  const vfxEmitRef = useRef(vfx.emit);
+  vfxEmitRef.current = vfx.emit;
+
   const {
     board,
     currentPiece,
@@ -188,6 +192,12 @@ export default function Rhythmia() {
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
+
+  // Stable refs for tower defense callbacks used in beat timer setInterval
+  const spawnEnemiesRef = useRef(spawnEnemies);
+  spawnEnemiesRef.current = spawnEnemies;
+  const updateEnemiesRef = useRef(updateEnemies);
+  updateEnemiesRef.current = updateEnemies;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -492,6 +502,8 @@ export default function Rhythmia() {
   }, [initAudio, initGame]);
 
   // Beat timer for rhythm game + enemy spawning
+  // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
+  // (vfx object recreates every render, which would reset the interval)
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
@@ -506,14 +518,14 @@ export default function Rhythmia() {
       playDrum();
 
       // Tower Defense: spawn enemies on each beat
-      spawnEnemies(ENEMIES_PER_BEAT);
+      spawnEnemiesRef.current(ENEMIES_PER_BEAT);
 
       // Move enemies toward tower
-      updateEnemies();
+      updateEnemiesRef.current();
 
       // VFX: beat pulse ring — intensity scales with BPM
       const intensity = Math.min(1, (world.bpm - 80) / 100);
-      vfx.emit({ type: 'beat', bpm: world.bpm, intensity });
+      vfxEmitRef.current({ type: 'beat', bpm: world.bpm, intensity });
 
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
@@ -521,7 +533,7 @@ export default function Rhythmia() {
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx, spawnEnemies, updateEnemies]);
+  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
   // Beat phase animation
   useEffect(() => {
