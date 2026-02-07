@@ -13,3 +13,8 @@ export {
     JudgmentDisplay,
     TouchControls,
 } from './GameUI';
+export { FloatingItems } from './FloatingItems';
+export { ItemSlots } from './ItemSlots';
+export { CraftingUI } from './CraftingUI';
+export { TerrainParticles } from './TerrainParticles';
+export { WorldTransition, GamePhaseIndicator } from './WorldTransition';

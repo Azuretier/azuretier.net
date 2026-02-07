@@ -47,3 +47,77 @@ export type RhythmState = {
     boardShake: boolean;
     scorePop: boolean;
 };
+
+// ===== Game Loop Phase =====
+export type GamePhase =
+    | 'WORLD_CREATION'
+    | 'PLAYING'
+    | 'CRAFTING'
+    | 'COLLAPSE'
+    | 'TRANSITION';
+
+// ===== Item System =====
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type ItemType = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: ItemRarity;
+    dropWeight: number;
+};
+
+export type InventoryItem = {
+    itemId: string;
+    count: number;
+};
+
+// ===== Floating Item (visual) =====
+export type FloatingItem = {
+    id: number;
+    itemId: string;
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    startTime: number;
+    duration: number;
+    collected: boolean;
+};
+
+// ===== Weapon Cards =====
+export type WeaponCard = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    description: string;
+    descriptionJa: string;
+    damageMultiplier: number;
+    specialEffect?: string;
+    recipe: { itemId: string; count: number }[];
+};
+
+export type CraftedCard = {
+    cardId: string;
+    craftedAt: number;
+};
+
+// ===== Terrain Particle =====
+export type TerrainParticle = {
+    id: number;
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+    color: string;
+    opacity: number;
+    life: number;
+    maxLife: number;
+};
