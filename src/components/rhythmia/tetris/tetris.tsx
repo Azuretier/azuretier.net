@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE } from './constants';
 import type { Piece } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -42,16 +42,25 @@ import {
   JudgmentDisplay,
   TouchControls,
   RhythmVFX,
+  FloatingItems,
+  ItemSlots,
+  CraftingUI,
+  TerrainParticles,
+  WorldTransition,
+  GamePhaseIndicator,
 } from './components';
 
 /**
- * Rhythmia - A rhythm-based Tetris game
- * Split into modular components for better maintainability
+ * Rhythmia - A rhythm-based Tetris game with full game loop:
+ * World Creation → Dig → Item Drop → Craft → Firepower → Collapse → Reload → Next World
  */
 export default function Rhythmia() {
   // Device type detection for responsive layouts
   const deviceInfo = useDeviceType();
   const { type: deviceType, isLandscape } = deviceInfo;
+
+  // Ref for board area to compute particle spawn positions
+  const gameAreaRef = useRef<HTMLDivElement>(null);
 
   // Compute responsive CSS class names
   const responsiveClassName = useMemo(() => {
@@ -110,6 +119,14 @@ export default function Rhythmia() {
     boardShake,
     scorePop,
     colorTheme,
+    // Game loop
+    gamePhase,
+    inventory,
+    floatingItems,
+    terrainParticles,
+    craftedCards,
+    showCraftUI,
+    damageMultiplier,
     // Refs
     boardRef,
     currentPieceRef,
@@ -128,6 +145,7 @@ export default function Rhythmia() {
     terrainDestroyedCountRef,
     terrainTotalRef,
     beatPhaseRef,
+    damageMultiplierRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -147,6 +165,7 @@ export default function Rhythmia() {
     setBeatPhase,
     setBoardBeat,
     setColorTheme,
+    setGamePhase,
     spawnPiece,
     showJudgment,
     updateScore,
@@ -155,9 +174,27 @@ export default function Rhythmia() {
     handleTerrainReady,
     destroyTerrain,
     startNewStage,
+    // Game loop actions
+    spawnItemDrops,
+    spawnTerrainParticles,
+    craftCard,
+    canCraftCard,
+    toggleCraftUI,
+    triggerCollapse,
+    triggerTransition,
+    triggerWorldCreation,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
+
+  // Helper: get center of board area for particle/item spawn origin
+  const getBoardCenter = useCallback((): { x: number; y: number } => {
+    if (gameAreaRef.current) {
+      const rect = gameAreaRef.current.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+    return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  }, []);
 
   // Move piece in given direction
   const movePiece = useCallback((dx: number, dy: number): boolean => {
@@ -259,7 +296,7 @@ export default function Rhythmia() {
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
 
-  // Handle piece locking and game advancement
+  // Handle piece locking and game advancement — integrates the full game loop
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
@@ -309,9 +346,10 @@ export default function Rhythmia() {
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
     updateScore(scoreRef.current + finalScore);
 
-    // Terrain destruction (combo multiplier mirrors score calculation)
+    // === DIG PHASE: Terrain destruction with damage multiplier from weapon cards ===
     if (clearedLines > 0) {
-      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current);
+      const weaponMult = damageMultiplierRef.current;
+      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult;
       const remaining = destroyTerrain(damage);
 
       // VFX: line clear equalizer bars + glitch particles
@@ -322,9 +360,17 @@ export default function Rhythmia() {
         onBeat,
         combo: comboRef.current,
       });
+      // === PARTICLE EFFECTS: Terrain emits particles when destroyed ===
+      const center = getBoardCenter();
+      spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
+
+      // === ITEM DROP: Terrain drops items that float to inventory ===
+      spawnItemDrops(damage, center.x, center.y);
 
       if (remaining <= 0) {
-        // All terrain destroyed — advance stage
+        // === COLLAPSE PHASE: Terrain fully destroyed ===
+        triggerCollapse();
+
         const newStageNumber = stageNumberRef.current + 1;
         // Cycle worlds every 5 stages
         const newWorldIdx = Math.floor((newStageNumber - 1) / 5) % WORLDS.length;
@@ -337,9 +383,19 @@ export default function Rhythmia() {
           showJudgment(`STAGE ${newStageNumber}!`, '#FFD700');
         }
 
+        // Collapse → Transition → World Creation → Playing
         setTimeout(() => {
+          triggerTransition();
+        }, 1200);
+
+        setTimeout(() => {
+          triggerWorldCreation();
           startNewStage(newStageNumber);
-        }, 800);
+        }, 2400);
+
+        setTimeout(() => {
+          setGamePhase('PLAYING');
+        }, 3800);
       }
 
       playLineClear(clearedLines);
@@ -357,10 +413,12 @@ export default function Rhythmia() {
     currentPieceRef.current = spawned;
   }, [
     beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, worldIdxRef, stageNumberRef,
-    terrainDestroyedCountRef, terrainTotalRef,
-    setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece,
+    terrainDestroyedCountRef, terrainTotalRef, damageMultiplierRef,
+    setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece, setGamePhase,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, destroyTerrain, startNewStage, vfx,
+    getBoardCenter, spawnTerrainParticles, spawnItemDrops,
+    triggerCollapse, triggerTransition, triggerWorldCreation,
   ]);
 
   // Hard drop
@@ -533,6 +591,23 @@ export default function Rhythmia() {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
+      // Handle craft UI toggle with 'f' key
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleCraftUI();
+        return;
+      }
+
+      // Close craft UI with Escape
+      if (showCraftUI && (e.key === 'Escape')) {
+        e.preventDefault();
+        toggleCraftUI();
+        return;
+      }
+
+      // Don't process game inputs while craft UI is open
+      if (showCraftUI) return;
+
       const currentTime = performance.now();
 
       switch (e.key) {
@@ -607,6 +682,10 @@ export default function Rhythmia() {
 
         case 'p':
         case 'P':
+          e.preventDefault();
+          setIsPaused(prev => !prev);
+          break;
+
         case 'Escape':
           e.preventDefault();
           setIsPaused(prev => !prev);
@@ -634,7 +713,7 @@ export default function Rhythmia() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCraftUI, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
 
   const world = WORLDS[worldIdx];
 
@@ -650,6 +729,19 @@ export default function Rhythmia() {
         onTerrainReady={handleTerrainReady}
       />
 
+      {/* Terrain destruction particle effects */}
+      <TerrainParticles particles={terrainParticles} />
+
+      {/* Floating item drops from terrain */}
+      <FloatingItems items={floatingItems} />
+
+      {/* World transition overlays (creation / collapse / reload) */}
+      <WorldTransition
+        phase={gamePhase}
+        worldIdx={worldIdx}
+        stageNumber={stageNumber}
+      />
+
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
         <TitleScreen onStart={startGame} />
@@ -660,17 +752,29 @@ export default function Rhythmia() {
         <div className={styles.game}>
           <WorldDisplay worldIdx={worldIdx} />
 
-          {/* Theme Navbar */}
+          {/* Game phase indicator + Theme Navbar */}
+          <GamePhaseIndicator
+            phase={gamePhase}
+            stageNumber={stageNumber}
+            damageMultiplier={damageMultiplier}
+          />
           <ThemeNav colorTheme={colorTheme} onThemeChange={setColorTheme} />
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
           <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
 
-          <div className={styles.gameArea}>
+          <div className={styles.gameArea} ref={gameAreaRef}>
+            {/* Left side: Hold + Item Slots */}
             <div className={styles.nextWrap}>
               <div className={styles.nextLabel}>HOLD (C)</div>
               <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+              <ItemSlots
+                inventory={inventory}
+                craftedCards={craftedCards}
+                damageMultiplier={damageMultiplier}
+                onCraftOpen={toggleCraftUI}
+              />
             </div>
 
             <Board
@@ -721,6 +825,16 @@ export default function Rhythmia() {
         onStart={vfx.start}
         onStop={vfx.stop}
       />
+      {/* Crafting UI overlay */}
+      {showCraftUI && (
+        <CraftingUI
+          inventory={inventory}
+          craftedCards={craftedCards}
+          onCraft={craftCard}
+          canCraft={canCraftCard}
+          onClose={toggleCraftUI}
+        />
+      )}
 
       {/* Judgment */}
       <JudgmentDisplay

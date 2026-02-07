@@ -1,7 +1,27 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState } from '../types';
-import { BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme } from '../constants';
+import type { Piece, Board, KeyState, GamePhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle } from '../types';
+import {
+    BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
+    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
+    ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
+    TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
+} from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
+
+let nextFloatingId = 0;
+let nextParticleId = 0;
+
+/**
+ * Roll a random item based on drop weights
+ */
+function rollItem(): string {
+    let roll = Math.random() * TOTAL_DROP_WEIGHT;
+    for (const item of ITEMS) {
+        roll -= item.dropWeight;
+        if (roll <= 0) return item.id;
+    }
+    return ITEMS[0].id;
+}
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -44,6 +64,24 @@ export function useGameState() {
     // Color theme
     const [colorTheme, setColorTheme] = useState<ColorTheme>('stage');
 
+    // ===== Game Loop Phase =====
+    const [gamePhase, setGamePhase] = useState<GamePhase>('WORLD_CREATION');
+
+    // ===== Item System =====
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [floatingItems, setFloatingItems] = useState<FloatingItem[]>([]);
+    const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
+
+    // ===== Weapon Cards =====
+    const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
+    const [showCraftUI, setShowCraftUI] = useState(false);
+
+    // Computed: total damage multiplier from all crafted cards
+    const damageMultiplier = craftedCards.reduce((mult, card) => {
+        const def = WEAPON_CARD_MAP[card.cardId];
+        return def ? mult * def.damageMultiplier : mult;
+    }, 1);
+
     // Refs for accessing current values in callbacks (avoids stale closures)
     const gameLoopRef = useRef<number | null>(null);
     const beatTimerRef = useRef<number | null>(null);
@@ -71,6 +109,7 @@ export function useGameState() {
     const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
     const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
+    const damageMultiplierRef = useRef(damageMultiplier);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -100,6 +139,7 @@ export function useGameState() {
     useEffect(() => { terrainDestroyedCountRef.current = terrainDestroyedCount; }, [terrainDestroyedCount]);
     useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
+    useEffect(() => { damageMultiplierRef.current = damageMultiplier; }, [damageMultiplier]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -189,6 +229,157 @@ export function useGameState() {
         terrainDestroyedCountRef.current = 0;
     }, []);
 
+    // ===== Item System Actions =====
+
+    // Spawn floating items from terrain destruction
+    const spawnItemDrops = useCallback((damage: number, originX: number, originY: number) => {
+        const itemCount = Math.max(1, Math.floor(damage * ITEMS_PER_TERRAIN_DAMAGE));
+        const now = Date.now();
+        const newItems: FloatingItem[] = [];
+
+        for (let i = 0; i < Math.min(itemCount, MAX_FLOATING_ITEMS); i++) {
+            const itemId = rollItem();
+            newItems.push({
+                id: nextFloatingId++,
+                itemId,
+                x: originX + (Math.random() - 0.5) * 200,
+                y: originY + (Math.random() - 0.5) * 100,
+                targetX: originX,
+                targetY: originY + 300,
+                startTime: now + i * 80,
+                duration: FLOAT_DURATION + Math.random() * 200,
+                collected: false,
+            });
+        }
+
+        setFloatingItems(prev => [...prev, ...newItems].slice(-MAX_FLOATING_ITEMS * 2));
+
+        // Schedule item collection
+        setTimeout(() => {
+            setFloatingItems(prev => prev.map(fi =>
+                newItems.some(ni => ni.id === fi.id) ? { ...fi, collected: true } : fi
+            ));
+            // Add items to inventory
+            const itemCounts: Record<string, number> = {};
+            newItems.forEach(fi => {
+                itemCounts[fi.itemId] = (itemCounts[fi.itemId] || 0) + 1;
+            });
+            setInventory(prev => {
+                const updated = [...prev];
+                Object.entries(itemCounts).forEach(([itemId, count]) => {
+                    const existing = updated.find(i => i.itemId === itemId);
+                    if (existing) {
+                        existing.count += count;
+                    } else {
+                        updated.push({ itemId, count });
+                    }
+                });
+                return updated;
+            });
+        }, FLOAT_DURATION + itemCount * 80 + 200);
+
+        // Clean up collected floating items
+        setTimeout(() => {
+            setFloatingItems(prev => prev.filter(fi => !newItems.some(ni => ni.id === fi.id)));
+        }, FLOAT_DURATION + itemCount * 80 + 600);
+    }, []);
+
+    // Spawn terrain destruction particles
+    const spawnTerrainParticles = useCallback((originX: number, originY: number, count: number, color?: string) => {
+        const now = Date.now();
+        const newParticles: TerrainParticle[] = [];
+        const colors = ['#8B8B8B', '#B87333', '#4FC3F7', '#FFD700', '#9C27B0', '#FFFFFF'];
+
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+            const speed = 2 + Math.random() * 6;
+            newParticles.push({
+                id: nextParticleId++,
+                x: originX + (Math.random() - 0.5) * 40,
+                y: originY + (Math.random() - 0.5) * 20,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 3,
+                size: 3 + Math.random() * 6,
+                color: color || colors[Math.floor(Math.random() * colors.length)],
+                opacity: 0.8 + Math.random() * 0.2,
+                life: TERRAIN_PARTICLE_LIFETIME,
+                maxLife: TERRAIN_PARTICLE_LIFETIME,
+            });
+        }
+
+        setTerrainParticles(prev => [...prev, ...newParticles].slice(-200));
+
+        // Clean up after lifetime
+        setTimeout(() => {
+            setTerrainParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
+        }, TERRAIN_PARTICLE_LIFETIME + 100);
+    }, []);
+
+    // Craft a weapon card
+    const craftCard = useCallback((cardId: string): boolean => {
+        const card = WEAPON_CARD_MAP[cardId];
+        if (!card) return false;
+
+        // Check if we have all required items
+        const inventoryCopy = inventory.map(i => ({ ...i }));
+        for (const req of card.recipe) {
+            const item = inventoryCopy.find(i => i.itemId === req.itemId);
+            if (!item || item.count < req.count) return false;
+        }
+
+        // Deduct items
+        for (const req of card.recipe) {
+            const item = inventoryCopy.find(i => i.itemId === req.itemId)!;
+            item.count -= req.count;
+        }
+
+        setInventory(inventoryCopy.filter(i => i.count > 0));
+        setCraftedCards(prev => [...prev, { cardId, craftedAt: Date.now() }]);
+        return true;
+    }, [inventory]);
+
+    // Check if a card can be crafted
+    const canCraftCard = useCallback((cardId: string): boolean => {
+        const card = WEAPON_CARD_MAP[cardId];
+        if (!card) return false;
+        return card.recipe.every(req => {
+            const item = inventory.find(i => i.itemId === req.itemId);
+            return item && item.count >= req.count;
+        });
+    }, [inventory]);
+
+    // Toggle craft UI
+    const toggleCraftUI = useCallback(() => {
+        setShowCraftUI(prev => !prev);
+        if (!showCraftUI) {
+            setGamePhase('CRAFTING');
+            setIsPaused(true);
+        } else {
+            setGamePhase('PLAYING');
+            setIsPaused(false);
+        }
+    }, [showCraftUI]);
+
+    // Set phase to PLAYING (after world creation animation)
+    const enterPlayPhase = useCallback(() => {
+        setGamePhase('PLAYING');
+    }, []);
+
+    // Trigger collapse phase when terrain fully destroyed
+    const triggerCollapse = useCallback(() => {
+        setGamePhase('COLLAPSE');
+    }, []);
+
+    // Trigger transition phase (new world construction)
+    const triggerTransition = useCallback(() => {
+        setGamePhase('TRANSITION');
+    }, []);
+
+    // Trigger world creation phase
+    const triggerWorldCreation = useCallback(() => {
+        setGamePhase('WORLD_CREATION');
+    }, []);
+
     // Initialize/reset game
     const initGame = useCallback(() => {
         setBoard(createEmptyBoard());
@@ -209,6 +400,15 @@ export function useGameState() {
         setGameOver(false);
         setIsPaused(false);
         setIsPlaying(true);
+
+        // Reset game loop state
+        setGamePhase('WORLD_CREATION');
+        setInventory([]);
+        setCraftedCards([]);
+        setFloatingItems([]);
+        setTerrainParticles([]);
+        setShowCraftUI(false);
+
         setHoldPiece(null);
         setCanHold(true);
 
@@ -234,6 +434,11 @@ export function useGameState() {
         setCurrentPiece(initialPiece);
         currentPieceRef.current = initialPiece;
         lastGravityRef.current = performance.now();
+
+        // Transition to PLAYING after world creation animation
+        setTimeout(() => {
+            setGamePhase('PLAYING');
+        }, 1500);
     }, [resetKeyStates]);
 
     return {
@@ -267,6 +472,14 @@ export function useGameState() {
         arr,
         sdf,
         colorTheme,
+        // Game loop
+        gamePhase,
+        inventory,
+        floatingItems,
+        terrainParticles,
+        craftedCards,
+        showCraftUI,
+        damageMultiplier,
 
         // Setters
         setBoard,
@@ -289,6 +502,7 @@ export function useGameState() {
         setArr,
         setSdf,
         setColorTheme,
+        setGamePhase,
 
         // Refs
         boardRef,
@@ -311,6 +525,7 @@ export function useGameState() {
         terrainDestroyedCountRef,
         terrainTotalRef,
         beatPhaseRef,
+        damageMultiplierRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
@@ -327,5 +542,15 @@ export function useGameState() {
         handleTerrainReady,
         destroyTerrain,
         startNewStage,
+        // Game loop actions
+        spawnItemDrops,
+        spawnTerrainParticles,
+        craftCard,
+        canCraftCard,
+        toggleCraftUI,
+        enterPlayPhase,
+        triggerCollapse,
+        triggerTransition,
+        triggerWorldCreation,
     };
 }
