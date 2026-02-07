@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 
 // Simple seeded random for deterministic terrain
@@ -115,15 +115,86 @@ function createGridLines(): THREE.LineSegments {
   return new THREE.LineSegments(geo, mat);
 }
 
-export default function VoxelWorldBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
+interface SceneState {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  gridLines: THREE.LineSegments;
+  instancedMesh: THREE.InstancedMesh | null;
+  boxGeo: THREE.BoxGeometry;
+  boxMat: THREE.MeshStandardMaterial;
+}
 
+interface VoxelWorldBackgroundProps {
+  seed?: number;
+  destroyedCount?: number;
+  onTerrainReady?: (totalBlocks: number) => void;
+}
+
+export default function VoxelWorldBackground({
+  seed = 42,
+  destroyedCount = 0,
+  onTerrainReady,
+}: VoxelWorldBackgroundProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sceneStateRef = useRef<SceneState | null>(null);
+  const aliveIndicesRef = useRef<number[]>([]);
+  const lastDestroyedCountRef = useRef(0);
+  const animIdRef = useRef<number>(0);
+  const onTerrainReadyRef = useRef(onTerrainReady);
+  onTerrainReadyRef.current = onTerrainReady;
+
+  // Build terrain mesh into the scene
+  const buildTerrain = useCallback((terrainSeed: number) => {
+    const ss = sceneStateRef.current;
+    if (!ss) return;
+
+    // Remove old instanced mesh
+    if (ss.instancedMesh) {
+      ss.scene.remove(ss.instancedMesh);
+      ss.instancedMesh.dispose();
+    }
+
+    // Generate new terrain
+    const voxelData = generateVoxelWorld(terrainSeed, 20);
+    const mesh = new THREE.InstancedMesh(ss.boxGeo, ss.boxMat, voxelData.count);
+
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
+    for (let i = 0; i < voxelData.count; i++) {
+      dummy.position.set(
+        voxelData.positions[i * 3],
+        voxelData.positions[i * 3 + 1],
+        voxelData.positions[i * 3 + 2]
+      );
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+      color.setRGB(
+        voxelData.colors[i * 3],
+        voxelData.colors[i * 3 + 1],
+        voxelData.colors[i * 3 + 2]
+      );
+      mesh.setColorAt(i, color);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
+    ss.scene.add(mesh);
+    ss.instancedMesh = mesh;
+
+    // Reset alive tracking
+    aliveIndicesRef.current = Array.from({ length: voxelData.count }, (_, i) => i);
+    lastDestroyedCountRef.current = 0;
+
+    onTerrainReadyRef.current?.(voxelData.count);
+  }, []);
+
+  // Setup scene once
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Scene setup
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0x000000, 0);
@@ -138,45 +209,22 @@ export default function VoxelWorldBackground() {
     // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambient);
-
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(20, 30, 10);
     scene.add(dirLight);
-
     const pointLight = new THREE.PointLight(0xffffff, 0.3);
     pointLight.position.set(0, 15, 0);
     scene.add(pointLight);
 
-    // Voxel terrain
-    const voxelData = generateVoxelWorld(42, 20);
+    // Shared geometry/material for instanced meshes
     const boxGeo = new THREE.BoxGeometry(0.95, 0.95, 0.95);
     const boxMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true });
-    const instancedMesh = new THREE.InstancedMesh(boxGeo, boxMat, voxelData.count);
-
-    const dummy = new THREE.Object3D();
-    const color = new THREE.Color();
-    for (let i = 0; i < voxelData.count; i++) {
-      dummy.position.set(
-        voxelData.positions[i * 3],
-        voxelData.positions[i * 3 + 1],
-        voxelData.positions[i * 3 + 2]
-      );
-      dummy.updateMatrix();
-      instancedMesh.setMatrixAt(i, dummy.matrix);
-      color.setRGB(
-        voxelData.colors[i * 3],
-        voxelData.colors[i * 3 + 1],
-        voxelData.colors[i * 3 + 2]
-      );
-      instancedMesh.setColorAt(i, color);
-    }
-    instancedMesh.instanceMatrix.needsUpdate = true;
-    if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
-    scene.add(instancedMesh);
 
     // Grid lines
     const gridLines = createGridLines();
     scene.add(gridLines);
+
+    sceneStateRef.current = { renderer, scene, camera, gridLines, instancedMesh: null, boxGeo, boxMat };
 
     // Handle resize
     const updateSize = () => {
@@ -192,38 +240,79 @@ export default function VoxelWorldBackground() {
     window.addEventListener('resize', updateSize);
 
     // Animation loop
-    let animId: number;
     let lastTime = 0;
     const animate = (time: number) => {
-      animId = requestAnimationFrame(animate);
+      animIdRef.current = requestAnimationFrame(animate);
       const delta = (time - lastTime) / 1000;
       lastTime = time;
 
       if (delta < 0.1) {
-        instancedMesh.rotation.y += delta * 0.03;
+        const ss = sceneStateRef.current;
+        if (ss?.instancedMesh) {
+          ss.instancedMesh.rotation.y += delta * 0.03;
+        }
         gridLines.rotation.y += delta * 0.02;
       }
 
       renderer.render(scene, camera);
     };
-    animId = requestAnimationFrame(animate);
+    animIdRef.current = requestAnimationFrame(animate);
 
-    // Cleanup
-    cleanupRef.current = () => {
-      cancelAnimationFrame(animId);
+    // Build initial terrain
+    buildTerrain(seed);
+
+    return () => {
+      cancelAnimationFrame(animIdRef.current);
       window.removeEventListener('resize', updateSize);
       renderer.dispose();
       boxGeo.dispose();
       boxMat.dispose();
-      instancedMesh.dispose();
+      if (sceneStateRef.current?.instancedMesh) {
+        sceneStateRef.current.instancedMesh.dispose();
+      }
       gridLines.geometry.dispose();
       (gridLines.material as THREE.Material).dispose();
+      sceneStateRef.current = null;
     };
-
-    return () => {
-      cleanupRef.current?.();
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Regenerate terrain when seed changes
+  useEffect(() => {
+    buildTerrain(seed);
+  }, [seed, buildTerrain]);
+
+  // Destroy blocks when destroyedCount increases
+  useEffect(() => {
+    const ss = sceneStateRef.current;
+    if (!ss?.instancedMesh) return;
+
+    const toDestroy = destroyedCount - lastDestroyedCountRef.current;
+    if (toDestroy <= 0) return;
+
+    const alive = aliveIndicesRef.current;
+    const actualDestroy = Math.min(toDestroy, alive.length);
+
+    // Fisher-Yates partial shuffle to pick random blocks to destroy
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < actualDestroy; i++) {
+      const j = i + Math.floor(Math.random() * (alive.length - i));
+      [alive[i], alive[j]] = [alive[j], alive[i]];
+
+      // Scale block to 0 to hide it
+      const idx = alive[i];
+      dummy.position.set(0, -1000, 0);
+      dummy.scale.set(0, 0, 0);
+      dummy.updateMatrix();
+      ss.instancedMesh.setMatrixAt(idx, dummy.matrix);
+    }
+
+    // Remove destroyed entries from alive list
+    aliveIndicesRef.current = alive.slice(actualDestroy);
+    ss.instancedMesh.instanceMatrix.needsUpdate = true;
+
+    lastDestroyedCountRef.current = destroyedCount;
+  }, [destroyedCount]);
 
   return (
     <div

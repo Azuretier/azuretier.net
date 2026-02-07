@@ -136,6 +136,10 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 // Set to 0 for instant movement (common in competitive play)
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
+// ===== Terrain Settings =====
+// Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
+export const TERRAIN_DAMAGE_PER_LINE = 4;
+
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 

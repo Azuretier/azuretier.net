@@ -6,7 +6,7 @@ export {
     WorldDisplay,
     ScoreDisplay,
     ComboDisplay,
-    EnemyBar,
+    TerrainProgress,
     BeatBar,
     StatsPanel,
     ThemeNav,

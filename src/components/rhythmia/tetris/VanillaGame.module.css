@@ -403,8 +403,8 @@
   color: #000000;
 }
 
-/* Enemy HP */
-.enemyBar {
+/* Terrain Progress Bar */
+.terrainBar {
   width: min(250px, 70vw);
   height: 8px;
   background: rgba(255, 255, 255, 0.06);
@@ -412,13 +412,13 @@
   overflow: hidden;
 }
 
-.enemyFill {
+.terrainFill {
   height: 100%;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
   transition: width 0.3s;
 }
 
-.enemyLabel {
+.terrainLabel {
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.7rem;
   text-align: center;
@@ -592,7 +592,7 @@
     height: 14px;
   }
 
-  .enemyBar {
+  .terrainBar {
     width: min(200px, 80vw);
     height: 6px;
   }

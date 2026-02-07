@@ -35,7 +35,10 @@ export type GameState = {
 
 export type RhythmState = {
     worldIdx: number;
-    enemyHP: number;
+    terrainSeed: number;
+    terrainDestroyedCount: number;
+    terrainTotal: number;
+    stageNumber: number;
     beatPhase: number;
     judgmentText: string;
     judgmentColor: string;

@@ -63,19 +63,22 @@ export function ComboDisplay({ combo }: ComboDisplayProps) {
     );
 }
 
-interface EnemyBarProps {
-    enemyHP: number;
+interface TerrainProgressProps {
+    terrainRemaining: number;
+    terrainTotal: number;
+    stageNumber: number;
 }
 
 /**
- * Enemy HP bar display
+ * Terrain destruction progress bar
  */
-export function EnemyBar({ enemyHP }: EnemyBarProps) {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }: TerrainProgressProps) {
+    const percent = terrainTotal > 0 ? (terrainRemaining / terrainTotal) * 100 : 0;
     return (
         <>
-            <div className={styles.enemyLabel}>👻 ノイズリング</div>
-            <div className={styles.enemyBar}>
-                <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — 地形破壊</div>
+            <div className={styles.terrainBar}>
+                <div className={styles.terrainFill} style={{ width: `${percent}%` }} />
             </div>
         </>
     );

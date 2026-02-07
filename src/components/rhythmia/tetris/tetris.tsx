@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH } from './constants';
+import { WORLDS, BOARD_WIDTH, TERRAIN_DAMAGE_PER_LINE } from './constants';
 import type { Piece } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -35,7 +35,7 @@ import {
   WorldDisplay,
   ScoreDisplay,
   ComboDisplay,
-  EnemyBar,
+  TerrainProgress,
   BeatBar,
   StatsPanel,
   ThemeNav,
@@ -95,7 +95,10 @@ export default function Rhythmia() {
     isPaused,
     isPlaying,
     worldIdx,
-    enemyHP,
+    stageNumber,
+    terrainSeed,
+    terrainDestroyedCount,
+    terrainTotal,
     beatPhase,
     judgmentText,
     judgmentColor,
@@ -118,7 +121,9 @@ export default function Rhythmia() {
     gameOverRef,
     isPausedRef,
     worldIdxRef,
-    enemyHPRef,
+    stageNumberRef,
+    terrainDestroyedCountRef,
+    terrainTotalRef,
     beatPhaseRef,
     keyStatesRef,
     gameLoopRef,
@@ -136,7 +141,6 @@ export default function Rhythmia() {
     setLevel,
     setIsPaused,
     setWorldIdx,
-    setEnemyHP,
     setBeatPhase,
     setBoardBeat,
     setColorTheme,
@@ -145,6 +149,9 @@ export default function Rhythmia() {
     updateScore,
     triggerBoardShake,
     initGame,
+    handleTerrainReady,
+    destroyTerrain,
+    startNewStage,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
@@ -267,26 +274,28 @@ export default function Rhythmia() {
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
     updateScore(scoreRef.current + finalScore);
 
-    // Enemy damage
+    // Terrain destruction
     if (clearedLines > 0) {
-      const damage = clearedLines * 8 * mult;
-      const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
-      setEnemyHP(newEnemyHP);
+      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult;
+      const remaining = destroyTerrain(damage);
 
-      if (newEnemyHP <= 0) {
-        // Next world
-        const newWorldIdx = worldIdxRef.current + 1;
-        if (newWorldIdx >= WORLDS.length) {
-          showJudgment('🎉 CLEAR!', '#FFD700');
-          setTimeout(() => {
-            setWorldIdx(0);
-            setEnemyHP(100);
-          }, 2000);
-        } else {
+      if (remaining <= 0) {
+        // All terrain destroyed — advance stage
+        const newStageNumber = stageNumberRef.current + 1;
+        // Cycle worlds every 5 stages
+        const newWorldIdx = Math.floor((newStageNumber - 1) / 5) % WORLDS.length;
+        const currentWorldIdx = worldIdxRef.current;
+
+        if (newWorldIdx !== currentWorldIdx) {
           showJudgment('WORLD CLEAR!', '#00FF00');
           setWorldIdx(newWorldIdx);
-          setEnemyHP(100);
+        } else {
+          showJudgment(`STAGE ${newStageNumber}!`, '#FFD700');
         }
+
+        setTimeout(() => {
+          startNewStage(newStageNumber);
+        }, 800);
       }
 
       playLineClear(clearedLines);
@@ -303,10 +312,11 @@ export default function Rhythmia() {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, enemyHPRef, worldIdxRef,
-    setCombo, setBoard, setEnemyHP, setWorldIdx, setLines, setLevel, setCurrentPiece,
+    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, worldIdxRef, stageNumberRef,
+    terrainDestroyedCountRef, terrainTotalRef,
+    setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef,
+    currentPieceRef, destroyTerrain, startNewStage,
   ]);
 
   // Hard drop
@@ -573,8 +583,12 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={responsiveCSSVars}
     >
-      {/* Voxel World Background */}
-      <VoxelWorldBackground />
+      {/* Voxel World Background — destructible terrain */}
+      <VoxelWorldBackground
+        seed={terrainSeed}
+        destroyedCount={terrainDestroyedCount}
+        onTerrainReady={handleTerrainReady}
+      />
 
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
@@ -591,7 +605,7 @@ export default function Rhythmia() {
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
-          <EnemyBar enemyHP={enemyHP} />
+          <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
 
           <div className={styles.gameArea}>
             <div className={styles.nextWrap}>

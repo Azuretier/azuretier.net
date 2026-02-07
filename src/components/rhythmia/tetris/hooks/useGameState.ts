@@ -24,7 +24,10 @@ export function useGameState() {
 
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
-    const [enemyHP, setEnemyHP] = useState(100);
+    const [stageNumber, setStageNumber] = useState(1);
+    const [terrainSeed, setTerrainSeed] = useState(42);
+    const [terrainDestroyedCount, setTerrainDestroyedCount] = useState(0);
+    const [terrainTotal, setTerrainTotal] = useState(0);
     const [beatPhase, setBeatPhase] = useState(0);
     const [judgmentText, setJudgmentText] = useState('');
     const [judgmentColor, setJudgmentColor] = useState('');
@@ -64,7 +67,9 @@ export function useGameState() {
     const gameOverRef = useRef(gameOver);
     const isPausedRef = useRef(isPaused);
     const worldIdxRef = useRef(worldIdx);
-    const enemyHPRef = useRef(enemyHP);
+    const stageNumberRef = useRef(stageNumber);
+    const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
+    const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
 
     // Key states for DAS/ARR
@@ -91,7 +96,9 @@ export function useGameState() {
     useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
     useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
     useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
-    useEffect(() => { enemyHPRef.current = enemyHP; }, [enemyHP]);
+    useEffect(() => { stageNumberRef.current = stageNumber; }, [stageNumber]);
+    useEffect(() => { terrainDestroyedCountRef.current = terrainDestroyedCount; }, [terrainDestroyedCount]);
+    useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
 
     // Get next piece from seven-bag system
@@ -154,6 +161,34 @@ export function useGameState() {
         };
     }, []);
 
+    // Called by VoxelWorldBackground when terrain is generated/regenerated
+    const handleTerrainReady = useCallback((totalBlocks: number) => {
+        setTerrainTotal(totalBlocks);
+        terrainTotalRef.current = totalBlocks;
+    }, []);
+
+    // Destroy terrain blocks by incrementing the destroyed count
+    const destroyTerrain = useCallback((count: number): number => {
+        const newDestroyed = Math.min(
+            terrainDestroyedCountRef.current + count,
+            terrainTotalRef.current
+        );
+        setTerrainDestroyedCount(newDestroyed);
+        terrainDestroyedCountRef.current = newDestroyed;
+        const remaining = terrainTotalRef.current - newDestroyed;
+        return remaining;
+    }, []);
+
+    // Start a new terrain stage
+    const startNewStage = useCallback((newStageNumber: number) => {
+        setStageNumber(newStageNumber);
+        stageNumberRef.current = newStageNumber;
+        // New seed triggers VoxelWorldBackground regeneration
+        setTerrainSeed(newStageNumber * 7919 + 42);
+        setTerrainDestroyedCount(0);
+        terrainDestroyedCountRef.current = 0;
+    }, []);
+
     // Initialize/reset game
     const initGame = useCallback(() => {
         setBoard(createEmptyBoard());
@@ -163,7 +198,14 @@ export function useGameState() {
         setLines(0);
         setLevel(1);
         setWorldIdx(0);
-        setEnemyHP(100);
+
+        // Initialize terrain for stage 1
+        setStageNumber(1);
+        stageNumberRef.current = 1;
+        setTerrainSeed(42);
+        setTerrainDestroyedCount(0);
+        terrainDestroyedCountRef.current = 0;
+
         setGameOver(false);
         setIsPaused(false);
         setIsPlaying(true);
@@ -210,7 +252,10 @@ export function useGameState() {
         isPaused,
         isPlaying,
         worldIdx,
-        enemyHP,
+        stageNumber,
+        terrainSeed,
+        terrainDestroyedCount,
+        terrainTotal,
         beatPhase,
         judgmentText,
         judgmentColor,
@@ -238,7 +283,6 @@ export function useGameState() {
         setIsPaused,
         setIsPlaying,
         setWorldIdx,
-        setEnemyHP,
         setBeatPhase,
         setBoardBeat,
         setDas,
@@ -263,7 +307,9 @@ export function useGameState() {
         gameOverRef,
         isPausedRef,
         worldIdxRef,
-        enemyHPRef,
+        stageNumberRef,
+        terrainDestroyedCountRef,
+        terrainTotalRef,
         beatPhaseRef,
         keyStatesRef,
         gameLoopRef,
@@ -278,5 +324,8 @@ export function useGameState() {
         triggerBoardShake,
         resetKeyStates,
         initGame,
+        handleTerrainReady,
+        destroyTerrain,
+        startNewStage,
     };
 }
