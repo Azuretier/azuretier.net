@@ -69,6 +69,79 @@ export function useAudio() {
         playTone(1047, 0.2, 'triangle');
     }, [playTone]);
 
+    // Tower defense sounds — inspired by retro synth SFX style
+    const playShootSound = useCallback(() => {
+        const ctx = audioCtxRef.current;
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 700 + Math.random() * 200;
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+    }, []);
+
+    const playHitSound = useCallback(() => {
+        const ctx = audioCtxRef.current;
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 140;
+        gain.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+    }, []);
+
+    const playKillSound = useCallback(() => {
+        const ctx = audioCtxRef.current;
+        if (!ctx) return;
+        // Ascending two-tone chime like the reference
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.value = 523;
+        gain1.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start();
+        osc1.stop(ctx.currentTime + 0.08);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.value = 784;
+        gain2.gain.setValueAtTime(0.04, ctx.currentTime + 0.06);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(ctx.currentTime + 0.06);
+        osc2.stop(ctx.currentTime + 0.16);
+    }, []);
+
+    const playEmptySound = useCallback(() => {
+        const ctx = audioCtxRef.current;
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 80;
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+    }, []);
+
     return {
         initAudio,
         playTone,
@@ -78,5 +151,9 @@ export function useAudio() {
         playRotateSound,
         playHardDropSound,
         playPerfectSound,
+        playShootSound,
+        playHitSound,
+        playKillSound,
+        playEmptySound,
     };
 }

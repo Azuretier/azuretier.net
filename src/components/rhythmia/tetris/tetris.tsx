@@ -214,7 +214,7 @@ export default function Rhythmia() {
     manaRef,
   } = gameState;
 
-  const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
+  const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -231,6 +231,10 @@ export default function Rhythmia() {
   fireBulletRef.current = fireBullet;
   const updateBulletsRef = useRef(updateBullets);
   updateBulletsRef.current = updateBullets;
+  const playShootSoundRef = useRef(playShootSound);
+  playShootSoundRef.current = playShootSound;
+  const playKillSoundRef = useRef(playKillSound);
+  playKillSoundRef.current = playKillSound;
   const destroyTerrainRef = useRef(destroyTerrain);
   destroyTerrainRef.current = destroyTerrain;
   const startNewStageRef = useRef(startNewStage);
@@ -581,8 +585,11 @@ export default function Rhythmia() {
         // Then spawn new enemies for next beat
         spawnEnemiesRef.current(ENEMIES_PER_BEAT);
 
-        // Move bullets and check collisions
-        updateBulletsRef.current();
+        // Move bullets and check collisions — returns kill count
+        const kills = updateBulletsRef.current();
+        if (kills > 0) {
+          playKillSoundRef.current();
+        }
 
         // Apply damage when enemies reach the tower
         if (reached > 0) {
@@ -597,7 +604,10 @@ export default function Rhythmia() {
         }
 
         // Tower auto-fires bullet if enough mana
-        fireBulletRef.current();
+        const fired = fireBulletRef.current();
+        if (fired) {
+          playShootSoundRef.current();
+        }
 
         // Fever mode: drain mana, regen health
         if (comboRef.current >= 10) {
