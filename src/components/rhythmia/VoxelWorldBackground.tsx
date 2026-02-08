@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import type { Enemy, Bullet, GameMode } from './tetris/types';
+import { BULLET_SPEED } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -763,6 +764,8 @@ export default function VoxelWorldBackground({
     // Bullet tracking for muzzle flash and impact detection
     const prevBulletIds = new Set<number>();
     const prevBulletPositions = new Map<number, { x: number; y: number; z: number }>();
+    // Interpolated bullet positions — updated every frame for smooth 60fps movement
+    const interpBulletPos = new Map<number, { x: number; y: number; z: number }>();
     let muzzleFlashTimer = 0;
     const impactParticles: ImpactParticle[] = [];
 
@@ -873,20 +876,23 @@ export default function VoxelWorldBackground({
           const cosR = Math.cos(terrainRotY);
           const sinR = Math.sin(terrainRotY);
 
-          // Detect new bullets → trigger muzzle flash
+          // Detect new bullets → trigger muzzle flash + init interpolated pos
           for (const b of currentBullets) {
             if (!prevBulletIds.has(b.id)) {
               muzzleFlashTimer = 80;
+              interpBulletPos.set(b.id, { x: b.x, y: b.y, z: b.z });
             }
           }
 
-          // Detect removed bullets → spawn impact particles
+          // Detect removed bullets → spawn impact particles + cleanup
           for (const [id, pos] of prevBulletPositions) {
             if (!currentIds.has(id)) {
-              // Rotate impact position with terrain
-              const ipx = pos.x * cosR - pos.z * sinR;
-              const ipz = pos.x * sinR + pos.z * cosR;
-              spawnImpactBurst(ipx, pos.y, ipz, impactParticles, 12);
+              // Use interpolated position for more accurate impact location
+              const ipos = interpBulletPos.get(id) ?? pos;
+              const ipx = ipos.x * cosR - ipos.z * sinR;
+              const ipz = ipos.x * sinR + ipos.z * cosR;
+              spawnImpactBurst(ipx, ipos.y, ipz, impactParticles, 12);
+              interpBulletPos.delete(id);
             }
           }
 
@@ -898,14 +904,44 @@ export default function VoxelWorldBackground({
             prevBulletPositions.set(b.id, { x: b.x, y: b.y, z: b.z });
           }
 
-          // Render bullets with smooth rotation spin
+          // Interpolate bullet positions every frame for smooth 60fps movement
+          // Each frame, move the interpolated position toward the target at BULLET_SPEED
+          const frameSpeed = BULLET_SPEED * delta * 60; // normalize to ~60fps baseline
+          for (const b of currentBullets) {
+            let pos = interpBulletPos.get(b.id);
+            if (!pos) {
+              pos = { x: b.x, y: b.y, z: b.z };
+              interpBulletPos.set(b.id, pos);
+            }
+
+            // Move interpolated position toward target
+            const dx = b.targetX - pos.x;
+            const dy = b.targetY - pos.y;
+            const dz = b.targetZ - pos.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist > 0.1) {
+              const step = Math.min(frameSpeed, dist);
+              pos.x += (dx / dist) * step;
+              pos.y += (dy / dist) * step;
+              pos.z += (dz / dist) * step;
+            } else {
+              // Snap when very close to target
+              pos.x = b.targetX;
+              pos.y = b.targetY;
+              pos.z = b.targetZ;
+            }
+          }
+
+          // Render bullets using interpolated positions
           ss.bulletMesh.count = currentBullets.length;
           for (let i = 0; i < currentBullets.length; i++) {
             const b = currentBullets[i];
-            const rx = b.x * cosR - b.z * sinR;
-            const rz = b.x * sinR + b.z * cosR;
+            const pos = interpBulletPos.get(b.id) ?? { x: b.x, y: b.y, z: b.z };
+            const rx = pos.x * cosR - pos.z * sinR;
+            const rz = pos.x * sinR + pos.z * cosR;
 
-            dummy.position.set(rx, b.y, rz);
+            dummy.position.set(rx, pos.y, rz);
             // Smoother, subtler pulse for cleaner look at high speed
             const pulse = 0.95 + Math.sin(time * 0.008 + b.id * 1.7) * 0.12;
             dummy.scale.set(pulse, pulse, pulse);
