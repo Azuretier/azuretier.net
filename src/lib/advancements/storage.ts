@@ -1,5 +1,6 @@
 import type { PlayerStats, AdvancementState } from './types';
 import { ADVANCEMENTS } from './definitions';
+import { syncToFirestore, writeNotification } from './firestore';
 
 const STORAGE_KEY = 'rhythmia_advancements';
 
@@ -118,6 +119,13 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
+
+  // Sync to Firestore and write notifications for newly unlocked
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
   return updated;
 }
 
@@ -158,6 +166,13 @@ export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): Advanc
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
+
+  // Sync to Firestore and write notifications for newly unlocked
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
   return updated;
 }
 
