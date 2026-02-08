@@ -118,17 +118,24 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, g
 }
 
 interface BeatBarProps {
-    beatPhase: number;
+    /** Ref attached to the container div — parent's rAF loop sets
+     *  --beat-phase CSS var and data-onbeat attribute directly on this element
+     *  to bypass React re-render batching for smooth cross-browser animation. */
+    containerRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
- * Beat timing indicator bar
+ * Beat timing indicator bar — cursor sweeps left→right each beat interval.
+ * Cursor position is driven by a CSS custom property (--beat-phase) and
+ * the on-beat glow by a data-onbeat attribute, both set from the parent's
+ * requestAnimationFrame loop for frame-precise, re-render-free animation.
  */
-export function BeatBar({ beatPhase }: BeatBarProps) {
+export function BeatBar({ containerRef }: BeatBarProps) {
     return (
-        <div className={styles.beatBar}>
-            <div className={styles.beatTarget} />
-            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
+        <div ref={containerRef} className={styles.beatBar}>
+            <div className={styles.beatTargetLeft} />
+            <div className={styles.beatTargetRight} />
+            <div className={styles.beatCursor} />
         </div>
     );
 }
@@ -143,7 +150,7 @@ interface StatsProps {
  */
 export function StatsPanel({ lines, level }: StatsProps) {
     return (
-        <div className={styles.statsPanel || 'flex gap-4 mt-4 text-white text-sm'}>
+        <div className={styles.statsPanel}>
             <div>LINES: {lines}</div>
             <div>LEVEL: {level}</div>
         </div>

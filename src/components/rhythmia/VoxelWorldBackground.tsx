@@ -39,18 +39,18 @@ function smoothNoise(x: number, z: number, seed: number): number {
   return nx0 + sz * (nx1 - nx0);
 }
 
-// Hilly terrain for vanilla mode
-function terrainHeightVanilla(x: number, z: number, seed: number): number {
-  const s1 = smoothNoise(x * 0.08, z * 0.08, seed);
-  const s2 = smoothNoise(x * 0.15, z * 0.15, seed + 100);
-  const s3 = smoothNoise(x * 0.3, z * 0.3, seed + 200);
-  const h = s1 * 4 + s2 * 2 + s3 * 1;
-  return Math.max(1, Math.floor(h + 1));
-}
-
 // Flat terrain for TD mode
 function terrainHeightTD(_x: number, _z: number, _seed: number): number {
   return 1;
+  
+// Block color based on height
+function blockColor(y: number, maxY: number): THREE.Color {
+  const ratio = y / Math.max(maxY, 1);
+  if (ratio > 0.8) return new THREE.Color(0.95, 0.95, 0.95);
+  if (ratio > 0.6) return new THREE.Color(0.45, 0.45, 0.45);
+  if (ratio > 0.3) return new THREE.Color(0.25, 0.55, 0.2);
+  if (ratio > 0.1) return new THREE.Color(0.4, 0.28, 0.15);
+  return new THREE.Color(0.3, 0.3, 0.35);
 }
 
 // Block color for vanilla mode — earth tones by height
@@ -214,32 +214,53 @@ interface VoxelData {
   count: number;
 }
 
-function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td'): VoxelData {
+// Terrain dimensions: 16 wide (X) × 20 tall (Y) × 16 deep (Z)
+const TERRAIN_W = 16;
+const TERRAIN_H = 20;
+const TERRAIN_D = 16;
+
+function generateVoxelWorld(seed: number): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
 
-  const heightFn = mode === 'vanilla' ? terrainHeightVanilla : terrainHeightTD;
-  const colorFn = mode === 'vanilla' ? blockColorVanilla : blockColorTD;
+  // Generate a height map using noise, scaled to fit within TERRAIN_H
+  const heights: number[][] = [];
+  for (let x = 0; x < TERRAIN_W; x++) {
+    heights[x] = [];
+    for (let z = 0; z < TERRAIN_D; z++) {
+      // Noise-based height, ranging from ~4 to TERRAIN_H
+      let h = 0;
+      h += smoothNoise(x * 0.12, z * 0.12, seed) * 10;
+      h += smoothNoise(x * 0.25, z * 0.25, seed + 1000) * 5;
+      h += smoothNoise(x * 0.5, z * 0.5, seed + 2000) * 2;
+      // Clamp height between 4 and TERRAIN_H
+      heights[x][z] = Math.max(4, Math.min(TERRAIN_H, Math.floor(h) + 8));
+    }
+  }
 
-  for (let x = -size; x <= size; x++) {
-    for (let z = -size; z <= size; z++) {
-      const dist = Math.sqrt(x * x + z * z);
-      if (dist > size + 0.5) continue;
-
-      const maxY = heightFn(x, z, seed);
-      for (let y = 0; y < maxY; y++) {
-        const color = mode === 'vanilla'
-          ? colorFn(y, maxY)
-          : colorFn(y, maxY, x, z);
-        blocks.push({ x, y, z, color });
+  // Fill the terrain box — every column is solid from y=0 up to its height
+  for (let x = 0; x < TERRAIN_W; x++) {
+    for (let z = 0; z < TERRAIN_D; z++) {
+      const h = heights[x][z];
+      for (let y = 0; y < h; y++) {
+        const color = blockColor(y, TERRAIN_H);
+        // Center the terrain around origin
+        blocks.push({
+          x: x - TERRAIN_W / 2 + 0.5,
+          y,
+          z: z - TERRAIN_D / 2 + 0.5,
+          color,
+        });
       }
     }
   }
 
-  // For vanilla mode, sort blocks by height descending so that
-  // reducing instancedMesh.count removes the top blocks first
-  if (mode === 'vanilla') {
-    blocks.sort((a, b) => b.y - a.y);
-  }
+  // Sort blocks by Y descending so index 0 = highest block
+  // Within the same Y, randomize order for visual variety
+  const rng = seededRandom(seed + 99999);
+  blocks.sort((a, b) => {
+    if (b.y !== a.y) return b.y - a.y;
+    return rng() - 0.5;
+  });
 
   const count = blocks.length;
   const positions = new Float32Array(count * 3);
@@ -519,11 +540,11 @@ export default function VoxelWorldBackground({
     renderer.setClearColor(0x000000, 0);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x000000, 30, 80);
+    scene.fog = new THREE.Fog(0x000000, 40, 100);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-    camera.position.set(35, 25, 35);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(22, 20, 22);
+    camera.lookAt(0, 8, 0);
 
     // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.5);
@@ -749,10 +770,40 @@ export default function VoxelWorldBackground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Regenerate terrain when seed or gameMode changes
+  // Regenerate terrain when seed changes
   useEffect(() => {
-    buildTerrain(seed, gameMode);
-  }, [seed, gameMode, buildTerrain]);
+    buildTerrain(seed);
+  }, [seed, buildTerrain]);
+
+  // Destroy blocks when destroyedCount increases — top-to-bottom order
+  // Blocks are sorted Y-descending in generateVoxelWorld, so destroying
+  // sequentially from the front of the alive list removes top layers first.
+  useEffect(() => {
+    const ss = sceneStateRef.current;
+    if (!ss?.instancedMesh) return;
+
+    const toDestroy = destroyedCount - lastDestroyedCountRef.current;
+    if (toDestroy <= 0) return;
+
+    const alive = aliveIndicesRef.current;
+    const actualDestroy = Math.min(toDestroy, alive.length);
+
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < actualDestroy; i++) {
+      // Destroy from the front — highest Y blocks first
+      const idx = alive[i];
+      dummy.position.set(0, -1000, 0);
+      dummy.scale.set(0, 0, 0);
+      dummy.updateMatrix();
+      ss.instancedMesh.setMatrixAt(idx, dummy.matrix);
+    }
+
+    // Remove destroyed entries from the front of the alive list
+    aliveIndicesRef.current = alive.slice(actualDestroy);
+    ss.instancedMesh.instanceMatrix.needsUpdate = true;
+
+    lastDestroyedCountRef.current = destroyedCount;
+  }, [destroyedCount]);
 
   return (
     <div

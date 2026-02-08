@@ -92,7 +92,13 @@ export default function Rhythmia() {
   const gameState = useGameState();
   const audio = useAudio();
   const vfx = useRhythmVFX();
+  // Stable ref for vfx — useRhythmVFX() returns a new object every render,
+  // so using vfx directly as an effect dependency would restart those effects
+  // on every render. The ref always holds the latest value without triggering re-runs.
+  const vfxRef = useRef(vfx);
+  vfxRef.current = vfx;
   const boardElRef = useRef<HTMLDivElement>(null);
+  const beatBarRef = useRef<HTMLDivElement>(null);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -270,7 +276,7 @@ export default function Rhythmia() {
     const rotatedPiece = tryRotation(piece, direction, boardRef.current);
     if (rotatedPiece) {
       // Emit rotation trail VFX before updating piece
-      vfx.emit({
+      vfxRef.current.emit({
         type: 'rotation',
         pieceType: piece.type,
         boardX: piece.x,
@@ -283,7 +289,7 @@ export default function Rhythmia() {
       currentPieceRef.current = rotatedPiece;
       playRotateSound();
     }
-  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound, vfx]);
+  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound]);
 
   // Process horizontal DAS/ARR
   const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
@@ -361,22 +367,22 @@ export default function Rhythmia() {
       }
 
       // VFX: combo change event
-      vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
+      vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
 
       // VFX: fever mode trigger at combo 10+
       if (newCombo >= 10 && comboRef.current < 10) {
-        vfx.emit({ type: 'feverStart', combo: newCombo });
+        vfxRef.current.emit({ type: 'feverStart', combo: newCombo });
       }
     } else {
       // VFX: combo broken — end fever if active
       if (comboRef.current >= 10) {
-        vfx.emit({ type: 'feverEnd' });
+        vfxRef.current.emit({ type: 'feverEnd' });
       }
       if (comboRef.current > 0) {
         showJudgment('MISS', '#FF4444');
       }
       setCombo(0);
-      vfx.emit({ type: 'comboChange', combo: 0, onBeat: false });
+      vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
     const newBoard = lockPiece(piece, boardRef.current);
@@ -417,7 +423,7 @@ export default function Rhythmia() {
         // === VANILLA: Destroy terrain blocks ===
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         const remaining = destroyTerrain(damage);
-
+        
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
 
@@ -428,8 +434,8 @@ export default function Rhythmia() {
         }
       }
 
-      // VFX: line clear equalizer bars + glitch particles (both modes)
-      vfx.emit({
+      // VFX: line clear equalizer bars + glitch particles
+      vfxRef.current.emit({
         type: 'lineClear',
         rows: rowsToClear,
         count: clearedLines,
@@ -477,7 +483,7 @@ export default function Rhythmia() {
 
     // VFX: hard drop impact particles
     if (dropDistance > 0) {
-      vfx.emit({
+      vfxRef.current.emit({
         type: 'hardDrop',
         pieceType: newPiece.type,
         boardX: newPiece.x,
@@ -488,7 +494,7 @@ export default function Rhythmia() {
 
     playHardDropSound();
     handlePieceLock(newPiece, dropDistance);
-  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound, vfx]);
+  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound]);
 
   // Hold current piece
   const holdCurrentPiece = useCallback(() => {
@@ -603,7 +609,7 @@ export default function Rhythmia() {
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (world.bpm - 80) / 100);
-      vfxEmitRef.current({ type: 'beat', bpm: world.bpm, intensity });
+      vfxRef.current.emit({ type: 'beat', bpm: world.bpm, intensity });
 
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
@@ -613,25 +619,46 @@ export default function Rhythmia() {
     };
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
-  // Beat phase animation
+  // Beat phase animation — drives cursor via direct DOM manipulation (CSS var + data attr)
+  // to avoid React re-render batching issues that cause inconsistent/missing animation on
+  // some browsers. React state is updated at a throttled rate for Board's fever rainbow effect.
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
     let animFrame: number;
+    let lastStateUpdate = 0;
     const updateBeat = () => {
       if (!gameOverRef.current) {
         const world = WORLDS[worldIdxRef.current];
         const interval = 60000 / world.bpm;
-        const elapsed = Date.now() - lastBeatRef.current;
+        const now = Date.now();
+        const elapsed = now - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
-        setBeatPhase(phase);
+        beatPhaseRef.current = phase;
+
+        // Direct DOM update — bypasses React for smooth cross-browser animation
+        if (beatBarRef.current) {
+          beatBarRef.current.style.setProperty('--beat-phase', String(phase));
+          if (phase > 0.75 || phase < 0.15) {
+            beatBarRef.current.setAttribute('data-onbeat', '');
+          } else {
+            beatBarRef.current.removeAttribute('data-onbeat');
+          }
+        }
+
+        // Throttled React state update (~30fps) for Board fever rainbow effect
+        if (now - lastStateUpdate > 33) {
+          setBeatPhase(phase);
+          lastStateUpdate = now;
+        }
+
         animFrame = requestAnimationFrame(updateBeat);
       }
     };
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {
@@ -852,10 +879,12 @@ export default function Rhythmia() {
           />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left side: Hold + Item Slots */}
-            <div className={styles.nextWrap}>
-              <div className={styles.nextLabel}>HOLD (C)</div>
-              <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+            {/* Left sidebar: Hold + Inventory (separate containers) */}
+            <div className={styles.sidePanelLeft}>
+              <div className={styles.nextWrap}>
+                <div className={styles.nextLabel}>HOLD (C)</div>
+                <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+              </div>
               <ItemSlots
                 inventory={inventory}
                 craftedCards={craftedCards}
@@ -864,31 +893,36 @@ export default function Rhythmia() {
               />
             </div>
 
-            <Board
-              board={board}
-              currentPiece={currentPiece}
-              boardBeat={boardBeat}
-              boardShake={boardShake}
-              gameOver={gameOver}
-              isPaused={isPaused}
-              score={score}
-              onRestart={() => startGame(gameMode)}
-              colorTheme={colorTheme}
-              worldIdx={worldIdx}
-              combo={combo}
-              beatPhase={beatPhase}
-              boardElRef={boardElRef}
-            />
-
-            <div className={styles.nextWrap}>
-              <div className={styles.nextLabel}>NEXT</div>
-              {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+            {/* Center column: Board + Beat bar + Stats */}
+            <div className={styles.centerColumn}>
+              <Board
+                board={board}
+                currentPiece={currentPiece}
+                boardBeat={boardBeat}
+                boardShake={boardShake}
+                gameOver={gameOver}
+                isPaused={isPaused}
+                score={score}
+                onRestart={startGame}
+                colorTheme={colorTheme}
+                worldIdx={worldIdx}
+                combo={combo}
+                beatPhase={beatPhase}
+                boardElRef={boardElRef}
+              />
+              <BeatBar containerRef={beatBarRef} />
+              <StatsPanel lines={lines} level={level} />
+              {gameMode === 'td' && <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />}
             </div>
 
-            {gameMode === 'td' && <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />}
+            {/* Right sidebar: Next */}
+            <div className={styles.sidePanelRight}>
+              <div className={styles.nextWrap}>
+                <div className={styles.nextLabel}>NEXT</div>
+                {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+              </div>
+            </div>
           </div>
-
-          <BeatBar beatPhase={beatPhase} />
 
           <TouchControls
             onMoveLeft={() => movePiece(-1, 0)}
@@ -900,8 +934,6 @@ export default function Rhythmia() {
             onHold={holdCurrentPiece}
             isMobile={deviceType !== 'desktop'}
           />
-
-          <StatsPanel lines={lines} level={level} />
         </div>
       )}
 
