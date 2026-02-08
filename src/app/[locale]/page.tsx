@@ -12,6 +12,7 @@ import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import Advancements from '../../components/rhythmia/Advancements';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import ModelViewer from '../../components/ModelViewer';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -58,7 +59,7 @@ export default function RhythmiaPage() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch {}
+            } catch { }
         };
 
         ws.onclose = () => {
@@ -194,6 +195,15 @@ export default function RhythmiaPage() {
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                        transition={{ duration: 0.6, delay: 0.25 }}
+                        style={{ marginBottom: '2rem' }}
+                    >
+                        <ModelViewer height="400px" />
                     </motion.div>
 
                     <div className={styles.serverGrid}>
