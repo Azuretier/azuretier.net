@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import type { Enemy, Bullet } from './tetris/types';
+import type { Enemy, Bullet, GameMode } from './tetris/types';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -39,20 +39,36 @@ function smoothNoise(x: number, z: number, seed: number): number {
   return nx0 + sz * (nx1 - nx0);
 }
 
-function terrainHeight(_x: number, _z: number, _seed: number): number {
-  // Flat terrain for board-game look
+// Hilly terrain for vanilla mode
+function terrainHeightVanilla(x: number, z: number, seed: number): number {
+  const s1 = smoothNoise(x * 0.08, z * 0.08, seed);
+  const s2 = smoothNoise(x * 0.15, z * 0.15, seed + 100);
+  const s3 = smoothNoise(x * 0.3, z * 0.3, seed + 200);
+  const h = s1 * 4 + s2 * 2 + s3 * 1;
+  return Math.max(1, Math.floor(h + 1));
+}
+
+// Flat terrain for TD mode
+function terrainHeightTD(_x: number, _z: number, _seed: number): number {
   return 1;
 }
 
-// Block color — checkerboard board-game pattern for flat terrain
-function blockColor(_y: number, _maxY: number, x?: number, z?: number): THREE.Color {
+// Block color for vanilla mode — earth tones by height
+function blockColorVanilla(y: number, maxY: number): THREE.Color {
+  const t = maxY > 1 ? y / maxY : 0.5;
+  if (t > 0.7) return new THREE.Color(0.35, 0.55, 0.25);  // grass
+  if (t > 0.3) return new THREE.Color(0.45, 0.35, 0.25);  // dirt
+  return new THREE.Color(0.4, 0.4, 0.4);                    // stone
+}
+
+// Block color for TD mode — checkerboard board-game pattern
+function blockColorTD(_y: number, _maxY: number, x?: number, z?: number): THREE.Color {
   if (x !== undefined && z !== undefined) {
-    // Checkerboard pattern
     const isLight = ((Math.abs(x) + Math.abs(z)) % 2) === 0;
     if (isLight) {
-      return new THREE.Color(0.30, 0.50, 0.25); // dark green
+      return new THREE.Color(0.30, 0.50, 0.25);
     } else {
-      return new THREE.Color(0.38, 0.60, 0.32); // light green
+      return new THREE.Color(0.38, 0.60, 0.32);
     }
   }
   return new THREE.Color(0.34, 0.55, 0.28);
@@ -198,19 +214,31 @@ interface VoxelData {
   count: number;
 }
 
-function generateVoxelWorld(seed: number, size: number): VoxelData {
+function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td'): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
 
-  // Flat single-layer terrain (board-game style)
+  const heightFn = mode === 'vanilla' ? terrainHeightVanilla : terrainHeightTD;
+  const colorFn = mode === 'vanilla' ? blockColorVanilla : blockColorTD;
+
   for (let x = -size; x <= size; x++) {
     for (let z = -size; z <= size; z++) {
-      // Circular boundary for a round board
       const dist = Math.sqrt(x * x + z * z);
       if (dist > size + 0.5) continue;
 
-      const color = blockColor(0, 1, x, z);
-      blocks.push({ x, y: 0, z, color });
+      const maxY = heightFn(x, z, seed);
+      for (let y = 0; y < maxY; y++) {
+        const color = mode === 'vanilla'
+          ? colorFn(y, maxY)
+          : colorFn(y, maxY, x, z);
+        blocks.push({ x, y, z, color });
+      }
     }
+  }
+
+  // For vanilla mode, sort blocks by height descending so that
+  // reducing instancedMesh.count removes the top blocks first
+  if (mode === 'vanilla') {
+    blocks.sort((a, b) => b.y - a.y);
   }
 
   const count = blocks.length;
@@ -376,6 +404,8 @@ interface SceneState {
 
 interface VoxelWorldBackgroundProps {
   seed?: number;
+  gameMode?: GameMode;
+  terrainDestroyedCount?: number;
   enemies?: Enemy[];
   bullets?: Bullet[];
   onTerrainReady?: (totalBlocks: number) => void;
@@ -383,6 +413,8 @@ interface VoxelWorldBackgroundProps {
 
 export default function VoxelWorldBackground({
   seed = 42,
+  gameMode = 'td',
+  terrainDestroyedCount = 0,
   enemies = [],
   bullets = [],
   onTerrainReady,
@@ -396,9 +428,14 @@ export default function VoxelWorldBackground({
   enemiesRef.current = enemies;
   const bulletsRef = useRef<Bullet[]>(bullets);
   bulletsRef.current = bullets;
+  const gameModeRef = useRef<GameMode>(gameMode);
+  gameModeRef.current = gameMode;
+  const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
+  terrainDestroyedCountRef.current = terrainDestroyedCount;
+  const totalBlockCountRef = useRef(0);
 
   // Build terrain mesh into the scene (called once)
-  const buildTerrain = useCallback((terrainSeed: number) => {
+  const buildTerrain = useCallback((terrainSeed: number, mode: GameMode) => {
     const ss = sceneStateRef.current;
     if (!ss) return;
 
@@ -421,10 +458,11 @@ export default function VoxelWorldBackground({
           }
         }
       });
+      ss.towerGroup = null;
     }
 
-    // Generate terrain
-    const voxelData = generateVoxelWorld(terrainSeed, 20);
+    // Generate terrain based on mode
+    const voxelData = generateVoxelWorld(terrainSeed, 20, mode);
     const mesh = new THREE.InstancedMesh(ss.boxGeo, ss.boxMat, voxelData.count);
 
     const dummy = new THREE.Object3D();
@@ -450,12 +488,23 @@ export default function VoxelWorldBackground({
 
     ss.scene.add(mesh);
     ss.instancedMesh = mesh;
+    totalBlockCountRef.current = voxelData.count;
 
-    // Place tower at terrain center (flat terrain, y=0 surface)
-    const towerGroup = createTowerModel();
-    towerGroup.position.set(0, 0.5, 0);
-    ss.scene.add(towerGroup);
-    ss.towerGroup = towerGroup;
+    // TD mode: place tower at terrain center
+    if (mode === 'td') {
+      const towerGroup = createTowerModel();
+      towerGroup.position.set(0, 0.5, 0);
+      ss.scene.add(towerGroup);
+      ss.towerGroup = towerGroup;
+
+      // Show enemy and bullet meshes
+      if (ss.enemyMesh) ss.enemyMesh.visible = true;
+      if (ss.bulletMesh) ss.bulletMesh.visible = true;
+    } else {
+      // Vanilla mode: hide enemy and bullet meshes
+      if (ss.enemyMesh) ss.enemyMesh.visible = false;
+      if (ss.bulletMesh) ss.bulletMesh.visible = false;
+    }
 
     onTerrainReadyRef.current?.(voxelData.count);
   }, []);
@@ -570,6 +619,13 @@ export default function VoxelWorldBackground({
         const ss = sceneStateRef.current;
         if (ss?.instancedMesh) {
           ss.instancedMesh.rotation.y += delta * 0.03;
+
+          // Vanilla mode: reduce visible block count based on destroyed count
+          if (gameModeRef.current === 'vanilla') {
+            const destroyed = terrainDestroyedCountRef.current;
+            const visible = Math.max(0, totalBlockCountRef.current - destroyed);
+            ss.instancedMesh.count = visible;
+          }
         }
         gridLines.rotation.y += delta * 0.02;
 
@@ -650,7 +706,7 @@ export default function VoxelWorldBackground({
     animIdRef.current = requestAnimationFrame(animate);
 
     // Build initial terrain
-    buildTerrain(seed);
+    buildTerrain(seed, gameModeRef.current);
 
     return () => {
       cancelAnimationFrame(animIdRef.current);
@@ -693,10 +749,10 @@ export default function VoxelWorldBackground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Regenerate terrain when seed changes
+  // Regenerate terrain when seed or gameMode changes
   useEffect(() => {
-    buildTerrain(seed);
-  }, [seed, buildTerrain]);
+    buildTerrain(seed, gameMode);
+  }, [seed, gameMode, buildTerrain]);
 
   return (
     <div

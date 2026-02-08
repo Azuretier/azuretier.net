@@ -1,3 +1,6 @@
+// ===== Game Mode =====
+export type GameMode = 'vanilla' | 'td';
+
 // ===== Game Types =====
 
 export type Piece = {

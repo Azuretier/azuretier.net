@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
@@ -47,6 +47,9 @@ export function useGameState() {
     const [gameOver, setGameOver] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+
+    // Game mode
+    const [gameMode, setGameMode] = useState<GameMode>('vanilla');
 
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
@@ -126,6 +129,7 @@ export function useGameState() {
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const manaRef = useRef(mana);
+    const gameModeRef = useRef<GameMode>(gameMode);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -160,6 +164,7 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { manaRef.current = mana; }, [mana]);
+    useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -580,7 +585,10 @@ export function useGameState() {
     }, []);
 
     // Initialize/reset game
-    const initGame = useCallback(() => {
+    const initGame = useCallback((mode: GameMode = 'vanilla') => {
+        setGameMode(mode);
+        gameModeRef.current = mode;
+
         setBoard(createEmptyBoard());
         boardRef.current = createEmptyBoard();
         setScore(0);
@@ -608,7 +616,7 @@ export function useGameState() {
         setTerrainParticles([]);
         setShowCraftUI(false);
 
-        // Reset tower defense state
+        // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
         enemiesRef.current = [];
         setBullets([]);
@@ -691,6 +699,9 @@ export function useGameState() {
         craftedCards,
         showCraftUI,
         damageMultiplier,
+        // Game mode
+        gameMode,
+
         // Tower defense
         enemies,
         bullets,
@@ -744,6 +755,7 @@ export function useGameState() {
         damageMultiplierRef,
         enemiesRef,
         bulletsRef,
+        gameModeRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,

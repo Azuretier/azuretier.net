@@ -361,6 +361,61 @@
   letter-spacing: 0.15em;
 }
 
+/* Mode selection */
+.modeSelect {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.modeBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 32px;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modeBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-4px);
+}
+
+.modeBtnTd {
+  border-color: rgba(255, 80, 80, 0.3);
+}
+
+.modeBtnTd:hover {
+  border-color: rgba(255, 80, 80, 0.6);
+  box-shadow: 0 0 20px rgba(255, 80, 80, 0.15);
+}
+
+.modeBtnIcon {
+  font-size: 2rem;
+}
+
+.modeBtnTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.2em;
+}
+
+.modeBtnDesc {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
 .startBtn {
   padding: 16px 48px;
   font-size: 0.85rem;

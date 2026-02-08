@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MANA_PER_LINE, MANA_PER_COMBO, MANA_COST_FEVER, HEALTH_REGEN_FEVER, MAX_MANA, MAX_HEALTH, BULLET_MANA_COST } from './constants';
-import type { Piece } from './types';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MANA_PER_LINE, MANA_PER_COMBO, MANA_COST_FEVER, HEALTH_REGEN_FEVER, MAX_MANA, MAX_HEALTH, BULLET_MANA_COST } from './constants';
+import type { Piece, GameMode } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
@@ -130,11 +130,16 @@ export default function Rhythmia() {
     craftedCards,
     showCraftUI,
     damageMultiplier,
+    // Game mode
+    gameMode,
     // Tower defense
     enemies,
     bullets,
     towerHealth,
     mana,
+    // Terrain (vanilla)
+    terrainDestroyedCount,
+    terrainTotal,
     // Refs
     boardRef,
     currentPieceRef,
@@ -153,6 +158,7 @@ export default function Rhythmia() {
     beatPhaseRef,
     damageMultiplierRef,
     enemiesRef,
+    gameModeRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -179,6 +185,10 @@ export default function Rhythmia() {
     triggerBoardShake,
     initGame,
     handleTerrainReady,
+    destroyTerrain,
+    startNewStage,
+    terrainDestroyedCountRef,
+    terrainTotalRef,
     // Game loop actions
     spawnItemDrops,
     spawnTerrainParticles,
@@ -215,6 +225,10 @@ export default function Rhythmia() {
   fireBulletRef.current = fireBullet;
   const updateBulletsRef = useRef(updateBullets);
   updateBulletsRef.current = updateBullets;
+  const destroyTerrainRef = useRef(destroyTerrain);
+  destroyTerrainRef.current = destroyTerrain;
+  const startNewStageRef = useRef(startNewStage);
+  startNewStageRef.current = startNewStage;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -325,8 +339,10 @@ export default function Rhythmia() {
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
 
-  // Handle piece locking and game advancement — tower defense game loop
+  // Handle piece locking and game advancement — branches by game mode
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
+    const mode = gameModeRef.current;
+
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
@@ -339,8 +355,10 @@ export default function Rhythmia() {
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
 
-      // Mana gain from combo
-      setMana(prev => Math.min(MAX_MANA, prev + MANA_PER_COMBO));
+      // Mana gain from combo (TD only)
+      if (mode === 'td') {
+        setMana(prev => Math.min(MAX_MANA, prev + MANA_PER_COMBO));
+      }
 
       // VFX: combo change event
       vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
@@ -381,16 +399,36 @@ export default function Rhythmia() {
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
     updateScore(scoreRef.current + finalScore);
 
-    // === TOWER DEFENSE: Kill enemies when lines are cleared ===
     if (clearedLines > 0) {
       const weaponMult = damageMultiplierRef.current;
-      const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
-      killEnemies(killCount);
+      const center = getBoardCenter();
 
-      // Mana gain from line clears
-      setMana(prev => Math.min(MAX_MANA, prev + clearedLines * MANA_PER_LINE));
+      if (mode === 'td') {
+        // === TOWER DEFENSE: Kill enemies when lines are cleared ===
+        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        killEnemies(killCount);
 
-      // VFX: line clear equalizer bars + glitch particles
+        // Mana gain from line clears
+        setMana(prev => Math.min(MAX_MANA, prev + clearedLines * MANA_PER_LINE));
+
+        // Item drops
+        spawnItemDrops(killCount, center.x, center.y);
+      } else {
+        // === VANILLA: Destroy terrain blocks ===
+        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const remaining = destroyTerrain(damage);
+
+        // Item drops from terrain
+        spawnItemDrops(damage, center.x, center.y);
+
+        // Check if terrain is fully destroyed → next stage
+        if (remaining <= 0) {
+          const nextStage = stageNumberRef.current + 1;
+          startNewStage(nextStage);
+        }
+      }
+
+      // VFX: line clear equalizer bars + glitch particles (both modes)
       vfx.emit({
         type: 'lineClear',
         rows: rowsToClear,
@@ -399,12 +437,8 @@ export default function Rhythmia() {
         combo: comboRef.current,
       });
 
-      // Particle effects
-      const center = getBoardCenter();
+      // Particle effects (both modes)
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
-
-      // Item drops
-      spawnItemDrops(killCount, center.x, center.y);
 
       playLineClear(clearedLines);
       triggerBoardShake();
@@ -420,10 +454,10 @@ export default function Rhythmia() {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef,
+    gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece, setMana,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, vfx, killEnemies,
+    currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
   ]);
 
@@ -509,13 +543,13 @@ export default function Rhythmia() {
     }
   }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, setCurrentPiece, handlePieceLock]);
 
-  // Start game
-  const startGame = useCallback(() => {
+  // Start game with selected mode
+  const startGame = useCallback((mode: GameMode) => {
     initAudio();
-    initGame();
+    initGame(mode);
   }, [initAudio, initGame]);
 
-  // Beat timer for rhythm game + enemy spawning
+  // Beat timer for rhythm game — branches by game mode via gameModeRef
   // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
   // (vfx object recreates every render, which would reset the interval)
   useEffect(() => {
@@ -531,38 +565,43 @@ export default function Rhythmia() {
       setBoardBeat(true);
       playDrum();
 
-      // Tower Defense: update existing enemies FIRST (move toward tower)
-      // Must happen before spawn to avoid setEnemies overwrite race condition
-      const reached = updateEnemiesRef.current();
+      const mode = gameModeRef.current;
 
-      // Then spawn new enemies for next beat
-      spawnEnemiesRef.current(ENEMIES_PER_BEAT);
+      if (mode === 'td') {
+        // === Tower Defense beat logic ===
+        // Update existing enemies FIRST (move toward tower)
+        const reached = updateEnemiesRef.current();
 
-      // Move bullets and check collisions
-      updateBulletsRef.current();
+        // Then spawn new enemies for next beat
+        spawnEnemiesRef.current(ENEMIES_PER_BEAT);
 
-      // Apply damage when enemies reach the tower
-      if (reached > 0) {
-        const damage = reached * ENEMY_REACH_DAMAGE;
-        setTowerHealthRef.current(prev => {
-          const newHealth = Math.max(0, prev - damage);
-          if (newHealth <= 0) {
-            setGameOverRef.current(true);
-          }
-          return newHealth;
-        });
+        // Move bullets and check collisions
+        updateBulletsRef.current();
+
+        // Apply damage when enemies reach the tower
+        if (reached > 0) {
+          const damage = reached * ENEMY_REACH_DAMAGE;
+          setTowerHealthRef.current(prev => {
+            const newHealth = Math.max(0, prev - damage);
+            if (newHealth <= 0) {
+              setGameOverRef.current(true);
+            }
+            return newHealth;
+          });
+        }
+
+        // Tower auto-fires bullet if enough mana
+        fireBulletRef.current();
+
+        // Fever mode: drain mana, regen health
+        if (comboRef.current >= 10) {
+          setManaRef.current(prev => Math.max(0, prev - MANA_COST_FEVER));
+          setTowerHealthRef.current(prev => Math.min(MAX_HEALTH, prev + HEALTH_REGEN_FEVER));
+        }
       }
+      // Vanilla mode: no enemy/bullet/tower logic — just rhythm VFX below
 
-      // Tower auto-fires bullet if enough mana
-      fireBulletRef.current();
-
-      // Fever mode: drain mana, regen health
-      if (comboRef.current >= 10) {
-        setManaRef.current(prev => Math.max(0, prev - MANA_COST_FEVER));
-        setTowerHealthRef.current(prev => Math.min(MAX_HEALTH, prev + HEALTH_REGEN_FEVER));
-      }
-
-      // VFX: beat pulse ring — intensity scales with BPM
+      // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (world.bpm - 80) / 100);
       vfxEmitRef.current({ type: 'beat', bpm: world.bpm, intensity });
 
@@ -761,11 +800,13 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
-      {/* Voxel World Background — Tower Defense */}
+      {/* Voxel World Background — mode-aware */}
       <VoxelWorldBackground
         seed={terrainSeed}
-        enemies={enemies}
-        bullets={bullets}
+        gameMode={gameMode}
+        terrainDestroyedCount={terrainDestroyedCount}
+        enemies={gameMode === 'td' ? enemies : []}
+        bullets={gameMode === 'td' ? bullets : []}
         onTerrainReady={handleTerrainReady}
       />
 
@@ -780,6 +821,7 @@ export default function Rhythmia() {
         phase={gamePhase}
         worldIdx={worldIdx}
         stageNumber={stageNumber}
+        gameMode={gameMode}
       />
 
       {/* Title Screen */}
@@ -802,7 +844,12 @@ export default function Rhythmia() {
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
-          <TerrainProgress terrainRemaining={enemies.filter(e => e.alive).length} terrainTotal={enemies.length} stageNumber={stageNumber} />
+          <TerrainProgress
+            terrainRemaining={gameMode === 'td' ? enemies.filter(e => e.alive).length : terrainTotal - terrainDestroyedCount}
+            terrainTotal={gameMode === 'td' ? enemies.length : terrainTotal}
+            stageNumber={stageNumber}
+            gameMode={gameMode}
+          />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
             {/* Left side: Hold + Item Slots */}
@@ -825,7 +872,7 @@ export default function Rhythmia() {
               gameOver={gameOver}
               isPaused={isPaused}
               score={score}
-              onRestart={startGame}
+              onRestart={() => startGame(gameMode)}
               colorTheme={colorTheme}
               worldIdx={worldIdx}
               combo={combo}
@@ -838,7 +885,7 @@ export default function Rhythmia() {
               {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
             </div>
 
-            <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />
+            {gameMode === 'td' && <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />}
           </div>
 
           <BeatBar beatPhase={beatPhase} />
