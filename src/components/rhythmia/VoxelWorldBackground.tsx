@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import type { Enemy } from './tetris/types';
+import type { Enemy, Bullet } from './tetris/types';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -355,6 +355,7 @@ function createTowerModel(): THREE.Group {
 }
 
 const MAX_ENEMIES = 64;
+const MAX_BULLETS = 32;
 
 interface SceneState {
   renderer: THREE.WebGLRenderer;
@@ -368,17 +369,22 @@ interface SceneState {
   enemyMesh: THREE.InstancedMesh | null;
   enemyGeo: THREE.BoxGeometry;
   enemyMat: THREE.MeshStandardMaterial;
+  bulletMesh: THREE.InstancedMesh | null;
+  bulletGeo: THREE.SphereGeometry;
+  bulletMat: THREE.MeshStandardMaterial;
 }
 
 interface VoxelWorldBackgroundProps {
   seed?: number;
   enemies?: Enemy[];
+  bullets?: Bullet[];
   onTerrainReady?: (totalBlocks: number) => void;
 }
 
 export default function VoxelWorldBackground({
   seed = 42,
   enemies = [],
+  bullets = [],
   onTerrainReady,
 }: VoxelWorldBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -388,6 +394,8 @@ export default function VoxelWorldBackground({
   onTerrainReadyRef.current = onTerrainReady;
   const enemiesRef = useRef<Enemy[]>(enemies);
   enemiesRef.current = enemies;
+  const bulletsRef = useRef<Bullet[]>(bullets);
+  bulletsRef.current = bullets;
 
   // Build terrain mesh into the scene (called once)
   const buildTerrain = useCallback((terrainSeed: number) => {
@@ -511,6 +519,19 @@ export default function VoxelWorldBackground({
     enemyMesh.count = 0;
     scene.add(enemyMesh);
 
+    // Bullet instanced mesh — bright glowing projectiles
+    const bulletGeo = new THREE.SphereGeometry(0.35, 6, 4);
+    const bulletMat = new THREE.MeshStandardMaterial({
+      color: 0x00CCFF,
+      roughness: 0.1,
+      metalness: 0.5,
+      emissive: 0x0088FF,
+      emissiveIntensity: 1.5,
+    });
+    const bulletMesh = new THREE.InstancedMesh(bulletGeo, bulletMat, MAX_BULLETS);
+    bulletMesh.count = 0;
+    scene.add(bulletMesh);
+
     const gridLines = createGridLines();
     scene.add(gridLines);
 
@@ -519,6 +540,7 @@ export default function VoxelWorldBackground({
       instancedMesh: null, boxGeo, boxMat,
       towerGroup: null,
       enemyMesh, enemyGeo, enemyMat,
+      bulletMesh, bulletGeo, bulletMat,
     };
 
     // Handle resize
@@ -592,6 +614,35 @@ export default function VoxelWorldBackground({
             if (ss.enemyMesh.instanceColor) ss.enemyMesh.instanceColor.needsUpdate = true;
           }
         }
+
+        // Update bullet instances
+        if (ss?.bulletMesh) {
+          const currentBullets = bulletsRef.current.filter(b => b.alive);
+          ss.bulletMesh.count = currentBullets.length;
+
+          const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
+
+          for (let i = 0; i < currentBullets.length; i++) {
+            const b = currentBullets[i];
+            // Rotate bullet position with terrain
+            const cosR = Math.cos(terrainRotY);
+            const sinR = Math.sin(terrainRotY);
+            const rx = b.x * cosR - b.z * sinR;
+            const rz = b.x * sinR + b.z * cosR;
+
+            dummy.position.set(rx, b.y, rz);
+            // Pulse scale for glow effect
+            const pulse = 0.8 + Math.sin(time * 0.02 + b.id * 2) * 0.3;
+            dummy.scale.set(pulse, pulse, pulse);
+            dummy.rotation.set(0, 0, 0);
+            dummy.updateMatrix();
+            ss.bulletMesh.setMatrixAt(i, dummy.matrix);
+          }
+
+          if (currentBullets.length > 0) {
+            ss.bulletMesh.instanceMatrix.needsUpdate = true;
+          }
+        }
       }
 
       renderer.render(scene, camera);
@@ -618,6 +669,11 @@ export default function VoxelWorldBackground({
       if (sceneStateRef.current?.enemyMesh) {
         sceneStateRef.current.enemyMesh.dispose();
       }
+      if (sceneStateRef.current?.bulletMesh) {
+        sceneStateRef.current.bulletMesh.dispose();
+      }
+      bulletGeo.dispose();
+      bulletMat.dispose();
       if (sceneStateRef.current?.towerGroup) {
         sceneStateRef.current.towerGroup.traverse((child) => {
           if (child instanceof THREE.Mesh) {

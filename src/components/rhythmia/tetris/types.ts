@@ -132,6 +132,18 @@ export type Enemy = {
     spawnTime: number;
 };
 
+export type Bullet = {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    targetX: number;
+    targetY: number;
+    targetZ: number;
+    speed: number;
+    alive: boolean;
+};
+
 // ===== Terrain Particle =====
 export type TerrainParticle = {
     id: number;
