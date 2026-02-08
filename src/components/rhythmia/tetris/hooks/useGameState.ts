@@ -456,9 +456,10 @@ export function useGameState() {
     }, []);
 
     // Move bullets toward targets and check collision with enemies
-    const updateBullets = useCallback(() => {
+    // Returns the number of enemies killed this update
+    const updateBullets = useCallback((): number => {
         const currentBullets = bulletsRef.current;
-        if (currentBullets.length === 0) return;
+        if (currentBullets.length === 0) return 0;
 
         const updatedBullets: Bullet[] = [];
         const killedEnemyIds: Set<number> = new Set();
@@ -517,6 +518,8 @@ export function useGameState() {
             setEnemies(newEnemies);
             enemiesRef.current = newEnemies;
         }
+
+        return killedEnemyIds.size;
     }, []);
 
     // Craft a weapon card

@@ -379,11 +379,51 @@ function createTowerModel(): THREE.Group {
     tower.add(win);
   }
 
+  // Turret — rotating barrel that aims at enemies
+  const turretGroup = new THREE.Group();
+  turretGroup.position.set(0, 11.5, 0);
+  turretGroup.name = 'turret';
+
+  const barrelGeo = new THREE.CylinderGeometry(0.1, 0.16, 2.8, 6);
+  const barrelMat2 = new THREE.MeshStandardMaterial({
+    color: 0x3a3a3a, roughness: 0.8, metalness: 0.3, flatShading: true,
+  });
+  const barrel = new THREE.Mesh(barrelGeo, barrelMat2);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.position.set(0, 0, 1.4);
+  turretGroup.add(barrel);
+
+  const muzzleGeo = new THREE.SphereGeometry(0.18, 6, 6);
+  const muzzleMat = new THREE.MeshBasicMaterial({
+    color: 0x64ffb4, transparent: true, opacity: 0,
+  });
+  const muzzle = new THREE.Mesh(muzzleGeo, muzzleMat);
+  muzzle.position.set(0, 0, 2.9);
+  muzzle.name = 'muzzle';
+  turretGroup.add(muzzle);
+
+  const turretBaseMat = new THREE.MeshStandardMaterial({
+    color: 0x3a3a4a, roughness: 0.8, metalness: 0.1, flatShading: true,
+  });
+  turretGroup.add(new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.35, 0.55), turretBaseMat,
+  ));
+
+  tower.add(turretGroup);
+
   return tower;
 }
 
 const MAX_ENEMIES = 64;
 const MAX_BULLETS = 32;
+const MAX_IMPACT_PARTICLES = 80;
+
+interface ImpactParticle {
+  x: number; y: number; z: number;
+  vx: number; vy: number; vz: number;
+  life: number;
+  decay: number;
+}
 
 interface SceneState {
   renderer: THREE.WebGLRenderer;
@@ -394,12 +434,17 @@ interface SceneState {
   boxGeo: THREE.BoxGeometry;
   boxMat: THREE.MeshStandardMaterial;
   towerGroup: THREE.Group | null;
+  turret: THREE.Group | null;
+  muzzleFlash: THREE.Mesh | null;
   enemyMesh: THREE.InstancedMesh | null;
   enemyGeo: THREE.BoxGeometry;
   enemyMat: THREE.MeshStandardMaterial;
   bulletMesh: THREE.InstancedMesh | null;
   bulletGeo: THREE.SphereGeometry;
   bulletMat: THREE.MeshStandardMaterial;
+  impactMesh: THREE.InstancedMesh | null;
+  impactGeo: THREE.BoxGeometry;
+  impactMat: THREE.MeshBasicMaterial;
 }
 
 interface VoxelWorldBackgroundProps {
@@ -499,13 +544,21 @@ export default function VoxelWorldBackground({
       ss.scene.add(towerGroup);
       ss.towerGroup = towerGroup;
 
-      // Show enemy and bullet meshes
+      // Cache turret and muzzle references for animation
+      ss.turret = towerGroup.getObjectByName('turret') as THREE.Group || null;
+      ss.muzzleFlash = ss.turret?.getObjectByName('muzzle') as THREE.Mesh || null;
+
+      // Show enemy, bullet, and impact meshes
       if (ss.enemyMesh) ss.enemyMesh.visible = true;
       if (ss.bulletMesh) ss.bulletMesh.visible = true;
+      if (ss.impactMesh) ss.impactMesh.visible = true;
     } else {
-      // Vanilla mode: hide enemy and bullet meshes
+      // Vanilla mode: hide enemy, bullet, and impact meshes
       if (ss.enemyMesh) ss.enemyMesh.visible = false;
       if (ss.bulletMesh) ss.bulletMesh.visible = false;
+      if (ss.impactMesh) ss.impactMesh.visible = false;
+      ss.turret = null;
+      ss.muzzleFlash = null;
     }
 
     // Reset alive tracking for vanilla mode terrain destruction
@@ -574,18 +627,25 @@ export default function VoxelWorldBackground({
     enemyMesh.count = 0;
     scene.add(enemyMesh);
 
-    // Bullet instanced mesh — bright glowing projectiles
-    const bulletGeo = new THREE.SphereGeometry(0.35, 6, 4);
+    // Bullet instanced mesh — green glowing projectiles (tower defense style)
+    const bulletGeo = new THREE.SphereGeometry(0.2, 8, 6);
     const bulletMat = new THREE.MeshStandardMaterial({
-      color: 0x00CCFF,
-      roughness: 0.1,
-      metalness: 0.5,
-      emissive: 0x0088FF,
-      emissiveIntensity: 1.5,
+      color: 0x64ffb4,
+      roughness: 0.05,
+      metalness: 0.4,
+      emissive: 0x64ffb4,
+      emissiveIntensity: 2.5,
     });
     const bulletMesh = new THREE.InstancedMesh(bulletGeo, bulletMat, MAX_BULLETS);
     bulletMesh.count = 0;
     scene.add(bulletMesh);
+
+    // Impact particle instanced mesh — small cubes that scatter on bullet hit
+    const impactGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+    const impactMat = new THREE.MeshBasicMaterial({ color: 0x64ffb4 });
+    const impactMesh = new THREE.InstancedMesh(impactGeo, impactMat, MAX_IMPACT_PARTICLES);
+    impactMesh.count = 0;
+    scene.add(impactMesh);
 
     const gridLines = createGridLines();
     scene.add(gridLines);
@@ -594,8 +654,11 @@ export default function VoxelWorldBackground({
       renderer, scene, camera, gridLines,
       instancedMesh: null, boxGeo, boxMat,
       towerGroup: null,
+      turret: null,
+      muzzleFlash: null,
       enemyMesh, enemyGeo, enemyMat,
       bulletMesh, bulletGeo, bulletMat,
+      impactMesh, impactGeo, impactMat,
     };
 
     // Handle resize
@@ -615,6 +678,32 @@ export default function VoxelWorldBackground({
     let lastTime = 0;
     const dummy = new THREE.Object3D();
     const enemyColor = new THREE.Color();
+
+    // Bullet tracking for muzzle flash and impact detection
+    const prevBulletIds = new Set<number>();
+    const prevBulletPositions = new Map<number, { x: number; y: number; z: number }>();
+    let muzzleFlashTimer = 0;
+    const impactParticles: ImpactParticle[] = [];
+
+    function spawnImpactBurst(
+      px: number, py: number, pz: number,
+      particles: ImpactParticle[], count: number,
+    ) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: px + (Math.random() - 0.5) * 0.4,
+          y: py + Math.random() * 0.3,
+          z: pz + (Math.random() - 0.5) * 0.4,
+          vx: (Math.random() - 0.5) * 0.06,
+          vy: Math.random() * 0.04 + 0.02,
+          vz: (Math.random() - 0.5) * 0.06,
+          life: 1,
+          decay: 0.008 + Math.random() * 0.012,
+        });
+      }
+      // Cap particles
+      while (particles.length > MAX_IMPACT_PARTICLES) particles.shift();
+    }
 
     const animate = (time: number) => {
       animIdRef.current = requestAnimationFrame(animate);
@@ -677,32 +766,112 @@ export default function VoxelWorldBackground({
           }
         }
 
-        // Update bullet instances
+        // === Turret aiming ===
+        if (ss?.turret && ss.towerGroup) {
+          const aliveEnemies = enemiesRef.current.filter(e => e.alive);
+          if (aliveEnemies.length > 0) {
+            // Find closest enemy
+            let closest = aliveEnemies[0];
+            let closestDist = Math.sqrt(closest.x ** 2 + closest.z ** 2);
+            for (let i = 1; i < aliveEnemies.length; i++) {
+              const d = Math.sqrt(aliveEnemies[i].x ** 2 + aliveEnemies[i].z ** 2);
+              if (d < closestDist) { closest = aliveEnemies[i]; closestDist = d; }
+            }
+            // Smooth turret rotation toward target (in local tower space)
+            const targetAngle = Math.atan2(closest.x, closest.z);
+            const tRot = ss.turret.rotation.y;
+            ss.turret.rotation.y += (targetAngle - tRot) * 0.06;
+          }
+        }
+
+        // === Muzzle flash ===
+        if (ss?.muzzleFlash) {
+          muzzleFlashTimer = Math.max(0, muzzleFlashTimer - delta * 1000);
+          (ss.muzzleFlash.material as THREE.MeshBasicMaterial).opacity =
+            muzzleFlashTimer > 0 ? muzzleFlashTimer / 80 * 0.9 : 0;
+        }
+
+        // === Bullet instances — detect new/removed for effects ===
         if (ss?.bulletMesh) {
           const currentBullets = bulletsRef.current.filter(b => b.alive);
-          ss.bulletMesh.count = currentBullets.length;
-
+          const currentIds = new Set(currentBullets.map(b => b.id));
           const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
+          const cosR = Math.cos(terrainRotY);
+          const sinR = Math.sin(terrainRotY);
 
+          // Detect new bullets → trigger muzzle flash
+          for (const b of currentBullets) {
+            if (!prevBulletIds.has(b.id)) {
+              muzzleFlashTimer = 80;
+            }
+          }
+
+          // Detect removed bullets → spawn impact particles
+          for (const [id, pos] of prevBulletPositions) {
+            if (!currentIds.has(id)) {
+              // Rotate impact position with terrain
+              const ipx = pos.x * cosR - pos.z * sinR;
+              const ipz = pos.x * sinR + pos.z * cosR;
+              spawnImpactBurst(ipx, pos.y, ipz, impactParticles, 12);
+            }
+          }
+
+          // Update tracking
+          prevBulletIds.clear();
+          prevBulletPositions.clear();
+          for (const b of currentBullets) {
+            prevBulletIds.add(b.id);
+            prevBulletPositions.set(b.id, { x: b.x, y: b.y, z: b.z });
+          }
+
+          // Render bullets with rotation spin
+          ss.bulletMesh.count = currentBullets.length;
           for (let i = 0; i < currentBullets.length; i++) {
             const b = currentBullets[i];
-            // Rotate bullet position with terrain
-            const cosR = Math.cos(terrainRotY);
-            const sinR = Math.sin(terrainRotY);
             const rx = b.x * cosR - b.z * sinR;
             const rz = b.x * sinR + b.z * cosR;
 
             dummy.position.set(rx, b.y, rz);
-            // Pulse scale for glow effect
             const pulse = 0.8 + Math.sin(time * 0.02 + b.id * 2) * 0.3;
             dummy.scale.set(pulse, pulse, pulse);
-            dummy.rotation.set(0, 0, 0);
+            // Spin like reference projectiles
+            dummy.rotation.set(time * 0.005 + b.id, time * 0.007 + b.id * 0.5, 0);
             dummy.updateMatrix();
             ss.bulletMesh.setMatrixAt(i, dummy.matrix);
           }
 
           if (currentBullets.length > 0) {
             ss.bulletMesh.instanceMatrix.needsUpdate = true;
+          }
+        }
+
+        // === Impact particles ===
+        if (ss?.impactMesh) {
+          // Update particle physics
+          for (let i = impactParticles.length - 1; i >= 0; i--) {
+            const p = impactParticles[i];
+            p.vy -= 0.0002 * delta * 1000; // gravity
+            p.x += p.vx * delta * 60;
+            p.y += p.vy * delta * 60;
+            p.z += p.vz * delta * 60;
+            p.life -= p.decay;
+            if (p.life <= 0) impactParticles.splice(i, 1);
+          }
+
+          // Render particles — scale shrinks with life
+          ss.impactMesh.count = impactParticles.length;
+          for (let i = 0; i < impactParticles.length; i++) {
+            const p = impactParticles[i];
+            dummy.position.set(p.x, p.y, p.z);
+            const s = Math.max(0, p.life);
+            dummy.scale.set(s, s, s);
+            dummy.rotation.set(p.life * 3, p.life * 5, 0);
+            dummy.updateMatrix();
+            ss.impactMesh.setMatrixAt(i, dummy.matrix);
+          }
+
+          if (impactParticles.length > 0) {
+            ss.impactMesh.instanceMatrix.needsUpdate = true;
           }
         }
       }
@@ -734,8 +903,13 @@ export default function VoxelWorldBackground({
       if (sceneStateRef.current?.bulletMesh) {
         sceneStateRef.current.bulletMesh.dispose();
       }
+      if (sceneStateRef.current?.impactMesh) {
+        sceneStateRef.current.impactMesh.dispose();
+      }
       bulletGeo.dispose();
       bulletMat.dispose();
+      impactGeo.dispose();
+      impactMat.dispose();
       if (sceneStateRef.current?.towerGroup) {
         sceneStateRef.current.towerGroup.traverse((child) => {
           if (child instanceof THREE.Mesh) {
