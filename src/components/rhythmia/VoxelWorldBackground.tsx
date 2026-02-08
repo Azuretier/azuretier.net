@@ -709,13 +709,13 @@ export default function VoxelWorldBackground({
     scene.add(enemyMesh);
 
     // Bullet instanced mesh — green glowing projectiles (tower defense style)
-    const bulletGeo = new THREE.SphereGeometry(0.2, 8, 6);
+    const bulletGeo = new THREE.SphereGeometry(0.2, 12, 8);
     const bulletMat = new THREE.MeshStandardMaterial({
       color: 0x64ffb4,
-      roughness: 0.05,
-      metalness: 0.4,
+      roughness: 0.02,
+      metalness: 0.5,
       emissive: 0x64ffb4,
-      emissiveIntensity: 2.5,
+      emissiveIntensity: 3.5,
     });
     const bulletMesh = new THREE.InstancedMesh(bulletGeo, bulletMat, MAX_BULLETS);
     bulletMesh.count = 0;
@@ -854,7 +854,7 @@ export default function VoxelWorldBackground({
             // Smooth turret rotation toward target (in local tower space)
             const targetAngle = Math.atan2(closest.x, closest.z);
             const tRot = ss.turret.rotation.y;
-            ss.turret.rotation.y += (targetAngle - tRot) * 0.06;
+            ss.turret.rotation.y += (targetAngle - tRot) * 0.12;
           }
         }
 
@@ -898,7 +898,7 @@ export default function VoxelWorldBackground({
             prevBulletPositions.set(b.id, { x: b.x, y: b.y, z: b.z });
           }
 
-          // Render bullets with rotation spin
+          // Render bullets with smooth rotation spin
           ss.bulletMesh.count = currentBullets.length;
           for (let i = 0; i < currentBullets.length; i++) {
             const b = currentBullets[i];
@@ -906,10 +906,11 @@ export default function VoxelWorldBackground({
             const rz = b.x * sinR + b.z * cosR;
 
             dummy.position.set(rx, b.y, rz);
-            const pulse = 0.8 + Math.sin(time * 0.02 + b.id * 2) * 0.3;
+            // Smoother, subtler pulse for cleaner look at high speed
+            const pulse = 0.95 + Math.sin(time * 0.008 + b.id * 1.7) * 0.12;
             dummy.scale.set(pulse, pulse, pulse);
-            // Spin like reference projectiles
-            dummy.rotation.set(time * 0.005 + b.id, time * 0.007 + b.id * 0.5, 0);
+            // Faster, smoother spin
+            dummy.rotation.set(time * 0.012 + b.id, time * 0.015 + b.id * 0.5, 0);
             dummy.updateMatrix();
             ss.bulletMesh.setMatrixAt(i, dummy.matrix);
           }

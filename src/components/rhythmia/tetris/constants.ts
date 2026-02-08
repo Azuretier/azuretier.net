@@ -267,7 +267,7 @@ export const MANA_PER_COMBO = 3;         // Mana gained per combo increment
 export const MANA_COST_FEVER = 2;        // Mana drained per beat during fever
 export const HEALTH_REGEN_FEVER = 1;     // Health regen per beat during fever
 export const BULLET_MANA_COST = 10;     // Mana cost per tower bullet
-export const BULLET_SPEED = 2.0;        // Bullet travel speed per frame
+export const BULLET_SPEED = 4.5;        // Bullet travel speed per frame
 export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet kills enemy
 
 // ===== Helper Constants =====
