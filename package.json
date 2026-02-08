@@ -16,6 +16,7 @@
     "bot:install": "cd apps/discord-bot && npm install"
   },
   "dependencies": {
+    "@next/third-parties": "^16.1.6",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
