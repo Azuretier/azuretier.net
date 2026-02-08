@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { ServerMessage } from '@/types/multiplayer';
 import { getUnlockedCount } from '@/lib/advancements/storage';
-import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
@@ -24,8 +24,6 @@ export default function RhythmiaPage() {
     const wsRef = useRef<WebSocket | null>(null);
 
     const t = useTranslations();
-
-    const isArenaLocked = unlockedCount < BATTLE_ARENA_REQUIRED_ADVANCEMENTS;
 
     useEffect(() => {
         setUnlockedCount(getUnlockedCount());
@@ -80,7 +78,6 @@ export default function RhythmiaPage() {
     }, [connectMultiplayerWs]);
 
     const launchGame = (mode: GameMode) => {
-        if (mode === 'multiplayer' && isArenaLocked) return;
         // Close lobby WebSocket when entering multiplayer to avoid double-counting
         if (mode === 'multiplayer' && wsRef.current) {
             wsRef.current.close();
@@ -234,29 +231,15 @@ export default function RhythmiaPage() {
                             <button className={styles.playButton}>{t('lobby.play')}</button>
                         </motion.div>
 
-                        {/* Multiplayer Server (locked until 3 advancements) */}
+                        {/* Multiplayer Server */}
                         <motion.div
-                            className={`${styles.serverCard} ${styles.multiplayer} ${isArenaLocked ? styles.lockedCard : ''}`}
+                            className={`${styles.serverCard} ${styles.multiplayer}`}
                             onClick={() => launchGame('multiplayer')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
                             transition={{ duration: 0.6, delay: 0.45 }}
-                            whileHover={isArenaLocked ? {} : { y: -8, transition: { duration: 0.25 } }}
+                            whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
-                            {isArenaLocked && (
-                                <div className={styles.lockOverlay}>
-                                    <svg className={styles.lockIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                    <div className={styles.lockText}>
-                                        {t('advancements.lockMessage', {
-                                            current: unlockedCount,
-                                            required: BATTLE_ARENA_REQUIRED_ADVANCEMENTS,
-                                        })}
-                                    </div>
-                                </div>
-                            )}
                             <span className={`${styles.cardBadge} ${styles.new}`}>{t('multiplayer.badge')}</span>
                             <h2 className={styles.cardTitle}>{t('multiplayer.title')}</h2>
                             <p className={styles.cardSubtitle}>{t('multiplayer.subtitle')}</p>
@@ -282,8 +265,8 @@ export default function RhythmiaPage() {
                                     <div className={styles.statLabel}>{t('multiplayer.stats.status')}</div>
                                 </div>
                             </div>
-                            <button className={`${styles.playButton} ${isArenaLocked ? styles.lockedButton : ''}`} disabled={isArenaLocked}>
-                                {isArenaLocked ? t('advancements.locked') : t('lobby.battle')}
+                            <button className={styles.playButton}>
+                                {t('lobby.battle')}
                             </button>
                         </motion.div>
                     </div>

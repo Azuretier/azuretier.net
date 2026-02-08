@@ -55,8 +55,6 @@
         "title": "ADVANCEMENTS",
         "button": "{count}/{total} Advancements",
         "unlocked": "ADVANCEMENT UNLOCKED",
-        "locked": "LOCKED",
-        "lockMessage": "{current}/{required} advancements to unlock",
         "lines_10": { "name": "Line Beginner", "desc": "Clear 10 total lines" },
         "lines_50": { "name": "Line Apprentice", "desc": "Clear 50 total lines" },
         "lines_200": { "name": "Line Expert", "desc": "Clear 200 total lines" },

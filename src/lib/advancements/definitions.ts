@@ -64,5 +64,3 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'mp_games_10', category: 'multiplayer', icon: '⚔️', threshold: 10, statKey: 'totalMultiplayerGames' },
   { id: 'mp_games_50', category: 'multiplayer', icon: '⚔️', threshold: 50, statKey: 'totalMultiplayerGames' },
 ];
-
-export const BATTLE_ARENA_REQUIRED_ADVANCEMENTS = 3;

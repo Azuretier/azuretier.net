@@ -55,8 +55,6 @@
         "title": "進捗",
         "button": "{count}/{total} 進捗",
         "unlocked": "進捗達成",
-        "locked": "ロック中",
-        "lockMessage": "解放まで {current}/{required} 進捗",
         "lines_10": { "name": "ライン初心者", "desc": "合計10ライン消去" },
         "lines_50": { "name": "ライン見習い", "desc": "合計50ライン消去" },
         "lines_200": { "name": "ラインエキスパート", "desc": "合計200ライン消去" },
