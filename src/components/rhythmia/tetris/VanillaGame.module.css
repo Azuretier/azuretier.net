@@ -1870,9 +1870,6 @@
   border-color: rgba(200, 50, 50, 0.25);
 }
 
-.vBarMpTrack {
-  border-color: rgba(50, 100, 200, 0.25);
-}
 
 .vBarFill {
   position: absolute;
@@ -1897,21 +1894,6 @@
   100% { box-shadow: 0 0 12px rgba(255, 50, 50, 0.6); }
 }
 
-.vBarMpFill {
-  background: linear-gradient(0deg, #0d47a1, #42a5f5);
-  box-shadow: 0 0 6px rgba(66, 165, 245, 0.3);
-}
-
-.vBarMpFever {
-  background: linear-gradient(0deg, #ff6f00, #ffd54f);
-  box-shadow: 0 0 10px rgba(255, 180, 0, 0.4);
-  animation: manaFeverPulse 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes manaFeverPulse {
-  0% { box-shadow: 0 0 6px rgba(255, 180, 0, 0.3); }
-  100% { box-shadow: 0 0 14px rgba(255, 200, 0, 0.6); }
-}
 
 .vBarTicks {
   position: absolute;

@@ -502,6 +502,38 @@ interface ImpactParticle {
   decay: number;
 }
 
+// Create a canvas texture for an enemy HP bar
+function createHpBarTexture(healthPct: number): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 8;
+  const ctx = canvas.getContext('2d')!;
+
+  // Background (dark)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(0, 0, 64, 8);
+
+  // HP fill
+  const fillWidth = Math.max(0, Math.min(64, Math.round(healthPct * 64)));
+  if (healthPct > 0.5) {
+    ctx.fillStyle = '#4caf50'; // green
+  } else if (healthPct > 0.25) {
+    ctx.fillStyle = '#ff9800'; // orange
+  } else {
+    ctx.fillStyle = '#f44336'; // red
+  }
+  ctx.fillRect(0, 0, fillWidth, 8);
+
+  // Border
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0, 0, 64, 8);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
 interface SceneState {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
@@ -516,6 +548,7 @@ interface SceneState {
   enemyMesh: THREE.InstancedMesh | null;
   enemyGeo: THREE.BoxGeometry;
   enemyMat: THREE.MeshStandardMaterial;
+  hpBarSprites: THREE.Sprite[];
   bulletMesh: THREE.InstancedMesh | null;
   bulletGeo: THREE.SphereGeometry;
   bulletMat: THREE.MeshStandardMaterial;
@@ -731,6 +764,21 @@ export default function VoxelWorldBackground({
     const gridLines = createGridLines();
     scene.add(gridLines);
 
+    // HP bar sprite pool for enemies
+    const hpBarSprites: THREE.Sprite[] = [];
+    for (let i = 0; i < MAX_ENEMIES; i++) {
+      const mat = new THREE.SpriteMaterial({
+        map: createHpBarTexture(1),
+        transparent: true,
+        depthTest: false,
+      });
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(2.5, 0.4, 1);
+      sprite.visible = false;
+      scene.add(sprite);
+      hpBarSprites.push(sprite);
+    }
+
     sceneStateRef.current = {
       renderer, scene, camera, gridLines,
       instancedMesh: null, boxGeo, boxMat,
@@ -738,6 +786,7 @@ export default function VoxelWorldBackground({
       turret: null,
       muzzleFlash: null,
       enemyMesh, enemyGeo, enemyMat,
+      hpBarSprites,
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
     };
@@ -837,6 +886,31 @@ export default function VoxelWorldBackground({
           if (currentEnemies.length > 0) {
             ss.enemyMesh.instanceMatrix.needsUpdate = true;
             if (ss.enemyMesh.instanceColor) ss.enemyMesh.instanceColor.needsUpdate = true;
+          }
+
+          // Update HP bar sprites above enemies
+          for (let i = 0; i < ss.hpBarSprites.length; i++) {
+            const sprite = ss.hpBarSprites[i];
+            if (i < currentEnemies.length) {
+              const e = currentEnemies[i];
+              const healthPct = e.health / e.maxHealth;
+              const cosR = Math.cos(terrainRotY);
+              const sinR = Math.sin(terrainRotY);
+              const rx = e.x * cosR - e.z * sinR;
+              const rz = e.x * sinR + e.z * cosR;
+              const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
+
+              sprite.position.set(rx, bobY + 2.0, rz);
+              sprite.visible = true;
+
+              // Update HP bar texture
+              const mat = sprite.material as THREE.SpriteMaterial;
+              if (mat.map) mat.map.dispose();
+              mat.map = createHpBarTexture(healthPct);
+              mat.needsUpdate = true;
+            } else {
+              sprite.visible = false;
+            }
           }
         }
 

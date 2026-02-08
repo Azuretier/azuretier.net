@@ -127,21 +127,6 @@ export function useAudio() {
         osc2.stop(ctx.currentTime + 0.16);
     }, []);
 
-    const playEmptySound = useCallback(() => {
-        const ctx = audioCtxRef.current;
-        if (!ctx) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.value = 80;
-        gain.gain.setValueAtTime(0.05, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.18);
-    }, []);
-
     return {
         initAudio,
         playTone,
@@ -154,6 +139,5 @@ export function useAudio() {
         playShootSound,
         playHitSound,
         playKillSound,
-        playEmptySound,
     };
 }
