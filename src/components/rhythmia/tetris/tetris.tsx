@@ -792,8 +792,8 @@ export default function Rhythmia() {
           <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left sidebar: Hold + Inventory */}
-            <div className={styles.sidePanel}>
+            {/* Left sidebar: Hold + Inventory (separate containers) */}
+            <div className={styles.sidePanelLeft}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>HOLD (C)</div>
                 <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
@@ -828,7 +828,7 @@ export default function Rhythmia() {
             </div>
 
             {/* Right sidebar: Next */}
-            <div className={styles.sidePanel}>
+            <div className={styles.sidePanelRight}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
