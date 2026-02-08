@@ -100,12 +100,42 @@
   color: #ffffff;
 }
 
-/* Game area */
+/* Game area — three-column grid: sidebar | board+beatbar | sidebar
+   1fr auto 1fr ensures the board stays perfectly centered regardless
+   of how wide the sidebars are. */
 .gameArea {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 12px;
+  align-items: start;
+}
+
+/* Side panels — flex column, content-sized */
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Left sidebar aligns content to the right (near the board) */
+.sidePanelLeft {
+  composes: sidePanel;
+  align-items: flex-end;
+}
+
+/* Right sidebar aligns content to the left (near the board) */
+.sidePanelRight {
+  composes: sidePanel;
   align-items: flex-start;
+}
+
+/* Center column: board + beat bar + stats, all aligned */
+.centerColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Board */
@@ -227,6 +257,9 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .nextLabel {
@@ -241,17 +274,20 @@
 .next {
   display: grid;
   gap: 1px;
+  justify-content: center;
 }
 
 .nextCell {
   width: clamp(12px, 3vw, 20px);
   height: clamp(12px, 3vw, 20px);
   border-radius: 1px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* Beat indicator — cursor sweeps left→right, target zones mark the on-beat window */
 .beatBar {
-  width: min(300px, 80vw);
+  width: 100%;
+  max-width: 100%;
   height: 20px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
@@ -528,6 +564,16 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
+/* Stats panel */
+.statsPanel {
+  display: flex;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+}
+
 /* Particles */
 .particle {
   position: fixed;
@@ -583,9 +629,21 @@
   }
 
   .gameArea {
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
+  }
+
+  .sidePanelLeft,
+  .sidePanelRight {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .centerColumn {
+    gap: 6px;
   }
 
   .cell {
@@ -599,7 +657,6 @@
   }
 
   .nextWrap {
-    flex-direction: row;
     padding: 6px 12px;
   }
 
@@ -644,7 +701,6 @@
   }
 
   .beatBar {
-    width: min(250px, 90vw);
     height: 18px;
   }
 
@@ -668,7 +724,18 @@
   }
 
   .gameArea {
+    display: flex;
     flex-direction: row;
+    justify-content: center;
+  }
+
+  .sidePanelLeft,
+  .sidePanelRight {
+    max-width: 80px;
+  }
+
+  .centerColumn {
+    gap: 4px;
   }
 
   .cell {
@@ -704,7 +771,6 @@
   }
 
   .beatBar {
-    width: 180px;
     height: 14px;
   }
 

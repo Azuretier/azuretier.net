@@ -792,10 +792,12 @@ export default function Rhythmia() {
           <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left side: Hold + Item Slots */}
-            <div className={styles.nextWrap}>
-              <div className={styles.nextLabel}>HOLD (C)</div>
-              <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+            {/* Left sidebar: Hold + Inventory (separate containers) */}
+            <div className={styles.sidePanelLeft}>
+              <div className={styles.nextWrap}>
+                <div className={styles.nextLabel}>HOLD (C)</div>
+                <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+              </div>
               <ItemSlots
                 inventory={inventory}
                 craftedCards={craftedCards}
@@ -804,29 +806,35 @@ export default function Rhythmia() {
               />
             </div>
 
-            <Board
-              board={board}
-              currentPiece={currentPiece}
-              boardBeat={boardBeat}
-              boardShake={boardShake}
-              gameOver={gameOver}
-              isPaused={isPaused}
-              score={score}
-              onRestart={startGame}
-              colorTheme={colorTheme}
-              worldIdx={worldIdx}
-              combo={combo}
-              beatPhase={beatPhase}
-              boardElRef={boardElRef}
-            />
+            {/* Center column: Board + Beat bar + Stats */}
+            <div className={styles.centerColumn}>
+              <Board
+                board={board}
+                currentPiece={currentPiece}
+                boardBeat={boardBeat}
+                boardShake={boardShake}
+                gameOver={gameOver}
+                isPaused={isPaused}
+                score={score}
+                onRestart={startGame}
+                colorTheme={colorTheme}
+                worldIdx={worldIdx}
+                combo={combo}
+                beatPhase={beatPhase}
+                boardElRef={boardElRef}
+              />
+              <BeatBar containerRef={beatBarRef} />
+              <StatsPanel lines={lines} level={level} />
+            </div>
 
-            <div className={styles.nextWrap}>
-              <div className={styles.nextLabel}>NEXT</div>
-              {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+            {/* Right sidebar: Next */}
+            <div className={styles.sidePanelRight}>
+              <div className={styles.nextWrap}>
+                <div className={styles.nextLabel}>NEXT</div>
+                {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+              </div>
             </div>
           </div>
-
-          <BeatBar containerRef={beatBarRef} />
 
           <TouchControls
             onMoveLeft={() => movePiece(-1, 0)}
@@ -838,8 +846,6 @@ export default function Rhythmia() {
             onHold={holdCurrentPiece}
             isMobile={deviceType !== 'desktop'}
           />
-
-          <StatsPanel lines={lines} level={level} />
         </div>
       )}
 
