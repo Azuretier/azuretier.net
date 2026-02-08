@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint",
     "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts",
@@ -60,6 +61,7 @@
     "marked": "^15.0.12",
     "next": "^16.1.5",
     "next-intl": "^4.8.2",
+    "next-sitemap": "^4.2.3",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-day-picker": "^9.13.0",
