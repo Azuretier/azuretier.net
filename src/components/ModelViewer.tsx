@@ -10,8 +10,10 @@ import { RoundedPlaneGeometry } from 'maath/geometry'
 import { suspend } from 'suspend-react'
 
 extend({ RoundedPlaneGeometry })
-const regular = import('@pmndrs/assets/fonts/inter_regular.woff')
-const medium = import('@pmndrs/assets/fonts/inter_medium.woff')
+
+type FontModule = { default: string }
+const regular = import('@pmndrs/assets/fonts/inter_regular.woff') as Promise<FontModule>
+const medium = import('@pmndrs/assets/fonts/inter_medium.woff') as Promise<FontModule>
 
 interface FrameProps {
     id: string
