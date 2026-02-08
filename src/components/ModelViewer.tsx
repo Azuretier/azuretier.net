@@ -113,4 +113,4 @@ export default function ModelViewer({
     '/models/fiesta_tea-transformed.glb',
     '/models/pickles_3d_version_of_hyuna_lees_illustration-transformed.glb',
     '/models/still_life_based_on_heathers_artwork-transformed.glb',
-].forEach(useGLTF.preload);
+].forEach((url) => useGLTF.preload(url));
