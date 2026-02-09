@@ -1,6 +1,7 @@
 import React from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
+import { useNotifications } from '@/lib/notifications';
 import type { Piece, Board as BoardType } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -13,7 +14,9 @@ interface BoardProps {
     isPaused: boolean;
     score: number;
     onRestart: () => void;
+    onResume?: () => void;
     colorTheme?: ColorTheme;
+    onThemeChange?: (theme: ColorTheme) => void;
     worldIdx?: number;
     combo?: number;
     beatPhase?: number;
@@ -33,13 +36,16 @@ export function Board({
     isPaused,
     score,
     onRestart,
+    onResume,
     colorTheme = 'stage',
+    onThemeChange,
     worldIdx = 0,
     combo = 0,
     beatPhase = 0,
     boardElRef,
 }: BoardProps) {
     const isFever = combo >= 10;
+    const { unreadCount, toggleOpen, isOpen } = useNotifications();
 
     // Helper to get color for a piece type, with fever chroma shift
     const getColor = (pieceType: string) => {
@@ -139,13 +145,77 @@ export function Board({
                 })}
             </div>
 
-            {/* Overlay for Game Over / Paused */}
-            {(gameOver || isPaused) && (
+            {/* Overlay for Game Over */}
+            {gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
-                    <h2>{gameOver ? 'GAME OVER' : 'PAUSED'}</h2>
+                    <h2>GAME OVER</h2>
                     <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
                     <button className={styles.restartBtn} onClick={onRestart}>
-                        {gameOver ? 'もう一度' : 'Resume'}
+                        もう一度
+                    </button>
+                </div>
+            )}
+
+            {/* Overlay for Paused */}
+            {isPaused && !gameOver && (
+                <div className={styles.gameover} style={{ display: 'flex' }}>
+                    <h2>PAUSED</h2>
+                    <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
+
+                    {/* Theme selector */}
+                    {onThemeChange && (
+                        <div className={styles.pauseThemeNav}>
+                            <span className={styles.pauseThemeLabel}>Theme</span>
+                            <div className={styles.pauseThemeButtons}>
+                                <button
+                                    className={`${styles.pauseThemeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+                                    onClick={() => onThemeChange('standard')}
+                                >
+                                    Standard
+                                </button>
+                                <button
+                                    className={`${styles.pauseThemeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+                                    onClick={() => onThemeChange('stage')}
+                                >
+                                    Stage
+                                </button>
+                                <button
+                                    className={`${styles.pauseThemeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+                                    onClick={() => onThemeChange('monochrome')}
+                                >
+                                    Mono
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notification bell */}
+                    <button className={styles.pauseNotifBtn} onClick={toggleOpen}>
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        {unreadCount > 0 && (
+                            <span className={styles.pauseNotifBadge}>
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                        <span className={styles.pauseNotifLabel}>
+                            {unreadCount > 0 ? `${unreadCount} new` : 'Notifications'}
+                        </span>
+                    </button>
+
+                    <button className={styles.restartBtn} onClick={onResume || onRestart}>
+                        Resume
                     </button>
                 </div>
             )}
