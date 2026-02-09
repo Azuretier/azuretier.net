@@ -3,37 +3,9 @@ import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '.
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
-import type { AdvancementCategory, AdvancementState } from '@/lib/advancements/types';
+import { AdvancementsMenu } from '@/components/rhythmia/AdvancementsMenu';
 import type { Piece, Board as BoardType } from '../types';
 import styles from '../VanillaGame.module.css';
-
-const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer'];
-
-const CATEGORY_ICONS: Record<AdvancementCategory, string> = {
-    general: '🎮',
-    lines: '📏',
-    score: '💎',
-    tspin: '🌀',
-    combo: '🔥',
-    multiplayer: '⚔️',
-};
-
-const CATEGORY_LABELS: Record<AdvancementCategory, string> = {
-    general: 'General',
-    lines: 'Lines',
-    score: 'Score',
-    tspin: 'T-Spin',
-    combo: 'Combo',
-    multiplayer: 'PvP',
-};
-
-function formatThreshold(n: number): string {
-    if (n >= 10000000) return `${(n / 1000000).toFixed(0)}M`;
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 10000) return `${(n / 1000).toFixed(0)}K`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return n.toLocaleString();
-}
 
 interface BoardProps {
     board: BoardType;
@@ -76,13 +48,13 @@ export function Board({
 }: BoardProps) {
     const isFever = combo >= 10;
     const [showAdvancements, setShowAdvancements] = useState(false);
-    const [advState, setAdvState] = useState<AdvancementState | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState<AdvancementCategory>('general');
+    const [unlockedCount, setUnlockedCount] = useState(0);
 
-    // Load advancement state when pause menu opens
+    // Load advancement count when pause menu opens
     useEffect(() => {
         if (isPaused && !gameOver) {
-            setAdvState(loadAdvancementState());
+            const state = loadAdvancementState();
+            setUnlockedCount(state.unlockedIds.length);
         } else {
             setShowAdvancements(false);
         }
@@ -145,11 +117,7 @@ export function Board({
         isFever ? styles.fever : '',
     ].filter(Boolean).join(' ');
 
-    // Advancement stats
-    const unlockedCount = advState?.unlockedIds.length ?? 0;
     const totalCount = ADVANCEMENTS.length;
-
-    const filteredAdvancements = ADVANCEMENTS.filter(a => a.category === selectedCategory);
 
     return (
         <div className={boardWrapClasses}>
@@ -250,89 +218,7 @@ export function Board({
                             )}
                         </>
                     ) : (
-                        /* Minecraft Console Edition style Advancements panel */
-                        <div className={styles.mcAdvPanel}>
-                            {/* Header bar */}
-                            <div className={styles.mcAdvHeader}>
-                                <button
-                                    className={styles.mcAdvBack}
-                                    onClick={() => setShowAdvancements(false)}
-                                >
-                                    ← Back
-                                </button>
-                                <div className={styles.mcAdvTitle}>ADVANCEMENTS</div>
-                                <div className={styles.mcAdvCount}>
-                                    {unlockedCount} / {totalCount}
-                                </div>
-                            </div>
-
-                            {/* Progress bar */}
-                            <div className={styles.mcAdvProgressBar}>
-                                <div
-                                    className={styles.mcAdvProgressFill}
-                                    style={{ width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%` }}
-                                />
-                            </div>
-
-                            {/* Category tabs — icon-based like MC Console */}
-                            <div className={styles.mcAdvTabs}>
-                                {CATEGORY_ORDER.map(cat => {
-                                    const catAdvs = ADVANCEMENTS.filter(a => a.category === cat);
-                                    const catUnlocked = advState
-                                        ? catAdvs.filter(a => advState.unlockedIds.includes(a.id)).length
-                                        : 0;
-                                    const isActive = selectedCategory === cat;
-                                    return (
-                                        <button
-                                            key={cat}
-                                            className={`${styles.mcAdvTab} ${isActive ? styles.mcAdvTabActive : ''}`}
-                                            onClick={() => setSelectedCategory(cat)}
-                                        >
-                                            <span className={styles.mcAdvTabIcon}>{CATEGORY_ICONS[cat]}</span>
-                                            <span className={styles.mcAdvTabLabel}>{CATEGORY_LABELS[cat]}</span>
-                                            <span className={styles.mcAdvTabCount}>{catUnlocked}/{catAdvs.length}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Advancement grid */}
-                            <div className={styles.mcAdvGrid}>
-                                {filteredAdvancements.map(adv => {
-                                    const unlocked = advState?.unlockedIds.includes(adv.id) ?? false;
-                                    const currentValue = advState?.stats[adv.statKey] ?? 0;
-                                    const progress = Math.min(1, currentValue / adv.threshold);
-
-                                    return (
-                                        <div
-                                            key={adv.id}
-                                            className={`${styles.mcAdvTile} ${unlocked ? styles.mcAdvTileUnlocked : styles.mcAdvTileLocked}`}
-                                        >
-                                            <div className={styles.mcAdvTileIcon}>
-                                                {unlocked ? adv.icon : '🔒'}
-                                            </div>
-                                            <div className={styles.mcAdvTileInfo}>
-                                                <div className={styles.mcAdvTileName}>
-                                                    {adv.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                                                </div>
-                                                <div className={styles.mcAdvTileProgress}>
-                                                    <div className={styles.mcAdvTileProgressBar}>
-                                                        <div
-                                                            className={styles.mcAdvTileProgressFill}
-                                                            style={{ width: `${progress * 100}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className={styles.mcAdvTileProgressText}>
-                                                        {formatThreshold(currentValue)}/{formatThreshold(adv.threshold)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {unlocked && <div className={styles.mcAdvTileCheck}>✓</div>}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                        <AdvancementsMenu onClose={() => setShowAdvancements(false)} />
                     )}
                 </div>
             )}
