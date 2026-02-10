@@ -244,6 +244,33 @@ export const WEAPON_CARDS: WeaponCard[] = [
 
 export const WEAPON_CARD_MAP: Record<string, WeaponCard> = Object.fromEntries(WEAPON_CARDS.map(c => [c.id, c]));
 
+// ===== Shop Items — purchasable weapons using ore currency =====
+import type { ShopItem } from './types';
+
+export const SHOP_ITEMS: ShopItem[] = WEAPON_CARDS.map(card => ({
+    id: card.id,
+    name: card.name,
+    nameJa: card.nameJa,
+    icon: card.icon,
+    color: card.color,
+    glowColor: card.glowColor,
+    description: card.description,
+    descriptionJa: card.descriptionJa,
+    cost: card.recipe,
+    producesCardId: card.id,
+    stats: [
+        { label: 'Damage', value: `+${Math.round((card.damageMultiplier - 1) * 100)}%`, color: '#FF6B6B' },
+        ...(card.specialEffect === 'wide_beat' ? [{ label: 'Beat Window', value: 'Extended', color: '#4FC3F7' }] : []),
+        ...(card.specialEffect === 'shatter' ? [{ label: 'Special', value: 'Shatter', color: '#CE93D8' }] : []),
+        ...(card.specialEffect === 'burst' ? [{ label: 'Special', value: 'Burst', color: '#FFFFFF' }] : []),
+    ],
+    components: card.recipe.map(r => r.itemId),
+    rarity: card.damageMultiplier >= 1.8 ? 'legendary' :
+            card.damageMultiplier >= 1.5 ? 'epic' :
+            card.damageMultiplier >= 1.3 ? 'rare' :
+            card.damageMultiplier >= 1.2 ? 'uncommon' : 'common',
+}));
+
 // Items dropped per terrain damage unit
 export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
 

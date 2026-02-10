@@ -6,7 +6,8 @@ import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
-import type { Piece, GameMode } from './types';
+import type { Piece, GameMode, Keybindings, KeybindAction } from './types';
+import { DEFAULT_KEYBINDINGS } from './types';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -48,6 +49,8 @@ import {
   FloatingItems,
   ItemSlots,
   CraftingUI,
+  InventoryUI,
+  ShopUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -104,6 +107,29 @@ export default function Rhythmia() {
   vfxRef.current = vfx;
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
+
+  // Keybindings (persisted in localStorage)
+  const [keybindings, setKeybindings] = useState<Keybindings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('rhythmia_keybindings');
+        if (stored) return { ...DEFAULT_KEYBINDINGS, ...JSON.parse(stored) };
+      } catch { /* ignore */ }
+    }
+    return DEFAULT_KEYBINDINGS;
+  });
+
+  // Inventory & Shop overlay state
+  const [showInventory, setShowInventory] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+
+  const handleKeybindChange = useCallback((action: KeybindAction, key: string) => {
+    setKeybindings(prev => {
+      const next = { ...prev, [action]: key };
+      try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
 
   // Per-game stat tracking for advancements
   const gamePerfectBeatsRef = useRef(0);
@@ -898,22 +924,73 @@ export default function Rhythmia() {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
+      // Handle inventory toggle
+      if (e.key.toLowerCase() === keybindings.inventory) {
+        e.preventDefault();
+        if (showShop) return;
+        if (showCraftUI) { toggleCraftUI(); }
+        setShowInventory(prev => {
+          const next = !prev;
+          if (next) {
+            setIsPaused(true);
+            setShowShop(false);
+          } else {
+            setIsPaused(false);
+          }
+          return next;
+        });
+        return;
+      }
+
+      // Handle shop toggle
+      if (e.key.toLowerCase() === keybindings.shop) {
+        e.preventDefault();
+        if (showInventory) return;
+        if (showCraftUI) { toggleCraftUI(); }
+        setShowShop(prev => {
+          const next = !prev;
+          if (next) {
+            setIsPaused(true);
+            setShowInventory(false);
+          } else {
+            setIsPaused(false);
+          }
+          return next;
+        });
+        return;
+      }
+
       // Handle craft UI toggle with 'f' key
       if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
+        if (showInventory || showShop) return;
         toggleCraftUI();
         return;
       }
 
-      // Close craft UI with Escape
-      if (showCraftUI && (e.key === 'Escape')) {
-        e.preventDefault();
-        toggleCraftUI();
-        return;
+      // Close any overlay with Escape
+      if (e.key === 'Escape') {
+        if (showInventory) {
+          e.preventDefault();
+          setShowInventory(false);
+          setIsPaused(false);
+          return;
+        }
+        if (showShop) {
+          e.preventDefault();
+          setShowShop(false);
+          setIsPaused(false);
+          return;
+        }
+        if (showCraftUI) {
+          e.preventDefault();
+          toggleCraftUI();
+          return;
+        }
       }
 
-      // Don't process game inputs while craft UI is open
-      if (showCraftUI) return;
+      // Don't process game inputs while any overlay is open
+      if (showCraftUI || showInventory || showShop) return;
 
       const currentTime = performance.now();
 
@@ -990,11 +1067,15 @@ export default function Rhythmia() {
         case 'p':
         case 'P':
           e.preventDefault();
+          setShowInventory(false);
+          setShowShop(false);
           setIsPaused(prev => !prev);
           break;
 
         case 'Escape':
           e.preventDefault();
+          setShowInventory(false);
+          setShowShop(false);
           setIsPaused(prev => !prev);
           break;
       }
@@ -1020,7 +1101,7 @@ export default function Rhythmia() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCraftUI, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
+  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
 
   const world = WORLDS[worldIdx];
 
@@ -1111,16 +1192,18 @@ export default function Rhythmia() {
                 boardBeat={boardBeat}
                 boardShake={boardShake}
                 gameOver={gameOver}
-                isPaused={isPaused}
+                isPaused={isPaused && !showInventory && !showShop}
                 score={score}
                 onRestart={() => startGame(gameMode)}
-                onResume={() => setIsPaused(false)}
+                onResume={() => { setIsPaused(false); setShowInventory(false); setShowShop(false); }}
                 colorTheme={colorTheme}
                 onThemeChange={setColorTheme}
                 worldIdx={worldIdx}
                 combo={combo}
                 beatPhase={beatPhase}
                 boardElRef={boardElRef}
+                keybindings={keybindings}
+                onKeybindChange={handleKeybindChange}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
@@ -1166,6 +1249,29 @@ export default function Rhythmia() {
           onCraft={craftCard}
           canCraft={canCraftCard}
           onClose={toggleCraftUI}
+        />
+      )}
+
+      {/* Inventory UI overlay */}
+      {showInventory && (
+        <InventoryUI
+          inventory={inventory}
+          craftedCards={craftedCards}
+          damageMultiplier={damageMultiplier}
+          onClose={() => { setShowInventory(false); setIsPaused(false); }}
+          closeKey={keybindings.inventory}
+        />
+      )}
+
+      {/* Shop UI overlay */}
+      {showShop && (
+        <ShopUI
+          inventory={inventory}
+          craftedCards={craftedCards}
+          onPurchase={craftCard}
+          canPurchase={canCraftCard}
+          onClose={() => { setShowShop(false); setIsPaused(false); }}
+          closeKey={keybindings.shop}
         />
       )}
 
