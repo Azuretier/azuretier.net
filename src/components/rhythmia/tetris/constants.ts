@@ -136,7 +136,13 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 // Set to 0 for instant movement (common in competitive play)
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
+// ===== Lock Delay Settings =====
+export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
+export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
+
 // ===== Terrain Settings =====
+// Number of terrains (stages) to clear before advancing to the next world
+export const TERRAINS_PER_WORLD = 4;
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
@@ -252,22 +258,28 @@ export const TERRAIN_PARTICLES_PER_LINE = 15;
 export const TERRAIN_PARTICLE_LIFETIME = 600;
 
 // ===== Tower Defense Settings =====
-export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn
-export const ENEMY_BASE_SPEED = 0.5;     // Base movement speed toward tower per tick
-export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower
+export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
+export const ENEMY_BASE_SPEED = 0.5;     // Legacy — grid system uses 1 tile/turn
+export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower (world units)
 export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
 export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
+
+// ===== Block Grid System =====
+// Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).
+// The tower sits at grid origin (0, 0). Grid extends from -GRID_HALF to +GRID_HALF.
+export const GRID_TILE_SIZE = 1;         // World units per grid tile
+export const GRID_HALF = 18;             // Grid extends ±18 tiles from center
+export const GRID_SPAWN_RING = 18;       // Manhattan distance from center for spawn perimeter
+export const GRID_TOWER_RADIUS = 1;      // Grid tiles — enemy reaches tower at Manhattan dist ≤ this
 
 // ===== Tower Defense HUD =====
 export const MAX_HEALTH = 100;
 export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
 export const ENEMY_HP = 3;              // Default HP for each enemy
-export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
-export const BULLET_GRAVITY = 40;       // Gravity acceleration (units/sec²)
+export const BULLET_SPEED = 4.5;        // Bullet travel speed per frame
 export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
-export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
