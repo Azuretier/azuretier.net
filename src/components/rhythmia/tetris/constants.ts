@@ -238,6 +238,227 @@ export const WEAPON_CARDS: WeaponCard[] = [
 
 export const WEAPON_CARD_MAP: Record<string, WeaponCard> = Object.fromEntries(WEAPON_CARDS.map(c => [c.id, c]));
 
+// ===== Shop System (LoL-style) =====
+import type { ShopItem } from './types';
+
+// Gold earned per line clear (base, before beat/combo multiplier)
+export const GOLD_PER_LINE: Record<number, number> = {
+    1: 100,
+    2: 300,
+    3: 500,
+    4: 800,
+};
+
+// Gold per combo level bonus
+export const GOLD_PER_COMBO = 25;
+
+// Gold per terrain damage unit
+export const GOLD_PER_TERRAIN_DAMAGE = 5;
+
+// ===== Basic Items (Components) =====
+export const SHOP_ITEMS: ShopItem[] = [
+    // --- Basic (Tier 1) ---
+    {
+        id: 'long_sword',
+        name: 'Long Sword',
+        nameJa: 'ロングソード',
+        icon: 'long_sword',
+        color: '#C0392B',
+        glowColor: '#E74C3C',
+        tier: 'basic',
+        cost: 350,
+        totalCost: 350,
+        category: 'damage',
+        stats: [{ key: 'damage', value: 0.08, label: '+8% Damage', labelJa: 'ダメージ+8%' }],
+        buildsFrom: [],
+        buildsInto: ['infinity_edge', 'guardian_angel'],
+    },
+    {
+        id: 'amplifying_tome',
+        name: 'Amplifying Tome',
+        nameJa: '増魔の書',
+        icon: 'amplifying_tome',
+        color: '#8E44AD',
+        glowColor: '#BB6BD9',
+        tier: 'basic',
+        cost: 435,
+        totalCost: 435,
+        category: 'utility',
+        stats: [{ key: 'beatWindow', value: 0.05, label: '+5% Beat Window', labelJa: 'ビート判定+5%' }],
+        buildsFrom: [],
+        buildsInto: ['rabadons_deathcap', 'hextech_rocketbelt'],
+    },
+    {
+        id: 'ruby_crystal',
+        name: 'Ruby Crystal',
+        nameJa: 'ルビークリスタル',
+        icon: 'ruby_crystal',
+        color: '#E74C3C',
+        glowColor: '#FF6B6B',
+        tier: 'basic',
+        cost: 400,
+        totalCost: 400,
+        category: 'defense',
+        stats: [{ key: 'itemDrop', value: 0.15, label: '+15% Item Drop', labelJa: 'アイテムドロップ+15%' }],
+        buildsFrom: [],
+        buildsInto: ['hextech_rocketbelt', 'warmogs_armor', 'guardian_angel'],
+    },
+    {
+        id: 'boots_of_speed',
+        name: 'Boots of Speed',
+        nameJa: 'ブーツ',
+        icon: 'boots_of_speed',
+        color: '#F39C12',
+        glowColor: '#F1C40F',
+        tier: 'basic',
+        cost: 300,
+        totalCost: 300,
+        category: 'utility',
+        stats: [{ key: 'das', value: -0.15, label: '-15% DAS', labelJa: 'DAS-15%' }],
+        buildsFrom: [],
+        buildsInto: ['phantom_dancer'],
+    },
+
+    // --- Legendary (Tier 3) ---
+    {
+        id: 'infinity_edge',
+        name: 'Infinity Edge',
+        nameJa: 'インフィニティ・エッジ',
+        icon: 'infinity_edge',
+        color: '#E74C3C',
+        glowColor: '#FF6B6B',
+        tier: 'legendary',
+        cost: 2700,
+        totalCost: 3400,
+        category: 'damage',
+        stats: [{ key: 'damage', value: 0.50, label: '+50% Damage', labelJa: 'ダメージ+50%' }],
+        buildsFrom: ['long_sword', 'long_sword'],
+        buildsInto: [],
+        passive: {
+            name: 'Critical Strike',
+            nameJa: 'クリティカルストライク',
+            description: '25% chance for line clears to deal double damage',
+            descriptionJa: 'ライン消去時25%の確率でダメージ2倍',
+        },
+        featureUnlock: 'crit_strikes',
+    },
+    {
+        id: 'rabadons_deathcap',
+        name: "Rabadon's Deathcap",
+        nameJa: 'ラバドンの死帽',
+        icon: 'rabadons_deathcap',
+        color: '#8E44AD',
+        glowColor: '#BB6BD9',
+        tier: 'legendary',
+        cost: 2730,
+        totalCost: 3600,
+        category: 'damage',
+        stats: [],
+        buildsFrom: ['amplifying_tome', 'amplifying_tome'],
+        buildsInto: [],
+        passive: {
+            name: 'Deathfire Grasp',
+            nameJa: '死炎の抱擁',
+            description: '+35% total damage multiplier',
+            descriptionJa: '総合ダメージ倍率+35%',
+        },
+        featureUnlock: 'deathfire_grasp',
+    },
+    {
+        id: 'hextech_rocketbelt',
+        name: 'Hextech Rocketbelt',
+        nameJa: 'ヘクステック・ロケットベルト',
+        icon: 'hextech_rocketbelt',
+        color: '#3498DB',
+        glowColor: '#5DADE2',
+        tier: 'legendary',
+        cost: 1765,
+        totalCost: 2600,
+        category: 'utility',
+        stats: [],
+        buildsFrom: ['amplifying_tome', 'ruby_crystal'],
+        buildsInto: [],
+        passive: {
+            name: 'Hextech Alternator',
+            nameJa: 'ヘクステック・オルタネーター',
+            description: '+1 Next Piece preview slot',
+            descriptionJa: 'NEXT表示スロット+1',
+        },
+        featureUnlock: 'extra_next_slot',
+    },
+    {
+        id: 'phantom_dancer',
+        name: 'Phantom Dancer',
+        nameJa: 'ファントムダンサー',
+        icon: 'phantom_dancer',
+        color: '#2ECC71',
+        glowColor: '#58D68D',
+        tier: 'legendary',
+        cost: 2000,
+        totalCost: 2600,
+        category: 'utility',
+        stats: [{ key: 'das', value: -0.30, label: '-30% DAS', labelJa: 'DAS-30%' }],
+        buildsFrom: ['boots_of_speed', 'boots_of_speed'],
+        buildsInto: [],
+        passive: {
+            name: 'Spectral Waltz',
+            nameJa: 'スペクトルワルツ',
+            description: 'Greatly increased piece movement speed',
+            descriptionJa: 'ピース移動速度が大幅アップ',
+        },
+        featureUnlock: 'spectral_waltz',
+    },
+    {
+        id: 'warmogs_armor',
+        name: "Warmog's Armor",
+        nameJa: 'ウォーモグアーマー',
+        icon: 'warmogs_armor',
+        color: '#27AE60',
+        glowColor: '#2ECC71',
+        tier: 'legendary',
+        cost: 2200,
+        totalCost: 3000,
+        category: 'defense',
+        stats: [],
+        buildsFrom: ['ruby_crystal', 'ruby_crystal'],
+        buildsInto: [],
+        passive: {
+            name: "Warmog's Heart",
+            nameJa: 'ウォーモグの心',
+            description: '+1 World Expansion (extra stage per world)',
+            descriptionJa: 'ワールド拡張+1（追加ステージ）',
+        },
+        featureUnlock: 'world_expansion',
+    },
+    {
+        id: 'guardian_angel',
+        name: 'Guardian Angel',
+        nameJa: 'ガーディアンエンジェル',
+        icon: 'guardian_angel',
+        color: '#F1C40F',
+        glowColor: '#F9E79F',
+        tier: 'legendary',
+        cost: 2050,
+        totalCost: 2800,
+        category: 'defense',
+        stats: [],
+        buildsFrom: ['long_sword', 'ruby_crystal'],
+        buildsInto: [],
+        passive: {
+            name: 'Resurrection',
+            nameJa: '復活',
+            description: 'Auto-revive once when game would end',
+            descriptionJa: 'ゲームオーバー時に1回自動復活',
+        },
+        featureUnlock: 'resurrection',
+    },
+];
+
+export const SHOP_ITEM_MAP: Record<string, ShopItem> = Object.fromEntries(SHOP_ITEMS.map(i => [i.id, i]));
+
+export const SHOP_BASIC_ITEMS = SHOP_ITEMS.filter(i => i.tier === 'basic');
+export const SHOP_LEGENDARY_ITEMS = SHOP_ITEMS.filter(i => i.tier === 'legendary');
+
 // Items dropped per terrain damage unit
 export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
 

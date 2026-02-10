@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, GOLD_PER_LINE, GOLD_PER_COMBO, GOLD_PER_TERRAIN_DAMAGE } from './constants';
 import type { Piece, GameMode } from './types';
 
 // Advancements
@@ -222,6 +222,22 @@ export default function Rhythmia() {
     setGameOver,
     setTowerHealth,
     towerHealthRef,
+    // Shop system
+    gold,
+    purchasedShopItems,
+    ownedComponents,
+    unlockedFeatures,
+    extraNextSlots,
+    gaUsed,
+    addGold,
+    getEffectiveCost,
+    canBuyShopItem,
+    buyShopItem,
+    sellShopItem,
+    setGaUsed,
+    goldRef,
+    unlockedFeaturesRef,
+    pieceBag,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
@@ -450,20 +466,40 @@ export default function Rhythmia() {
       const weaponMult = damageMultiplierRef.current;
       const center = getBoardCenter();
 
+      // === Critical Strike passive (Infinity Edge) ===
+      const features = unlockedFeaturesRef.current;
+      const critRoll = features.has('crit_strikes') ? Math.random() : 1;
+      const critMult = critRoll < 0.25 ? 2 : 1;
+      if (critMult > 1) {
+        showJudgment('CRITICAL!', '#FF4444');
+      }
+
+      // === Gold from line clears ===
+      const baseGold = GOLD_PER_LINE[clearedLines] || clearedLines * 100;
+      const comboGold = comboRef.current * GOLD_PER_COMBO;
+      const goldEarned = Math.floor((baseGold + comboGold) * mult);
+      addGold(goldEarned);
+
       if (mode === 'td') {
         // === TOWER DEFENSE: Kill enemies when lines are cleared ===
-        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult * critMult);
         killEnemies(killCount);
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
+
+        // Gold from kills
+        addGold(killCount * GOLD_PER_TERRAIN_DAMAGE);
       } else {
         // === VANILLA: Destroy terrain blocks ===
-        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult * critMult);
         const remaining = destroyTerrain(damage);
-        
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
+
+        // Gold from terrain damage
+        addGold(damage * GOLD_PER_TERRAIN_DAMAGE);
 
         // Check if terrain is fully destroyed → next stage
         if (remaining <= 0) {
@@ -507,6 +543,7 @@ export default function Rhythmia() {
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
+    addGold, unlockedFeaturesRef,
   ]);
 
   // Hard drop
@@ -613,6 +650,21 @@ export default function Rhythmia() {
     liveNotifiedRef.current = new Set();
     setToastIds([]);
   }, [initAudio, initGame]);
+
+  // Guardian Angel passive: auto-revive once
+  useEffect(() => {
+    if (gameOver && unlockedFeatures.has('resurrection') && !gaUsed) {
+      setGaUsed(true);
+      // Revive: reset game over, clear the top 4 rows, resume
+      setGameOver(false);
+      setBoard(prev => {
+        const cleared = prev.map((row, y) => y < 4 ? row.map(() => null) : row);
+        return cleared;
+      });
+      showJudgment('REVIVE!', '#F1C40F');
+      return; // Don't record game end
+    }
+  }, [gameOver, unlockedFeatures, gaUsed, setGaUsed, setGameOver, setBoard, showJudgment]);
 
   // Record advancement stats when game ends
   useEffect(() => {
@@ -994,6 +1046,8 @@ export default function Rhythmia() {
                 craftedCards={craftedCards}
                 damageMultiplier={damageMultiplier}
                 onCraftOpen={toggleCraftUI}
+                gold={gold}
+                purchasedShopItems={purchasedShopItems}
               />
             </div>
 
@@ -1020,11 +1074,20 @@ export default function Rhythmia() {
               <StatsPanel lines={lines} level={level} />
             </div>
 
-            {/* Right sidebar: Next + HP bar */}
+            {/* Right sidebar: Next + Extra next slots + HP bar */}
             <div className={styles.sidePanelRight}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+                {/* Extra next piece slots from Hextech Rocketbelt */}
+                {extraNextSlots > 0 && pieceBag.length > 0 && (
+                  <div className={styles.extraNextSlots}>
+                    <div className={styles.extraNextLabel}>+{extraNextSlots}</div>
+                    {pieceBag.slice(0, extraNextSlots).map((pieceType, idx) => (
+                      <NextPiece key={idx} pieceType={pieceType} colorTheme={colorTheme} worldIdx={worldIdx} />
+                    ))}
+                  </div>
+                )}
               </div>
               {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
@@ -1060,6 +1123,13 @@ export default function Rhythmia() {
           onCraft={craftCard}
           canCraft={canCraftCard}
           onClose={toggleCraftUI}
+          gold={gold}
+          purchasedShopItems={purchasedShopItems}
+          ownedComponents={ownedComponents}
+          onBuyShopItem={buyShopItem}
+          onSellShopItem={sellShopItem}
+          canBuyShopItem={canBuyShopItem}
+          getEffectiveCost={getEffectiveCost}
         />
       )}
 
