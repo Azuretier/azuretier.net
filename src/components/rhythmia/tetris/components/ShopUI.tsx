@@ -14,6 +14,20 @@ interface ShopUIProps {
     getEffectiveCost: (itemId: string) => number;
 }
 
+/** Map stat keys to existing item icons for Dungeons-style icon+text rows */
+const STAT_ICON_MAP: Record<string, string> = {
+    damage: 'long_sword',
+    beatWindow: 'amplifying_tome',
+    itemDrop: 'ruby_crystal',
+    das: 'boots_of_speed',
+};
+
+const CATEGORY_BADGE_MAP: Record<string, { label: string; style: string }> = {
+    damage: { label: 'DAMAGE', style: 'shopDetailBadgeDmg' },
+    utility: { label: 'UTILITY', style: 'shopDetailBadgeUtil' },
+    defense: { label: 'DEFENSE', style: 'shopDetailBadgeDef' },
+};
+
 const CATEGORY_TABS: { key: 'all' | ShopCategory; label: string; labelJa: string }[] = [
     { key: 'all', label: 'ALL', labelJa: '全て' },
     { key: 'damage', label: 'DAMAGE', labelJa: '攻撃' },
@@ -132,92 +146,140 @@ export function ShopUI({
                     )}
                 </div>
 
-                {/* Item detail panel (right side) */}
+                {/* Item detail panel — Hybrid Wynncraft container + Dungeons content */}
                 {selectedDef && (
                     <div className={styles.shopDetailPanel}>
+                        {/* Header: Icon + Name + Power Level */}
                         <div className={styles.shopDetailHeader}>
-                            <div className={styles.shopDetailIcon} style={{ background: `radial-gradient(circle, ${selectedDef.glowColor}30, ${selectedDef.color}10)` }}>
-                                <ItemIcon itemId={selectedDef.icon} size={36} />
+                            <div className={styles.shopDetailIcon} style={{ background: `radial-gradient(circle, ${selectedDef.glowColor}20, rgba(91,33,182,0.1))` }}>
+                                <ItemIcon itemId={selectedDef.icon} size={32} />
                             </div>
                             <div className={styles.shopDetailTitle}>
-                                <div className={styles.shopDetailName}>{selectedDef.name}</div>
-                                <div className={styles.shopDetailNameJa}>{selectedDef.nameJa}</div>
-                                <div className={styles.shopDetailCostLine}>
-                                    <ItemIcon itemId="gold" size={14} />
-                                    <span className={styles.shopDetailCost}>{getEffectiveCost(selectedDef.id)}g</span>
-                                    {selectedDef.tier === 'legendary' && (
-                                        <span className={styles.shopDetailTotalCost}>({selectedDef.totalCost}g total)</span>
-                                    )}
+                                <div className={styles.shopDetailName} style={{ color: selectedDef.color }}>
+                                    {selectedDef.name}
                                 </div>
+                                <div className={styles.shopDetailNameJa}>{selectedDef.nameJa}</div>
+                            </div>
+                            <div className={styles.shopDetailPower}>
+                                <span>PWR</span>
+                                <span className={styles.shopDetailPowerNum}>{Math.floor(selectedDef.totalCost / 100)}</span>
                             </div>
                         </div>
 
-                        {/* Stats */}
+                        {/* Tier + Category badges */}
+                        <div className={styles.shopDetailBadges}>
+                            <span className={`${styles.shopDetailBadge} ${selectedDef.tier === 'legendary' ? styles.shopDetailBadgeLegendary : styles.shopDetailBadgeBasic}`}>
+                                {selectedDef.tier === 'legendary' ? 'LEGENDARY' : 'BASIC'}
+                            </span>
+                            <span className={`${styles.shopDetailBadge} ${styles[CATEGORY_BADGE_MAP[selectedDef.category]?.style || 'shopDetailBadgeDmg']}`}>
+                                {CATEGORY_BADGE_MAP[selectedDef.category]?.label || selectedDef.category.toUpperCase()}
+                            </span>
+                        </div>
+
+                        <div className={styles.shopDetailDivider} />
+
+                        {/* Gold cost */}
+                        <div className={styles.shopDetailCostLine}>
+                            <ItemIcon itemId="gold" size={14} />
+                            <span className={styles.shopDetailCost}>{getEffectiveCost(selectedDef.id)}g</span>
+                            {selectedDef.tier === 'legendary' && (
+                                <span className={styles.shopDetailTotalCost}>({selectedDef.totalCost}g total)</span>
+                            )}
+                        </div>
+
+                        {/* Stats — Dungeons-style icon+text rows */}
                         {selectedDef.stats.length > 0 && (
-                            <div className={styles.shopDetailStats}>
-                                {selectedDef.stats.map((stat, i) => (
-                                    <div key={i} className={styles.shopDetailStat}>{stat.labelJa}</div>
-                                ))}
-                            </div>
+                            <>
+                                <div className={styles.shopDetailDivider} />
+                                <div className={styles.shopDetailStats}>
+                                    {selectedDef.stats.map((stat, i) => (
+                                        <div key={i} className={styles.shopDetailStat}>
+                                            <div className={styles.shopDetailStatIcon}>
+                                                <ItemIcon itemId={STAT_ICON_MAP[stat.key] || selectedDef.icon} size={14} />
+                                            </div>
+                                            <span>{stat.labelJa}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
 
-                        {/* Passive */}
+                        {/* Passive — unique ability */}
                         {selectedDef.passive && (
-                            <div className={styles.shopDetailPassive}>
-                                <div className={styles.shopDetailPassiveLabel}>
-                                    UNIQUE PASSIVE: <span style={{ color: selectedDef.color }}>{selectedDef.passive.name}</span>
+                            <>
+                                <div className={styles.shopDetailDivider} />
+                                <div className={styles.shopDetailPassive}>
+                                    <div className={styles.shopDetailPassiveLabel}>
+                                        UNIQUE PASSIVE: <span className={styles.shopDetailPassiveName}>{selectedDef.passive.nameJa}</span>
+                                    </div>
+                                    <div className={styles.shopDetailPassiveDesc}>{selectedDef.passive.descriptionJa}</div>
                                 </div>
-                                <div className={styles.shopDetailPassiveDesc}>{selectedDef.passive.descriptionJa}</div>
-                            </div>
+                            </>
                         )}
 
                         {/* Build path for legendary items */}
                         {selectedDef.tier === 'legendary' && selectedDef.buildsFrom.length > 0 && (
-                            <div className={styles.shopBuildPath}>
-                                <div className={styles.shopBuildPathLabel}>BUILD PATH</div>
-                                <div className={styles.shopBuildPathItems}>
-                                    {selectedDef.buildsFrom.map((compId, i) => {
-                                        const comp = SHOP_ITEM_MAP[compId];
-                                        if (!comp) return null;
-                                        const owned = (ownedComponents[compId] || 0) > i
-                                            ? true
-                                            : selectedDef.buildsFrom.slice(0, i).filter(c => c === compId).length < (ownedComponents[compId] || 0);
-                                        return (
-                                            <div key={i} className={`${styles.shopBuildPathItem} ${owned ? styles.shopBuildPathItemOwned : ''}`}>
-                                                <ItemIcon itemId={comp.icon} size={18} />
-                                                <span className={styles.shopBuildPathItemCost}>{comp.cost}g</span>
-                                            </div>
-                                        );
-                                    })}
-                                    <div className={styles.shopBuildPathPlus}>+</div>
-                                    <div className={styles.shopBuildPathRecipe}>
-                                        <span className={styles.shopBuildPathRecipeCost}>{selectedDef.cost}g</span>
+                            <>
+                                <div className={styles.shopDetailDivider} />
+                                <div className={styles.shopBuildPath}>
+                                    <div className={styles.shopBuildPathLabel}>BUILD PATH</div>
+                                    <div className={styles.shopBuildPathItems}>
+                                        {selectedDef.buildsFrom.map((compId, i) => {
+                                            const comp = SHOP_ITEM_MAP[compId];
+                                            if (!comp) return null;
+                                            const owned = (ownedComponents[compId] || 0) > i
+                                                ? true
+                                                : selectedDef.buildsFrom.slice(0, i).filter(c => c === compId).length < (ownedComponents[compId] || 0);
+                                            return (
+                                                <div key={i} className={`${styles.shopBuildPathItem} ${owned ? styles.shopBuildPathItemOwned : ''}`}>
+                                                    <ItemIcon itemId={comp.icon} size={18} />
+                                                    <span className={styles.shopBuildPathItemCost}>{comp.cost}g</span>
+                                                </div>
+                                            );
+                                        })}
+                                        <div className={styles.shopBuildPathPlus}>+</div>
+                                        <div className={styles.shopBuildPathRecipe}>
+                                            <span className={styles.shopBuildPathRecipeCost}>{selectedDef.cost}g</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         )}
 
                         {/* Builds into (for basic items) */}
                         {selectedDef.tier === 'basic' && selectedDef.buildsInto.length > 0 && (
-                            <div className={styles.shopBuildPath}>
-                                <div className={styles.shopBuildPathLabel}>BUILDS INTO</div>
-                                <div className={styles.shopBuildPathItems}>
-                                    {selectedDef.buildsInto.map(targetId => {
-                                        const target = SHOP_ITEM_MAP[targetId];
-                                        if (!target) return null;
-                                        return (
-                                            <button
-                                                key={targetId}
-                                                className={styles.shopBuildPathTarget}
-                                                onClick={() => setSelectedItem(targetId)}
-                                            >
-                                                <ItemIcon itemId={target.icon} size={20} />
-                                                <span className={styles.shopBuildPathTargetName}>{target.nameJa}</span>
-                                            </button>
-                                        );
-                                    })}
+                            <>
+                                <div className={styles.shopDetailDivider} />
+                                <div className={styles.shopBuildPath}>
+                                    <div className={styles.shopBuildPathLabel}>BUILDS INTO</div>
+                                    <div className={styles.shopBuildPathItems}>
+                                        {selectedDef.buildsInto.map(targetId => {
+                                            const target = SHOP_ITEM_MAP[targetId];
+                                            if (!target) return null;
+                                            return (
+                                                <button
+                                                    key={targetId}
+                                                    className={styles.shopBuildPathTarget}
+                                                    onClick={() => setSelectedItem(targetId)}
+                                                >
+                                                    <ItemIcon itemId={target.icon} size={20} />
+                                                    <span className={styles.shopBuildPathTargetName}>{target.nameJa}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
+                            </>
+                        )}
+
+                        {/* Lore / flavor text */}
+                        {selectedDef.lore && (
+                            <>
+                                <div className={styles.shopDetailDivider} />
+                                <div className={styles.shopDetailLore}>
+                                    &ldquo;{selectedDef.loreJa || selectedDef.lore}&rdquo;
+                                </div>
+                            </>
                         )}
 
                         {/* Buy / Sell buttons */}

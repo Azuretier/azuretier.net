@@ -148,6 +148,8 @@ export type ShopItem = {
         descriptionJa: string;
     };
     featureUnlock?: string; // feature key unlocked when purchased
+    lore?: string;
+    loreJa?: string;
 };
 
 export type PurchasedShopItem = {

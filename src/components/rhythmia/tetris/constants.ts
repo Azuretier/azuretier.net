@@ -272,6 +272,8 @@ export const SHOP_ITEMS: ShopItem[] = [
         stats: [{ key: 'damage', value: 0.08, label: '+8% Damage', labelJa: 'ダメージ+8%' }],
         buildsFrom: [],
         buildsInto: ['infinity_edge', 'guardian_angel'],
+        lore: 'A common blade, but sharp enough to cut through terrain.',
+        loreJa: '平凡な刃、しかし地形を切り裂くには十分。',
     },
     {
         id: 'amplifying_tome',
@@ -287,6 +289,8 @@ export const SHOP_ITEMS: ShopItem[] = [
         stats: [{ key: 'beatWindow', value: 0.05, label: '+5% Beat Window', labelJa: 'ビート判定+5%' }],
         buildsFrom: [],
         buildsInto: ['rabadons_deathcap', 'hextech_rocketbelt'],
+        lore: 'Ancient texts that amplify the rhythm of battle.',
+        loreJa: '戦いのリズムを増幅する古代の書。',
     },
     {
         id: 'ruby_crystal',
@@ -302,6 +306,8 @@ export const SHOP_ITEMS: ShopItem[] = [
         stats: [{ key: 'itemDrop', value: 0.15, label: '+15% Item Drop', labelJa: 'アイテムドロップ+15%' }],
         buildsFrom: [],
         buildsInto: ['hextech_rocketbelt', 'warmogs_armor', 'guardian_angel'],
+        lore: 'A fragment of crystallized luck.',
+        loreJa: '結晶化した幸運の欠片。',
     },
     {
         id: 'boots_of_speed',
@@ -317,6 +323,8 @@ export const SHOP_ITEMS: ShopItem[] = [
         stats: [{ key: 'das', value: -0.15, label: '-15% DAS', labelJa: 'DAS-15%' }],
         buildsFrom: [],
         buildsInto: ['phantom_dancer'],
+        lore: 'Light as air, fast as thought.',
+        loreJa: '空気のように軽く、思考のように速い。',
     },
 
     // --- Legendary (Tier 3) ---
@@ -341,6 +349,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: 'ライン消去時25%の確率でダメージ2倍',
         },
         featureUnlock: 'crit_strikes',
+        lore: 'The blade that cleaves through the infinite.',
+        loreJa: '無限を斬り裂く刃。',
     },
     {
         id: 'rabadons_deathcap',
@@ -363,6 +373,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: '総合ダメージ倍率+35%',
         },
         featureUnlock: 'deathfire_grasp',
+        lore: 'A hat worn by those who dance with death.',
+        loreJa: '死と踊る者が被る帽子。',
     },
     {
         id: 'hextech_rocketbelt',
@@ -385,6 +397,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: 'NEXT表示スロット+1',
         },
         featureUnlock: 'extra_next_slot',
+        lore: 'Hextech innovation that bends space itself.',
+        loreJa: '空間を歪めるヘクステックの革新。',
     },
     {
         id: 'phantom_dancer',
@@ -407,6 +421,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: 'ピース移動速度が大幅アップ',
         },
         featureUnlock: 'spectral_waltz',
+        lore: 'Those who wear it move between worlds.',
+        loreJa: '身につけた者は世界の間を舞う。',
     },
     {
         id: 'warmogs_armor',
@@ -429,6 +445,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: 'ワールド拡張+1（追加ステージ）',
         },
         featureUnlock: 'world_expansion',
+        lore: 'Forged from the heart of a dying world.',
+        loreJa: '滅びゆく世界の心臓から鍛えられし鎧。',
     },
     {
         id: 'guardian_angel',
@@ -451,6 +469,8 @@ export const SHOP_ITEMS: ShopItem[] = [
             descriptionJa: 'ゲームオーバー時に1回自動復活',
         },
         featureUnlock: 'resurrection',
+        lore: 'Even death cannot hold the chosen.',
+        loreJa: '選ばれし者に死は訪れない。',
     },
 ];
 
