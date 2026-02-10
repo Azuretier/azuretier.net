@@ -19,20 +19,8 @@
     },
     "vanilla": {
         "badge": "公式",
-        "title": "VANILLA",
-        "gameTitle": "RHYTHMIA — VANILLA",
-        "subtitle": "オリジナル体験",
-        "description": "クラシックなRHYTHMIAゲームプレイ。リズムに合わせてブロックを積み上げ、世界を制覇しよう。",
-        "features": {
-            "worlds": "5つの世界",
-            "rhythm": "リズム",
-            "solo": "ソロ"
-        },
-        "stats": {
-            "bpmStart": "開始BPM",
-            "bpmMax": "最大BPM",
-            "levels": "レベル"
-        }
+        "title": "Single Player",
+        "gameTitle": "RHYTHMIA — VANILLA"
     },
     "multiplayer": {
         "badge": "1v1",

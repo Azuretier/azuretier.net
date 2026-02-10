@@ -218,29 +218,6 @@ export default function RhythmiaPage() {
                         >
                             <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
                             <h2 className={styles.cardTitle}>{t('vanilla.title')}</h2>
-                            <p className={styles.cardSubtitle}>{t('vanilla.subtitle')}</p>
-                            <p className={styles.cardDescription}>
-                                {t('vanilla.description')}
-                            </p>
-                            <div className={styles.cardFeatures}>
-                                <span className={styles.featureTag}>{t('vanilla.features.worlds')}</span>
-                                <span className={styles.featureTag}>{t('vanilla.features.rhythm')}</span>
-                                <span className={styles.featureTag}>{t('vanilla.features.solo')}</span>
-                            </div>
-                            <div className={styles.cardStats}>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>100</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.bpmStart')}</div>
-                                </div>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>160</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.bpmMax')}</div>
-                                </div>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>∞</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.levels')}</div>
-                                </div>
-                            </div>
                             <button className={styles.playButton}>{t('lobby.play')}</button>
                         </motion.div>
 
