@@ -123,6 +123,38 @@ export type CraftedCard = {
     craftedAt: number;
 };
 
+// ===== Shop System (LoL-style) =====
+export type ShopItemTier = 'basic' | 'legendary';
+export type ShopCategory = 'damage' | 'utility' | 'defense';
+
+export type ShopItem = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    tier: ShopItemTier;
+    cost: number;
+    totalCost: number; // full cost including components
+    category: ShopCategory;
+    stats: { key: string; value: number; label: string; labelJa: string }[];
+    buildsFrom: string[]; // ids of component items needed
+    buildsInto: string[]; // ids of items this can build into
+    passive?: {
+        name: string;
+        nameJa: string;
+        description: string;
+        descriptionJa: string;
+    };
+    featureUnlock?: string; // feature key unlocked when purchased
+};
+
+export type PurchasedShopItem = {
+    itemId: string;
+    purchasedAt: number;
+};
+
 // ===== Tower Defense =====
 export type Enemy = {
     id: number;

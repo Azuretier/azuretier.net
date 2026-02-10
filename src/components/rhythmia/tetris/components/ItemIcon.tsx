@@ -267,6 +267,256 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
+        // ===== Shop Items =====
+
+        // Long Sword — crimson blade
+        case 'long_sword':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="lsword-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stopColor="#E8E8E8" />
+                            <stop offset="100%" stopColor="#A0A0A0" />
+                        </linearGradient>
+                    </defs>
+                    <polygon
+                        points={`${half},${size * 0.05} ${half + size * 0.07},${size * 0.55} ${half},${size * 0.62} ${half - size * 0.07},${size * 0.55}`}
+                        fill="url(#lsword-grad)"
+                        stroke="#C0392B"
+                        strokeWidth="0.6"
+                    />
+                    <rect x={half - size * 0.12} y={size * 0.6} width={size * 0.24} height={size * 0.05} rx={1} fill="#C0392B" />
+                    <rect x={half - size * 0.025} y={size * 0.64} width={size * 0.05} height={size * 0.28} rx={1} fill="#8B4513" />
+                    <circle cx={half} cy={size * 0.92} r={size * 0.04} fill="#C0392B" />
+                </g>
+            );
+
+        // Amplifying Tome — purple magic book
+        case 'amplifying_tome':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="tome-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#BB6BD9" />
+                            <stop offset="100%" stopColor="#6C3483" />
+                        </linearGradient>
+                    </defs>
+                    <rect x={size * 0.2} y={size * 0.12} width={size * 0.6} height={size * 0.76} rx={size * 0.04} fill="url(#tome-grad)" stroke="#8E44AD" strokeWidth="0.5" />
+                    <rect x={size * 0.15} y={size * 0.15} width={size * 0.08} height={size * 0.7} rx={size * 0.02} fill="#6C3483" />
+                    <line x1={size * 0.32} y1={size * 0.35} x2={size * 0.68} y2={size * 0.35} stroke="#D2B4DE" strokeWidth="0.5" opacity="0.6" />
+                    <line x1={size * 0.32} y1={size * 0.45} x2={size * 0.62} y2={size * 0.45} stroke="#D2B4DE" strokeWidth="0.5" opacity="0.4" />
+                    <line x1={size * 0.32} y1={size * 0.55} x2={size * 0.65} y2={size * 0.55} stroke="#D2B4DE" strokeWidth="0.5" opacity="0.3" />
+                    <circle cx={half} cy={size * 0.72} r={size * 0.06} fill="#E8DAEF" opacity="0.5" />
+                </g>
+            );
+
+        // Ruby Crystal — red faceted gem
+        case 'ruby_crystal':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="ruby-grad" x1="20%" y1="0%" x2="80%" y2="100%">
+                            <stop offset="0%" stopColor="#FF6B6B" />
+                            <stop offset="50%" stopColor="#E74C3C" />
+                            <stop offset="100%" stopColor="#922B21" />
+                        </linearGradient>
+                    </defs>
+                    <polygon
+                        points={`${half},${size * 0.1} ${size * 0.8},${size * 0.4} ${size * 0.7},${size * 0.8} ${size * 0.3},${size * 0.8} ${size * 0.2},${size * 0.4}`}
+                        fill="url(#ruby-grad)"
+                        stroke="#C0392B"
+                        strokeWidth="0.5"
+                    />
+                    <polygon
+                        points={`${half},${size * 0.1} ${size * 0.8},${size * 0.4} ${half},${size * 0.5} ${size * 0.2},${size * 0.4}`}
+                        fill="#FF8A80"
+                        opacity="0.35"
+                    />
+                    <line x1={half} y1={size * 0.1} x2={half} y2={size * 0.8} stroke="#FFCDD2" strokeWidth="0.3" opacity="0.4" />
+                </g>
+            );
+
+        // Boots of Speed — golden boot
+        case 'boots_of_speed':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="boots-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#F9E79F" />
+                            <stop offset="100%" stopColor="#D4AC0D" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d={`M${size * 0.35},${size * 0.1} L${size * 0.45},${size * 0.1} L${size * 0.48},${size * 0.6} L${size * 0.8},${size * 0.75} L${size * 0.8},${size * 0.9} L${size * 0.2},${size * 0.9} L${size * 0.2},${size * 0.78} L${size * 0.32},${size * 0.6} Z`}
+                        fill="url(#boots-grad)"
+                        stroke="#B7950B"
+                        strokeWidth="0.5"
+                    />
+                    <line x1={size * 0.37} y1={size * 0.25} x2={size * 0.43} y2={size * 0.25} stroke="#F1C40F" strokeWidth="0.8" opacity="0.6" />
+                    <line x1={size * 0.36} y1={size * 0.35} x2={size * 0.44} y2={size * 0.35} stroke="#F1C40F" strokeWidth="0.8" opacity="0.5" />
+                </g>
+            );
+
+        // Infinity Edge — iconic red-edged sword
+        case 'infinity_edge':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="ie-blade" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stopColor="#FFFFFF" />
+                            <stop offset="50%" stopColor="#E0E0E0" />
+                            <stop offset="100%" stopColor="#B0B0B0" />
+                        </linearGradient>
+                        <linearGradient id="ie-edge" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" stopColor="#FF4444" />
+                            <stop offset="100%" stopColor="#CC0000" />
+                        </linearGradient>
+                    </defs>
+                    <polygon
+                        points={`${half},${size * 0.02} ${half + size * 0.12},${size * 0.5} ${half + size * 0.06},${size * 0.58} ${half},${size * 0.62} ${half - size * 0.06},${size * 0.58} ${half - size * 0.12},${size * 0.5}`}
+                        fill="url(#ie-blade)"
+                        stroke="url(#ie-edge)"
+                        strokeWidth="0.8"
+                    />
+                    <rect x={half - size * 0.16} y={size * 0.58} width={size * 0.32} height={size * 0.06} rx={2} fill="#C0392B" />
+                    <rect x={half - size * 0.03} y={size * 0.63} width={size * 0.06} height={size * 0.22} rx={1} fill="#922B21" />
+                    <polygon
+                        points={`${half - size * 0.06},${size * 0.85} ${half},${size * 0.98} ${half + size * 0.06},${size * 0.85}`}
+                        fill="#C0392B"
+                    />
+                    <line x1={half} y1={size * 0.08} x2={half} y2={size * 0.55} stroke="#FF6B6B" strokeWidth="0.5" opacity="0.4" />
+                </g>
+            );
+
+        // Rabadon's Deathcap — purple wizard hat
+        case 'rabadons_deathcap':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="rab-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stopColor="#D2B4DE" />
+                            <stop offset="50%" stopColor="#8E44AD" />
+                            <stop offset="100%" stopColor="#4A235A" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d={`M${half},${size * 0.02} Q${size * 0.65},${size * 0.3} ${size * 0.85},${size * 0.72} L${size * 0.15},${size * 0.72} Q${size * 0.35},${size * 0.3} ${half},${size * 0.02}`}
+                        fill="url(#rab-grad)"
+                        stroke="#6C3483"
+                        strokeWidth="0.5"
+                    />
+                    <ellipse cx={half} cy={size * 0.78} rx={size * 0.42} ry={size * 0.1} fill="#4A235A" stroke="#6C3483" strokeWidth="0.5" />
+                    <circle cx={half * 0.85} cy={size * 0.4} r={size * 0.04} fill="#F9E79F" opacity="0.8" />
+                    <circle cx={half * 1.3} cy={size * 0.55} r={size * 0.03} fill="#F9E79F" opacity="0.5" />
+                    <circle cx={half} cy={size * 0.25} r={size * 0.025} fill="#F9E79F" opacity="0.6" />
+                </g>
+            );
+
+        // Hextech Rocketbelt — blue tech device
+        case 'hextech_rocketbelt':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="hex-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#5DADE2" />
+                            <stop offset="100%" stopColor="#1A5276" />
+                        </linearGradient>
+                        <radialGradient id="hex-core" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#AED6F1" stopOpacity="0.8" />
+                            <stop offset="100%" stopColor="#3498DB" stopOpacity="0.2" />
+                        </radialGradient>
+                    </defs>
+                    <rect x={size * 0.15} y={size * 0.25} width={size * 0.7} height={size * 0.5} rx={size * 0.08} fill="url(#hex-grad)" stroke="#2E86C1" strokeWidth="0.5" />
+                    <circle cx={half} cy={half} r={size * 0.14} fill="url(#hex-core)" stroke="#AED6F1" strokeWidth="0.4" />
+                    <rect x={size * 0.3} y={size * 0.75} width={size * 0.1} height={size * 0.15} rx={2} fill="#E74C3C" />
+                    <rect x={size * 0.45} y={size * 0.75} width={size * 0.1} height={size * 0.18} rx={2} fill="#E74C3C" />
+                    <rect x={size * 0.6} y={size * 0.75} width={size * 0.1} height={size * 0.15} rx={2} fill="#E74C3C" />
+                    <polygon points={`${size * 0.35},${size * 0.18} ${half},${size * 0.08} ${size * 0.65},${size * 0.18}`} fill="#2E86C1" opacity="0.5" />
+                </g>
+            );
+
+        // Phantom Dancer — ethereal green twin blades
+        case 'phantom_dancer':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="pd-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#82E0AA" stopOpacity="0.9" />
+                            <stop offset="100%" stopColor="#1E8449" stopOpacity="0.7" />
+                        </linearGradient>
+                    </defs>
+                    <polygon
+                        points={`${size * 0.3},${size * 0.05} ${size * 0.4},${size * 0.05} ${size * 0.55},${size * 0.65} ${size * 0.35},${size * 0.65}`}
+                        fill="url(#pd-grad)"
+                        stroke="#2ECC71"
+                        strokeWidth="0.4"
+                        opacity="0.8"
+                    />
+                    <polygon
+                        points={`${size * 0.6},${size * 0.05} ${size * 0.7},${size * 0.05} ${size * 0.65},${size * 0.65} ${size * 0.45},${size * 0.65}`}
+                        fill="url(#pd-grad)"
+                        stroke="#2ECC71"
+                        strokeWidth="0.4"
+                        opacity="0.6"
+                    />
+                    <ellipse cx={half} cy={size * 0.72} rx={size * 0.18} ry={size * 0.06} fill="#1E8449" />
+                    <rect x={half - size * 0.025} y={size * 0.72} width={size * 0.05} height={size * 0.22} rx={1} fill="#145A32" />
+                    <circle cx={half} cy={half * 0.6} r={size * 0.03} fill="#ABEBC6" opacity="0.7" />
+                </g>
+            );
+
+        // Warmog's Armor — green heavy plate
+        case 'warmogs_armor':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="wm-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stopColor="#58D68D" />
+                            <stop offset="50%" stopColor="#27AE60" />
+                            <stop offset="100%" stopColor="#1E8449" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d={`M${half},${size * 0.08} L${size * 0.82},${size * 0.25} L${size * 0.78},${size * 0.75} L${half},${size * 0.92} L${size * 0.22},${size * 0.75} L${size * 0.18},${size * 0.25} Z`}
+                        fill="url(#wm-grad)"
+                        stroke="#196F3D"
+                        strokeWidth="0.6"
+                    />
+                    <circle cx={half} cy={half} r={size * 0.12} fill="#ABEBC6" opacity="0.3" />
+                    <line x1={half} y1={size * 0.25} x2={half} y2={size * 0.75} stroke="#196F3D" strokeWidth="0.5" opacity="0.4" />
+                    <line x1={size * 0.3} y1={half} x2={size * 0.7} y2={half} stroke="#196F3D" strokeWidth="0.5" opacity="0.4" />
+                </g>
+            );
+
+        // Guardian Angel — golden wings with halo
+        case 'guardian_angel':
+            return (
+                <g>
+                    <defs>
+                        <linearGradient id="ga-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+                            <stop offset="0%" stopColor="#F9E79F" />
+                            <stop offset="100%" stopColor="#D4AC0D" />
+                        </linearGradient>
+                    </defs>
+                    <ellipse cx={half} cy={size * 0.15} rx={size * 0.18} ry={size * 0.06} fill="none" stroke="#F1C40F" strokeWidth="1" />
+                    <path
+                        d={`M${half},${size * 0.25} Q${size * 0.05},${size * 0.5} ${size * 0.15},${size * 0.85} L${size * 0.35},${size * 0.6} L${half},${size * 0.92}`}
+                        fill="url(#ga-grad)"
+                        stroke="#B7950B"
+                        strokeWidth="0.4"
+                        opacity="0.8"
+                    />
+                    <path
+                        d={`M${half},${size * 0.25} Q${size * 0.95},${size * 0.5} ${size * 0.85},${size * 0.85} L${size * 0.65},${size * 0.6} L${half},${size * 0.92}`}
+                        fill="url(#ga-grad)"
+                        stroke="#B7950B"
+                        strokeWidth="0.4"
+                        opacity="0.8"
+                    />
+                    <circle cx={half} cy={size * 0.4} r={size * 0.06} fill="#FEF9E7" opacity="0.8" />
+                </g>
+            );
+
         // ===== Weapon Cards =====
 
         // Stone Blade — simple angular sword

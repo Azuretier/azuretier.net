@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet, PurchasedShopItem } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
@@ -9,6 +9,7 @@ import {
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
+    SHOP_ITEM_MAP,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -90,11 +91,49 @@ export function useGameState() {
     const [bullets, setBullets] = useState<Bullet[]>([]);
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
 
-    // Computed: total damage multiplier from all crafted cards
-    const damageMultiplier = craftedCards.reduce((mult, card) => {
+    // ===== Shop System (LoL-style) =====
+    const [gold, setGold] = useState(0);
+    const [purchasedShopItems, setPurchasedShopItems] = useState<PurchasedShopItem[]>([]);
+    const [ownedComponents, setOwnedComponents] = useState<Record<string, number>>({}); // basic items owned (count)
+    const [gaUsed, setGaUsed] = useState(false); // Guardian Angel consumed
+
+    // Computed: active feature unlocks from purchased legendary items
+    const unlockedFeatures = purchasedShopItems.reduce<Set<string>>((set, item) => {
+        const def = SHOP_ITEM_MAP[item.itemId];
+        if (def?.featureUnlock) set.add(def.featureUnlock);
+        return set;
+    }, new Set());
+
+    // Computed: extra next slots from shop items
+    const extraNextSlots = unlockedFeatures.has('extra_next_slot') ? 1 : 0;
+
+    // Computed: total damage multiplier from all crafted cards + shop items
+    const baseDamageMultiplier = craftedCards.reduce((mult, card) => {
         const def = WEAPON_CARD_MAP[card.cardId];
         return def ? mult * def.damageMultiplier : mult;
     }, 1);
+
+    // Add shop item damage bonuses
+    const shopDamageBonus = (() => {
+        let bonus = 0;
+        // Basic components: additive damage
+        const longSwordCount = ownedComponents['long_sword'] || 0;
+        bonus += longSwordCount * 0.08;
+        // Legendary flat bonuses
+        for (const item of purchasedShopItems) {
+            const def = SHOP_ITEM_MAP[item.itemId];
+            if (!def) continue;
+            for (const stat of def.stats) {
+                if (stat.key === 'damage') bonus += stat.value;
+            }
+        }
+        return bonus;
+    })();
+
+    // Rabadon's multiplier: +35% to total damage
+    const rabadonsMultiplier = unlockedFeatures.has('deathfire_grasp') ? 1.35 : 1;
+
+    const damageMultiplier = (baseDamageMultiplier + shopDamageBonus) * rabadonsMultiplier;
 
     // Refs for accessing current values in callbacks (avoids stale closures)
     const gameLoopRef = useRef<number | null>(null);
@@ -162,6 +201,14 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+
+    // Shop refs
+    const goldRef = useRef(gold);
+    const purchasedShopItemsRef = useRef(purchasedShopItems);
+    const unlockedFeaturesRef = useRef(unlockedFeatures);
+    useEffect(() => { goldRef.current = gold; }, [gold]);
+    useEffect(() => { purchasedShopItemsRef.current = purchasedShopItems; }, [purchasedShopItems]);
+    useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures; }, [unlockedFeatures]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -552,6 +599,117 @@ export function useGameState() {
         });
     }, [inventory]);
 
+    // ===== Shop System Actions =====
+
+    // Add gold (called from gameplay)
+    const addGold = useCallback((amount: number) => {
+        setGold(prev => prev + amount);
+    }, []);
+
+    // Calculate effective cost of a shop item (recipe cost reduced by owned components)
+    const getEffectiveCost = useCallback((itemId: string): number => {
+        const item = SHOP_ITEM_MAP[itemId];
+        if (!item) return Infinity;
+
+        if (item.tier === 'basic') return item.cost;
+
+        // For legendary items: reduce cost by owned components
+        let discount = 0;
+        const componentCounts: Record<string, number> = {};
+        for (const compId of item.buildsFrom) {
+            componentCounts[compId] = (componentCounts[compId] || 0) + 1;
+        }
+
+        for (const [compId, needed] of Object.entries(componentCounts)) {
+            const owned = ownedComponents[compId] || 0;
+            const usable = Math.min(owned, needed);
+            const compDef = SHOP_ITEM_MAP[compId];
+            if (compDef) {
+                discount += usable * compDef.cost;
+            }
+        }
+
+        return item.cost + (item.totalCost - item.cost - discount);
+    }, [ownedComponents]);
+
+    // Check if player can afford a shop item
+    const canBuyShopItem = useCallback((itemId: string): boolean => {
+        const item = SHOP_ITEM_MAP[itemId];
+        if (!item) return false;
+
+        // Can't buy duplicates of legendaries
+        if (item.tier === 'legendary' && purchasedShopItems.some(p => p.itemId === itemId)) {
+            return false;
+        }
+
+        return gold >= getEffectiveCost(itemId);
+    }, [gold, purchasedShopItems, getEffectiveCost]);
+
+    // Purchase a shop item
+    const buyShopItem = useCallback((itemId: string): boolean => {
+        const item = SHOP_ITEM_MAP[itemId];
+        if (!item || !canBuyShopItem(itemId)) return false;
+
+        if (item.tier === 'basic') {
+            // Buy basic component
+            setGold(prev => prev - item.cost);
+            setOwnedComponents(prev => ({
+                ...prev,
+                [itemId]: (prev[itemId] || 0) + 1,
+            }));
+            return true;
+        }
+
+        // Buy legendary item - consume owned components and pay remaining gold
+        const effectiveCost = getEffectiveCost(itemId);
+        setGold(prev => prev - effectiveCost);
+
+        // Consume components
+        const componentCounts: Record<string, number> = {};
+        for (const compId of item.buildsFrom) {
+            componentCounts[compId] = (componentCounts[compId] || 0) + 1;
+        }
+        setOwnedComponents(prev => {
+            const updated = { ...prev };
+            for (const [compId, needed] of Object.entries(componentCounts)) {
+                const owned = updated[compId] || 0;
+                const consumed = Math.min(owned, needed);
+                updated[compId] = owned - consumed;
+                if (updated[compId] <= 0) delete updated[compId];
+            }
+            return updated;
+        });
+
+        setPurchasedShopItems(prev => [...prev, { itemId, purchasedAt: Date.now() }]);
+        return true;
+    }, [canBuyShopItem, getEffectiveCost]);
+
+    // Sell a shop item back (50% refund)
+    const sellShopItem = useCallback((itemId: string): boolean => {
+        const item = SHOP_ITEM_MAP[itemId];
+        if (!item) return false;
+
+        if (item.tier === 'basic') {
+            const owned = ownedComponents[itemId] || 0;
+            if (owned <= 0) return false;
+            setGold(prev => prev + Math.floor(item.cost * 0.5));
+            setOwnedComponents(prev => {
+                const updated = { ...prev };
+                updated[itemId] = (updated[itemId] || 0) - 1;
+                if (updated[itemId] <= 0) delete updated[itemId];
+                return updated;
+            });
+            return true;
+        }
+
+        // Sell legendary
+        const idx = purchasedShopItems.findIndex(p => p.itemId === itemId);
+        if (idx === -1) return false;
+        setGold(prev => prev + Math.floor(item.totalCost * 0.5));
+        setPurchasedShopItems(prev => prev.filter((_, i) => i !== idx));
+        return true;
+    }, [ownedComponents, purchasedShopItems]);
+
     // Toggle craft UI
     const toggleCraftUI = useCallback(() => {
         setShowCraftUI(prev => !prev);
@@ -615,6 +773,12 @@ export function useGameState() {
         setFloatingItems([]);
         setTerrainParticles([]);
         setShowCraftUI(false);
+
+        // Reset shop state
+        setGold(0);
+        setPurchasedShopItems([]);
+        setOwnedComponents({});
+        setGaUsed(false);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -705,6 +869,14 @@ export function useGameState() {
         bullets,
         towerHealth,
 
+        // Shop system
+        gold,
+        purchasedShopItems,
+        ownedComponents,
+        unlockedFeatures,
+        extraNextSlots,
+        gaUsed,
+
         // Setters
         setBoard,
         setCurrentPiece,
@@ -788,5 +960,14 @@ export function useGameState() {
         setEnemies,
         setTowerHealth,
         towerHealthRef,
+        // Shop actions
+        addGold,
+        getEffectiveCost,
+        canBuyShopItem,
+        buyShopItem,
+        sellShopItem,
+        setGaUsed,
+        goldRef,
+        unlockedFeaturesRef,
     };
 }

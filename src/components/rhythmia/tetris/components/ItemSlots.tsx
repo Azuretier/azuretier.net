@@ -1,6 +1,6 @@
 import React from 'react';
-import type { InventoryItem, CraftedCard } from '../types';
-import { ITEM_MAP, WEAPON_CARD_MAP } from '../constants';
+import type { InventoryItem, CraftedCard, PurchasedShopItem } from '../types';
+import { ITEM_MAP, WEAPON_CARD_MAP, SHOP_ITEM_MAP } from '../constants';
 import { ItemIcon, WeaponIcon } from './ItemIcon';
 import styles from '../VanillaGame.module.css';
 
@@ -9,6 +9,8 @@ interface ItemSlotsProps {
     craftedCards: CraftedCard[];
     damageMultiplier: number;
     onCraftOpen: () => void;
+    gold: number;
+    purchasedShopItems: PurchasedShopItem[];
 }
 
 const RARITY_LABEL: Record<string, string> = {
@@ -23,7 +25,7 @@ const RARITY_LABEL: Record<string, string> = {
  * Modern card-style inventory display
  * Glass-morphism cards with SVG icons, large count typography, and rarity accents
  */
-export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOpen }: ItemSlotsProps) {
+export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOpen, gold, purchasedShopItems }: ItemSlotsProps) {
     return (
         <div className={styles.itemSlotsPanel}>
             {/* Panel header */}
@@ -34,6 +36,12 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                         x{damageMultiplier.toFixed(1)}
                     </span>
                 )}
+            </div>
+
+            {/* Gold display */}
+            <div className={styles.goldDisplay}>
+                <ItemIcon itemId="gold" size={14} />
+                <span className={styles.goldAmount}>{gold}</span>
             </div>
 
             {/* Item cards grid */}
@@ -98,6 +106,29 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                                 }}
                             >
                                 <WeaponIcon cardId={cc.cardId} size={16} glowColor={card.glowColor} />
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Purchased shop items */}
+            {purchasedShopItems.length > 0 && (
+                <div className={styles.weaponCardSlots}>
+                    {purchasedShopItems.map((item, idx) => {
+                        const def = SHOP_ITEM_MAP[item.itemId];
+                        if (!def) return null;
+                        return (
+                            <div
+                                key={idx}
+                                className={`${styles.weaponCardSlot} ${styles.shopItemSlot}`}
+                                title={`${def.name} — ${def.passive?.description || def.stats.map(s => s.label).join(', ')}`}
+                                style={{
+                                    borderColor: `${def.color}50`,
+                                    background: `linear-gradient(135deg, ${def.color}15, transparent)`,
+                                }}
+                            >
+                                <ItemIcon itemId={def.icon} size={16} />
                             </div>
                         );
                     })}

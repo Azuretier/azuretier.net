@@ -2022,6 +2022,571 @@
   100% { box-shadow: 0 0 14px rgba(255, 200, 0, 0.6); }
 }
 
+/* ===== Gold Display in Inventory ===== */
+.goldDisplay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgba(255, 215, 0, 0.06);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 6px;
+}
+
+.goldAmount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #FFD700;
+  letter-spacing: 0.05em;
+}
+
+/* ===== Shop Item Slot (in inventory) ===== */
+.shopItemSlot {
+  animation: shopItemGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes shopItemGlow {
+  0% { box-shadow: 0 0 4px rgba(255, 255, 255, 0.05); }
+  100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.12); }
+}
+
+/* ===== Forge Tabs ===== */
+.forgeTabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.forgeTab {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.forgeTab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.forgeTabActive {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.forgeTabShopLabel {
+  font-size: 0.7rem;
+}
+
+.forgeTabGold {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6rem;
+  color: #FFD700;
+  font-weight: 600;
+}
+
+/* ===== Shop Container ===== */
+.shopContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Gold bar in shop */
+.shopGoldBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 215, 0, 0.03));
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px;
+}
+
+.shopGoldIcon {
+  display: flex;
+  align-items: center;
+}
+
+.shopGoldAmount {
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: #FFD700;
+  letter-spacing: 0.05em;
+}
+
+/* Category tabs */
+.shopCategoryTabs {
+  display: flex;
+  gap: 4px;
+}
+
+.shopCategoryTab {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopCategoryTab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.shopCategoryTabActive {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.shopCategoryTabLabel {
+  font-size: 0.6rem;
+}
+
+/* Shop body — grid with items + detail */
+.shopBody {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 10px;
+  min-height: 300px;
+}
+
+/* Item grid */
+.shopItemGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.shopSectionHeader {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.shopItemRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Individual shop item card */
+.shopItemCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  padding: 8px 4px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 2px;
+}
+
+.shopItemCard:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.shopItemSelected {
+  border-color: rgba(255, 215, 0, 0.4) !important;
+  background: rgba(255, 215, 0, 0.06) !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.1);
+}
+
+.shopItemLegendary {
+  border-color: rgba(255, 215, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.04), transparent);
+}
+
+.shopItemLegendary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+  border-radius: 8px 8px 0 0;
+}
+
+.shopItemBasic {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.shopItemOwned {
+  opacity: 0.5;
+}
+
+.shopItemIconWrap {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.shopItemName {
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.shopItemCost {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.shopItemOwnedBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.35rem;
+  color: rgba(100, 255, 100, 0.7);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.shopItemOwnedCount {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* Detail panel */
+.shopDetailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+.shopDetailHeader {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.shopDetailIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.shopDetailTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.shopDetailName {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  letter-spacing: 0.05em;
+}
+
+.shopDetailNameJa {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.shopDetailCostLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.shopDetailCost {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.shopDetailTotalCost {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Stats */
+.shopDetailStats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.shopDetailStat {
+  font-size: 0.6rem;
+  color: rgba(100, 255, 100, 0.7);
+  letter-spacing: 0.05em;
+}
+
+/* Passive */
+.shopDetailPassive {
+  padding: 8px;
+  background: rgba(255, 215, 0, 0.04);
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  border-radius: 6px;
+}
+
+.shopDetailPassiveLabel {
+  font-size: 0.55rem;
+  color: rgba(255, 215, 0, 0.7);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.shopDetailPassiveDesc {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* Build path */
+.shopBuildPath {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+.shopBuildPathLabel {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+
+.shopBuildPathItems {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.shopBuildPathItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  opacity: 0.5;
+}
+
+.shopBuildPathItemOwned {
+  opacity: 1;
+  border-color: rgba(100, 255, 100, 0.3);
+  background: rgba(100, 255, 100, 0.05);
+}
+
+.shopBuildPathItemCost {
+  font-size: 0.45rem;
+  color: rgba(255, 215, 0, 0.6);
+}
+
+.shopBuildPathPlus {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 300;
+}
+
+.shopBuildPathRecipe {
+  padding: 4px 8px;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px dashed rgba(255, 215, 0, 0.15);
+  border-radius: 6px;
+}
+
+.shopBuildPathRecipeCost {
+  font-size: 0.55rem;
+  color: #FFD700;
+  font-weight: 600;
+}
+
+.shopBuildPathTarget {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopBuildPathTarget:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.shopBuildPathTargetName {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Buy / Sell buttons */
+.shopDetailActions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.shopBuyBtn {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+}
+
+.shopBuyBtnActive {
+  cursor: pointer;
+  color: #000;
+  background: rgba(255, 215, 0, 0.85);
+  border-color: rgba(255, 215, 0, 0.9);
+}
+
+.shopBuyBtnActive:hover {
+  background: #FFD700;
+  transform: scale(1.01);
+}
+
+.shopSellBtn {
+  width: 100%;
+  padding: 6px;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid rgba(255, 100, 100, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 100, 100, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopSellBtn:hover {
+  background: rgba(255, 100, 100, 0.08);
+  color: rgba(255, 100, 100, 0.8);
+  border-color: rgba(255, 100, 100, 0.4);
+}
+
+/* ===== Extra Next Piece Slots ===== */
+.extraNextSlots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.extraNextLabel {
+  font-size: 0.5rem;
+  color: rgba(255, 215, 0, 0.4);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+/* Shop responsive */
+@media screen and (max-width: 480px) {
+  .shopBody {
+    grid-template-columns: 1fr;
+  }
+
+  .shopItemCard {
+    width: 60px;
+    padding: 6px 3px 4px;
+  }
+
+  .shopDetailPanel {
+    padding: 8px;
+  }
+
+  .shopItemIconWrap {
+    width: 28px;
+    height: 28px;
+  }
+
+  .forgeTabs {
+    padding: 2px;
+  }
+
+  .forgeTab {
+    padding: 6px 10px;
+    font-size: 0.6rem;
+  }
+}
+
 .vBarTicks {
   position: absolute;
   inset: 0;
