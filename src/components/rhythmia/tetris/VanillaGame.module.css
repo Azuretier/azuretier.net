@@ -1210,7 +1210,7 @@
   opacity: 0.7;
 }
 
-/* Icon wrapper with subtle radial glow */
+/* Icon wrapper with subtle radial glow + 3D ore bob */
 .itemCardIconWrap {
   width: 28px;
   height: 28px;
@@ -1219,6 +1219,12 @@
   justify-content: center;
   border-radius: 6px;
   margin-bottom: 2px;
+  animation: oreBlockBob 3s ease-in-out infinite;
+}
+
+@keyframes oreBlockBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
 }
 
 /* Large count number — dominant visual */
