@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import type { AdvancementCategory, AdvancementState } from '@/lib/advancements/types';
@@ -17,13 +19,23 @@ const CATEGORY_ICONS: Record<AdvancementCategory, string> = {
     multiplayer: '⚔️',
 };
 
-const CATEGORY_LABELS: Record<AdvancementCategory, string> = {
-    general: 'General',
-    lines: 'Lines',
-    score: 'Score',
-    tspin: 'T-Spin',
-    combo: 'Combo',
-    multiplayer: 'PvP',
+const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
+    en: {
+        general: 'General',
+        lines: 'Lines',
+        score: 'Score',
+        tspin: 'T-Spin',
+        combo: 'Combo',
+        multiplayer: 'PvP',
+    },
+    ja: {
+        general: '全般',
+        lines: 'ライン',
+        score: 'スコア',
+        tspin: 'Tスピン',
+        combo: 'コンボ',
+        multiplayer: 'マルチ',
+    },
 };
 
 function formatThreshold(n: number): string {
@@ -36,11 +48,13 @@ function formatThreshold(n: number): string {
 
 interface AdvancementsMenuProps {
     onClose: () => void;
+    overlay?: boolean;
 }
 
-export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
+export function AdvancementsMenu({ onClose, overlay = false }: AdvancementsMenuProps) {
     const [advState, setAdvState] = useState<AdvancementState | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<AdvancementCategory>('general');
+    const t = useTranslations();
 
     useEffect(() => {
         setAdvState(loadAdvancementState());
@@ -52,14 +66,18 @@ export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
     const totalCount = ADVANCEMENTS.length;
     const filteredAdvancements = ADVANCEMENTS.filter(a => a.category === selectedCategory);
 
-    return (
+    // Detect locale from translations
+    const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
+    const categoryLabels = CATEGORY_LABELS[locale] || CATEGORY_LABELS.en;
+
+    const panel = (
         <div className={styles.panel}>
             {/* Header bar */}
             <div className={styles.header}>
                 <button className={styles.back} onClick={onClose}>
-                    ← Back
+                    {t('lobby.back')}
                 </button>
-                <div className={styles.title}>ADVANCEMENTS</div>
+                <div className={styles.title}>{t('advancements.title')}</div>
                 <div className={styles.count}>
                     {unlockedCount} / {totalCount}
                 </div>
@@ -86,7 +104,7 @@ export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
                             onClick={() => setSelectedCategory(cat)}
                         >
                             <span className={styles.tabIcon}>{CATEGORY_ICONS[cat]}</span>
-                            <span className={styles.tabLabel}>{CATEGORY_LABELS[cat]}</span>
+                            <span className={styles.tabLabel}>{categoryLabels[cat]}</span>
                             <span className={styles.tabCount}>{catUnlocked}/{catAdvs.length}</span>
                         </button>
                     );
@@ -99,6 +117,7 @@ export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
                     const unlocked = advState.unlockedIds.includes(adv.id);
                     const currentValue = advState.stats[adv.statKey];
                     const progress = Math.min(1, currentValue / adv.threshold);
+                    const displayName = t(`advancements.${adv.id}.name`);
 
                     return (
                         <div
@@ -110,7 +129,7 @@ export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
                             </div>
                             <div className={styles.tileInfo}>
                                 <div className={styles.tileName}>
-                                    {adv.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                    {displayName}
                                 </div>
                                 <div className={styles.tileProgress}>
                                     <div className={styles.tileProgressBar}>
@@ -131,6 +150,22 @@ export function AdvancementsMenu({ onClose }: AdvancementsMenuProps) {
             </div>
         </div>
     );
+
+    if (overlay) {
+        return (
+            <motion.div
+                className={styles.overlay}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+            >
+                {panel}
+            </motion.div>
+        );
+    }
+
+    return panel;
 }
 
 export default AdvancementsMenu;

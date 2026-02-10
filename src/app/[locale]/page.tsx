@@ -10,7 +10,7 @@ import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
-import Advancements from '../../components/rhythmia/Advancements';
+import { AdvancementsMenu } from '../../components/rhythmia/AdvancementsMenu';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 
@@ -156,7 +156,7 @@ export default function RhythmiaPage() {
             {/* Advancements panel */}
             <AnimatePresence>
                 {showAdvancements && (
-                    <Advancements onClose={() => setShowAdvancements(false)} />
+                    <AdvancementsMenu onClose={() => setShowAdvancements(false)} overlay />
                 )}
             </AnimatePresence>
 
