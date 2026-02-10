@@ -18,7 +18,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 });
 
 // Hooks
-import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
+import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX, useKeybinds } from './hooks';
 
 // Utilities
 import {
@@ -52,6 +52,8 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
+  InventoryOverlay,
+  ShopOverlay,
 } from './components';
 
 /**
@@ -90,6 +92,13 @@ export default function Rhythmia() {
 
   // Get CSS custom properties for responsive sizing
   const responsiveCSSVars = useMemo(() => getResponsiveCSSVars(deviceInfo), [deviceInfo]);
+
+  // Keybinds (configurable, persisted to localStorage)
+  const { keybinds, setKeybind, resetKeybinds, isKeybind } = useKeybinds();
+
+  // Overlay states
+  const [showInventory, setShowInventory] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   // Game state and refs
   const gameState = useGameState();
@@ -213,6 +222,7 @@ export default function Rhythmia() {
     spawnTerrainParticles,
     craftCard,
     canCraftCard,
+    addInventoryItem,
     toggleCraftUI,
     // Tower defense actions
     spawnEnemies,
@@ -598,6 +608,42 @@ export default function Rhythmia() {
   // Stable callback for toast dismiss — avoids resetting the toast timer on every render
   const dismissToast = useCallback(() => setToastIds([]), []);
 
+  // Shop purchase handler — deduct score and add item to inventory
+  const handleShopPurchase = useCallback((shopItemId: string, cost: number) => {
+    if (scoreRef.current < cost) return;
+    updateScore(scoreRef.current - cost);
+    // Map shop item ID to material item ID and add to inventory
+    const materialId = shopItemId.replace('buy_', '');
+    addInventoryItem(materialId, 1);
+  }, [updateScore, scoreRef, addInventoryItem]);
+
+  // Toggle overlay helpers that auto-pause/unpause
+  const toggleInventory = useCallback(() => {
+    setShowInventory(prev => {
+      const next = !prev;
+      if (next) {
+        setShowShop(false);
+        setIsPaused(true);
+      } else {
+        setIsPaused(false);
+      }
+      return next;
+    });
+  }, [setIsPaused]);
+
+  const toggleShop = useCallback(() => {
+    setShowShop(prev => {
+      const next = !prev;
+      if (next) {
+        setShowInventory(false);
+        setIsPaused(true);
+      } else {
+        setIsPaused(false);
+      }
+      return next;
+    });
+  }, [setIsPaused]);
+
   // Start game with selected mode
   const startGame = useCallback((mode: GameMode) => {
     initAudio();
@@ -803,6 +849,32 @@ export default function Rhythmia() {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
+      // --- Overlay close: Escape closes any open overlay ---
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showInventory) { toggleInventory(); return; }
+        if (showShop) { toggleShop(); return; }
+        if (showCraftUI) { toggleCraftUI(); return; }
+        setIsPaused(prev => !prev);
+        return;
+      }
+
+      // --- Inventory toggle (configurable key, default E) ---
+      if (isKeybind(e.key, 'inventory')) {
+        e.preventDefault();
+        if (showShop) { toggleShop(); }
+        toggleInventory();
+        return;
+      }
+
+      // --- Shop toggle (configurable key, default L) ---
+      if (isKeybind(e.key, 'shop')) {
+        e.preventDefault();
+        if (showInventory) { toggleInventory(); }
+        toggleShop();
+        return;
+      }
+
       // Handle craft UI toggle with 'f' key
       if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
@@ -810,15 +882,8 @@ export default function Rhythmia() {
         return;
       }
 
-      // Close craft UI with Escape
-      if (showCraftUI && (e.key === 'Escape')) {
-        e.preventDefault();
-        toggleCraftUI();
-        return;
-      }
-
-      // Don't process game inputs while craft UI is open
-      if (showCraftUI) return;
+      // Don't process game inputs while any overlay is open
+      if (showCraftUI || showInventory || showShop) return;
 
       const currentTime = performance.now();
 
@@ -897,11 +962,6 @@ export default function Rhythmia() {
           e.preventDefault();
           setIsPaused(prev => !prev);
           break;
-
-        case 'Escape':
-          e.preventDefault();
-          setIsPaused(prev => !prev);
-          break;
       }
     };
 
@@ -925,7 +985,7 @@ export default function Rhythmia() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCraftUI, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
+  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI, toggleInventory, toggleShop, isKeybind]);
 
   const world = WORLDS[worldIdx];
 
@@ -1009,7 +1069,7 @@ export default function Rhythmia() {
                 boardBeat={boardBeat}
                 boardShake={boardShake}
                 gameOver={gameOver}
-                isPaused={isPaused}
+                isPaused={isPaused && !showInventory && !showShop}
                 score={score}
                 onRestart={() => startGame(gameMode)}
                 onResume={() => setIsPaused(false)}
@@ -1019,6 +1079,9 @@ export default function Rhythmia() {
                 combo={combo}
                 beatPhase={beatPhase}
                 boardElRef={boardElRef}
+                keybinds={keybinds}
+                onKeybindChange={setKeybind}
+                onKeybindReset={resetKeybinds}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
@@ -1064,6 +1127,28 @@ export default function Rhythmia() {
           onCraft={craftCard}
           canCraft={canCraftCard}
           onClose={toggleCraftUI}
+        />
+      )}
+
+      {/* Inventory overlay (Dungeons-style) */}
+      {showInventory && (
+        <InventoryOverlay
+          inventory={inventory}
+          craftedCards={craftedCards}
+          damageMultiplier={damageMultiplier}
+          onClose={toggleInventory}
+          closeKey={keybinds.inventory}
+        />
+      )}
+
+      {/* Shop overlay (LoL-style content) */}
+      {showShop && (
+        <ShopOverlay
+          score={score}
+          inventory={inventory}
+          onPurchase={handleShopPurchase}
+          onClose={toggleShop}
+          closeKey={keybinds.shop}
         />
       )}
 

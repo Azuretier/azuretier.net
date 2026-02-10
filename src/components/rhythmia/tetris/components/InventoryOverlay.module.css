@@ -1,0 +1,522 @@
+/* ===== Inventory Overlay — Minecraft Dungeons Style ===== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    animation: invFadeIn 0.2s ease;
+}
+
+@keyframes invFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== Main 3-Column Layout ===== */
+.container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 200px 1fr 280px;
+    gap: 16px;
+    padding: 24px 32px 8px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ===== Left Panel: Equipped Items ===== */
+.leftPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 40px;
+}
+
+.equippedSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.equippedSlot {
+    width: 72px;
+    height: 72px;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.equippedSlotMain {
+    width: 96px;
+    height: 96px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.equippedRow {
+    display: flex;
+    gap: 8px;
+}
+
+.equippedRow .equippedSlot {
+    width: 56px;
+    height: 56px;
+}
+
+.equippedCount {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #FFD700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.emptySlotX {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.08);
+    font-weight: 300;
+}
+
+/* Player stats */
+.playerStats {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.statBadge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+}
+
+.statBadgeLabel {
+    font-size: 0.5rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.15em;
+}
+
+.statBadgeValue {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Quick materials */
+.quickMaterials {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.quickMat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+}
+
+.quickMatCount {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== Center Panel: Grid ===== */
+.centerPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Category tabs */
+.categoryTabs {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    padding: 4px;
+}
+
+.categoryTab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.05em;
+}
+
+.categoryTab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.categoryTabActive {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.categoryTabIcon {
+    font-size: 0.8rem;
+}
+
+/* Item grid — Dungeons style cross-hatch empty slots */
+.itemGrid {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+}
+
+.gridSlot {
+    aspect-ratio: 1;
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: all 0.15s ease;
+    overflow: hidden;
+}
+
+.gridSlotFilled {
+    cursor: pointer;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.gridSlotFilled:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.03);
+}
+
+.gridSlotSelected {
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+}
+
+/* Cross-hatch pattern for empty slots */
+.emptySlotCross {
+    position: absolute;
+    inset: 8px;
+    opacity: 0.06;
+}
+
+.crossLine1,
+.crossLine2 {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 141%;
+    background: white;
+    transform-origin: top center;
+}
+
+.crossLine1 {
+    transform: rotate(45deg) translateX(-50%);
+}
+
+.crossLine2 {
+    transform: rotate(-45deg) translateX(-50%);
+}
+
+/* Slot icon area */
+.slotIconArea {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Slot badge (count / equipped) */
+.slotBadge {
+    position: absolute;
+    bottom: 3px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.slotBadgeCount {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.slotBadgeEquipped {
+    bottom: 3px;
+    right: 4px;
+}
+
+.slotBadgeIcon {
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.2);
+    padding: 1px 4px;
+    border-radius: 2px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ===== Right Panel: Detail ===== */
+.rightPanel {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    padding-left: 16px;
+}
+
+.detailEmpty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detailEmptyText {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.1em;
+}
+
+.detailContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+}
+
+.detailIconArea {
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+}
+
+.detailHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detailRarityBadge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 2px;
+    align-self: flex-start;
+    text-transform: uppercase;
+}
+
+.detailName {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 4px 0 0;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px currentColor;
+}
+
+.detailNameJa {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* Detail stats */
+.detailStats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.detailStatRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detailStatIcon {
+    width: 18px;
+    text-align: center;
+    font-size: 0.75rem;
+}
+
+.detailStatLabel {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    flex: 1;
+}
+
+.detailStatValue {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.detailStatGreen {
+    color: #66ff66;
+}
+
+.detailStatCyan {
+    color: #4FC3F7;
+}
+
+/* Lore text */
+.detailLore {
+    font-size: 0.65rem;
+    font-style: italic;
+    color: rgba(128, 128, 128, 0.85);
+    line-height: 1.5;
+    margin: 4px 0 0;
+}
+
+/* Power/Speed/Area bars */
+.detailBars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.detailBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detailBarLabel {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.1em;
+    min-width: 48px;
+}
+
+.detailBarTrack {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.detailBarFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* ===== Bottom Bar ===== */
+.bottomBar {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bottomHint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.05em;
+}
+
+.keyBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    padding: 2px 6px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* ===== Responsive ===== */
+@media screen and (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .leftPanel {
+        flex-direction: row;
+        padding-top: 0;
+        justify-content: center;
+    }
+
+    .equippedSection {
+        flex-direction: row;
+    }
+
+    .equippedSlotMain {
+        width: 64px;
+        height: 64px;
+    }
+
+    .rightPanel {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-left: 0;
+        padding-top: 8px;
+    }
+
+    .detailIconArea {
+        padding: 8px;
+    }
+
+    .playerStats {
+        display: none;
+    }
+
+    .quickMaterials {
+        flex-direction: row;
+    }
+}

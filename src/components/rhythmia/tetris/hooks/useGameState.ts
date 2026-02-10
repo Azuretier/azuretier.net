@@ -629,6 +629,20 @@ export function useGameState() {
         });
     }, [inventory]);
 
+    // Add item(s) to inventory directly (e.g. from shop purchase)
+    const addInventoryItem = useCallback((itemId: string, count: number) => {
+        setInventory(prev => {
+            const updated = [...prev];
+            const existing = updated.find(i => i.itemId === itemId);
+            if (existing) {
+                existing.count += count;
+            } else {
+                updated.push({ itemId, count });
+            }
+            return updated;
+        });
+    }, []);
+
     // Toggle craft UI
     const toggleCraftUI = useCallback(() => {
         setShowCraftUI(prev => !prev);
@@ -851,6 +865,7 @@ export function useGameState() {
         spawnTerrainParticles,
         craftCard,
         canCraftCard,
+        addInventoryItem,
         toggleCraftUI,
         enterPlayPhase,
         triggerCollapse,

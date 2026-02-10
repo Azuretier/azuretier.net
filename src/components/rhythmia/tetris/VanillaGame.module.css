@@ -823,6 +823,85 @@
   }
 }
 
+/* ===== Keybind Settings Panel ===== */
+.pauseSettingsPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 280px;
+}
+
+.pauseSettingsTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.keybindList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.keybindRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+.keybindLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+}
+
+.keybindKey {
+  min-width: 80px;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  letter-spacing: 0.05em;
+}
+
+.keybindKey:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.keybindKeyActive {
+  background: rgba(0, 127, 255, 0.15);
+  border-color: rgba(0, 127, 255, 0.5);
+  color: #007FFF;
+  animation: keybindPulse 1s ease-in-out infinite;
+}
+
+@keyframes keybindPulse {
+  0%, 100% { border-color: rgba(0, 127, 255, 0.5); }
+  50% { border-color: rgba(0, 127, 255, 0.8); }
+}
+
+.keybindActions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
 /* Stats panel */
 .statsPanel {
   display: flex;

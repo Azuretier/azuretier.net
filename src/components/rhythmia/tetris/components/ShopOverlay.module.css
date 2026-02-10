@@ -1,0 +1,553 @@
+/* ===== Shop Overlay — LoL Content + Dungeons Layout ===== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    animation: shopFadeIn 0.2s ease;
+}
+
+@keyframes shopFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== Main Layout ===== */
+.container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ===== Left: Main Shop Panel ===== */
+.mainPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    overflow-y: auto;
+}
+
+/* Tab bar */
+.tabBar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+}
+
+.tab {
+    padding: 8px 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.35);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tabActive {
+    color: white;
+    border-bottom-color: #FFD700;
+}
+
+.closeBtn {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Search bar */
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.searchIcon {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+}
+
+.searchInput::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* Section titles */
+.sectionTitle {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 8px;
+}
+
+/* Recommended weapons grid (3 cards) */
+.recommendedGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.recommendCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.recommendCard:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.recommendName {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    margin: 0;
+}
+
+.recommendIcon {
+    padding: 8px;
+}
+
+.recommendPrice {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.recommendTag {
+    font-size: 0.55rem;
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.recommendRating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 4px;
+}
+
+.infoIcon {
+    font-size: 0.65rem;
+    opacity: 0.5;
+}
+
+/* Shop item grid */
+.itemGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.shopCard {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.shopCard:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.shopCardSelected {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.shopCardDisabled {
+    opacity: 0.5;
+}
+
+.shopCardIcon {
+    flex-shrink: 0;
+}
+
+.shopCardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+}
+
+.shopCardName {
+    font-size: 0.6rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shopCardPrice {
+    font-size: 0.55rem;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Coin icon */
+.coinIcon {
+    font-size: 0.6rem;
+    color: #FFD700;
+}
+
+/* Commonly built */
+.commonlyBuilt {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.commonItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.commonItem:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.commonItemPrice {
+    font-size: 0.55rem;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Action bar */
+.actionBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.actionBtn {
+    padding: 6px 16px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    cursor: not-allowed;
+}
+
+.goldDisplay {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ===== Right: Detail Pane ===== */
+.detailPane {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.3);
+    overflow-y: auto;
+}
+
+.detailHeader {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.buildsIntoSlots {
+    display: flex;
+    gap: 4px;
+}
+
+.buildsIntoSlot {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Detail preview */
+.detailPreview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+}
+
+.detailPreviewIcon {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.detailCheckmark {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: white;
+    background: #00bfa5;
+    border-radius: 50%;
+}
+
+.detailPreviewCount {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Purchase button */
+.purchaseBtn {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: not-allowed;
+    transition: all 0.2s ease;
+}
+
+.purchaseBtnActive {
+    color: #00e5ff;
+    background: rgba(0, 229, 255, 0.08);
+    border-color: rgba(0, 229, 255, 0.4);
+    cursor: pointer;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.purchaseBtnActive:hover {
+    background: rgba(0, 229, 255, 0.15);
+    border-color: rgba(0, 229, 255, 0.6);
+}
+
+/* Detail info */
+.detailInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detailInfoIcon {
+    flex-shrink: 0;
+}
+
+.detailInfoText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detailInfoName {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 0 8px currentColor;
+}
+
+.detailInfoPrice {
+    font-size: 0.65rem;
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Effect */
+.detailEffect {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.detailEffectIcon {
+    font-size: 0.7rem;
+    color: #4FC3F7;
+}
+
+.detailEffectLabel {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.detailDesc {
+    font-size: 0.65rem;
+    color: rgba(128, 128, 128, 0.85);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Empty state */
+.detailEmptyState {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== Bottom Bar ===== */
+.bottomBar {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 10px 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bottomHint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.keyBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    padding: 2px 6px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* ===== Responsive ===== */
+@media screen and (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .detailPane {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .recommendedGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .itemGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
