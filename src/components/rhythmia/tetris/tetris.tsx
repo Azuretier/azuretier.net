@@ -52,6 +52,8 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
+  TutorialGuide,
+  hasTutorialBeenSeen,
 } from './components';
 
 /**
@@ -648,8 +650,12 @@ export default function Rhythmia() {
   // Stable callback for toast dismiss — avoids resetting the toast timer on every render
   const dismissToast = useCallback(() => setToastIds([]), []);
 
-  // Start game with selected mode
-  const startGame = useCallback((mode: GameMode) => {
+  // Tutorial state — shows on first vanilla play
+  const [showTutorial, setShowTutorial] = useState(false);
+  const pendingModeRef = useRef<GameMode | null>(null);
+
+  // Actually start the game (after tutorial or directly)
+  const launchGame = useCallback((mode: GameMode) => {
     initAudio();
     initGame(mode);
 
@@ -666,6 +672,24 @@ export default function Rhythmia() {
     lockMovesRef.current = 0;
     setToastIds([]);
   }, [initAudio, initGame]);
+
+  // Start game — intercept for tutorial on first vanilla play
+  const startGame = useCallback((mode: GameMode) => {
+    if (mode === 'vanilla' && !hasTutorialBeenSeen()) {
+      pendingModeRef.current = mode;
+      setShowTutorial(true);
+      return;
+    }
+    launchGame(mode);
+  }, [launchGame]);
+
+  // Tutorial completion — proceed with game launch
+  const handleTutorialComplete = useCallback(() => {
+    setShowTutorial(false);
+    const mode = pendingModeRef.current || 'vanilla';
+    pendingModeRef.current = null;
+    launchGame(mode);
+  }, [launchGame]);
 
   // Record advancement stats when game ends
   useEffect(() => {
@@ -1005,16 +1029,18 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
-      {/* Voxel World Background — mode-aware */}
-      <VoxelWorldBackground
-        seed={terrainSeed}
-        gameMode={gameMode}
-        terrainDestroyedCount={terrainDestroyedCount}
-        enemies={gameMode === 'td' ? enemies : []}
-        bullets={gameMode === 'td' ? bullets : []}
-        onTerrainReady={handleTerrainReady}
-        worldIdx={worldIdx}
-      />
+      {/* Voxel World Background — only render during gameplay */}
+      {isPlaying && (
+        <VoxelWorldBackground
+          seed={terrainSeed}
+          gameMode={gameMode}
+          terrainDestroyedCount={terrainDestroyedCount}
+          enemies={gameMode === 'td' ? enemies : []}
+          bullets={gameMode === 'td' ? bullets : []}
+          onTerrainReady={handleTerrainReady}
+          worldIdx={worldIdx}
+        />
+      )}
 
       {/* Terrain destruction particle effects */}
       <TerrainParticles particles={terrainParticles} />
@@ -1030,9 +1056,14 @@ export default function Rhythmia() {
         gameMode={gameMode}
       />
 
+      {/* Tutorial Guide — shown on first vanilla play */}
+      {showTutorial && (
+        <TutorialGuide onComplete={handleTutorialComplete} />
+      )}
+
       {/* Title Screen */}
-      {!isPlaying && !gameOver && (
-        <TitleScreen onStart={startGame} worldIdx={worldIdx} stageNumber={stageNumber} />
+      {!isPlaying && !gameOver && !showTutorial && (
+        <TitleScreen onStart={startGame} />
       )}
 
       {/* Game */}
