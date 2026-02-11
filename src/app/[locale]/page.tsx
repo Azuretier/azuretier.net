@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { ServerMessage } from '@/types/multiplayer';
 import { getUnlockedCount } from '@/lib/advancements/storage';
-import { BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import Advancements from '../../components/rhythmia/Advancements';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
@@ -19,6 +20,7 @@ export default function RhythmiaPage() {
     const [gameMode, setGameMode] = useState<GameMode>('lobby');
     const [isLoading, setIsLoading] = useState(true);
     const [onlineCount, setOnlineCount] = useState(0);
+    const [showAdvancements, setShowAdvancements] = useState(false);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const wsRef = useRef<WebSocket | null>(null);
 
@@ -36,10 +38,10 @@ export default function RhythmiaPage() {
 
     // Refresh unlocked count when returning to lobby
     useEffect(() => {
-        if (gameMode === 'lobby') {
+        if (gameMode === 'lobby' && !showAdvancements) {
             setUnlockedCount(getUnlockedCount());
         }
-    }, [gameMode]);
+    }, [gameMode, showAdvancements]);
 
     // Connect to multiplayer WebSocket at page load for accurate online count
     const connectMultiplayerWs = useCallback(() => {
@@ -151,6 +153,21 @@ export default function RhythmiaPage() {
                 )}
             </AnimatePresence>
 
+            {/* Advancements panel */}
+            <AnimatePresence>
+                {showAdvancements && (
+                    <motion.div
+                        className={styles.advOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                    >
+                        <Advancements onClose={() => setShowAdvancements(false)} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className={styles.container}>
                 <motion.header
                     className={styles.header}
@@ -160,6 +177,12 @@ export default function RhythmiaPage() {
                 >
                     <div className={styles.logo}>RHYTHMIA</div>
                     <div className={styles.statusBar}>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => setShowAdvancements(true)}
+                        >
+                            {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
+                        </button>
                         <div className={styles.statusItem}>
                             <span className={styles.statusDot}></span>
                             <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
