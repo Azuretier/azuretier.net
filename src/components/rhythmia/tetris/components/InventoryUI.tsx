@@ -48,7 +48,7 @@ export function InventoryUI({ inventory, craftedCards, damageMultiplier, onClose
     const showWeapons = tab === 'all' || tab === 'weapons';
 
     return (
-        <div className={styles.invOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className={styles.inventoryOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div className={styles.invPanel}>
                 {/* Header with tabs */}
                 <div className={styles.invHeader}>
