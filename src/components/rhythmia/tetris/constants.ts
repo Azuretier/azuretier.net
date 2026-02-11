@@ -136,7 +136,14 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 // Set to 0 for instant movement (common in competitive play)
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
+
+// ===== Lock Delay Settings =====
+export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
+export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
+
 // ===== Terrain Settings =====
+// Number of terrains (stages) to clear before advancing to the next world
+export const TERRAINS_PER_WORLD = 4;
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
@@ -303,18 +310,11 @@ export const getThemedColor = (
     theme: ColorTheme,
     worldIdx: number
 ): string => {
-    switch (theme) {
-        case 'standard':
-            return STANDARD_COLORS[pieceType] || COLORS[pieceType];
-        case 'monochrome':
-            return MONOCHROME_COLORS[pieceType] || '#FFFFFF';
-        case 'stage':
-        default:
-            // Use world colors based on piece index
-            const pieceIndex = PIECE_TYPES.indexOf(pieceType);
-            if (pieceIndex >= 0 && WORLDS[worldIdx]) {
-                return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
-            }
-            return COLORS[pieceType];
+    if (theme === 'stage') {
+        const pieceIndex = PIECE_TYPES.indexOf(pieceType);
+        if (pieceIndex >= 0 && WORLDS[worldIdx]) {
+            return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
+        }
     }
+    return COLORS[pieceType];
 };
