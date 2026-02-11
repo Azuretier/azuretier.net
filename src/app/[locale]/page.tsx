@@ -6,11 +6,11 @@ import { useTranslations } from 'next-intl';
 import type { ServerMessage } from '@/types/multiplayer';
 import { getUnlockedCount } from '@/lib/advancements/storage';
 import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import Advancements from '../../components/rhythmia/Advancements';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
-import Advancements from '../../components/rhythmia/Advancements';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 import { useRouter } from '@/i18n/navigation';
@@ -158,7 +158,15 @@ export default function RhythmiaPage() {
             {/* Advancements panel */}
             <AnimatePresence>
                 {showAdvancements && (
-                    <Advancements onClose={() => setShowAdvancements(false)} />
+                    <motion.div
+                        className={styles.advOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                    >
+                        <Advancements onClose={() => setShowAdvancements(false)} />
+                    </motion.div>
                 )}
             </AnimatePresence>
 
