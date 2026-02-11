@@ -99,6 +99,8 @@ function Rig({ activeId }: { activeId: string | null }) {
     const focus = useRef(new THREE.Vector3(0, 0, 0))
 
     useEffect(() => {
+        if (!controls) return
+        
         const active = scene.getObjectByName(activeId ?? '')
         if (active && active.parent) {
             active.parent.localToWorld(position.current.set(0, 0.5, 0.25))
