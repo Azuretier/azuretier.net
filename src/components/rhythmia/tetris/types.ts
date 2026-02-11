@@ -124,11 +124,19 @@ export type CraftedCard = {
 };
 
 // ===== Tower Defense =====
+
+// Grid position for block-based movement (orthogonal only, 1 tile per turn)
+export type GridPos = { gx: number; gz: number };
+
 export type Enemy = {
     id: number;
+    // World-space position (derived from grid coords for rendering)
     x: number;
     y: number;
     z: number;
+    // Grid coordinates — enemies move 1 tile per turn, orthogonal only
+    gridX: number;
+    gridZ: number;
     speed: number;
     health: number;
     maxHealth: number;
@@ -145,6 +153,30 @@ export type Bullet = {
     vy: number;
     vz: number;
     alive: boolean;
+};
+
+// ===== Shop System =====
+export type ShopItem = {
+    id: string;
+    name: string;
+    nameJa: string;
+    category: 'material' | 'weapon';
+    price: number;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: ItemRarity;
+    description: string;
+    descriptionJa: string;
+    stats?: { label: string; value: string }[];
+    buildsFrom?: { itemId: string; price: number }[];
+};
+
+// ===== Key Bindings =====
+export type KeyBindings = {
+    inventory: string;
+    shop: string;
+    forge: string;
 };
 
 // ===== Terrain Particle =====
