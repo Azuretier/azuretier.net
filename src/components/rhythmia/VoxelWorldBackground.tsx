@@ -923,10 +923,11 @@ export default function VoxelWorldBackground({
               interpBulletState.set(b.id, st);
             }
 
-            // Apply gravity and move
+            // Apply gravity and move (match game logic for consistency)
+            const prevVy = st.vy;
             st.vy -= BULLET_GRAVITY * delta;
             st.x += st.vx * delta;
-            st.y += st.vy * delta;
+            st.y += prevVy * delta - 0.5 * BULLET_GRAVITY * delta * delta;
             st.z += st.vz * delta;
 
             // Don't render if below ground
