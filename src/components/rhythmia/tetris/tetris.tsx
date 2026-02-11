@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL } from './constants';
-import type { Piece, GameMode } from './types';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, loadKeyBindings, saveKeyBindings } from './constants';
+import type { Piece, GameMode, KeyBindings } from './types';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -18,7 +18,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 });
 
 // Hooks
-import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX, useKeybinds } from './hooks';
+import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 
 // Utilities
 import {
@@ -52,8 +52,11 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
-  InventoryOverlay,
-  ShopOverlay,
+  TutorialGuide,
+  hasTutorialBeenSeen,
+  InventoryUI,
+  ShopUI,
+  KeyBindSettings,
 } from './components';
 
 /**
@@ -93,13 +96,6 @@ export default function Rhythmia() {
   // Get CSS custom properties for responsive sizing
   const responsiveCSSVars = useMemo(() => getResponsiveCSSVars(deviceInfo), [deviceInfo]);
 
-  // Keybinds (configurable, persisted to localStorage)
-  const { keybinds, setKeybind, resetKeybinds, isKeybind } = useKeybinds();
-
-  // Overlay states
-  const [showInventory, setShowInventory] = useState(false);
-  const [showShop, setShowShop] = useState(false);
-
   // Game state and refs
   const gameState = useGameState();
   const audio = useAudio();
@@ -122,6 +118,10 @@ export default function Rhythmia() {
   const advRecordedRef = useRef(false);
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
+
+  // Lock delay — grace period after piece lands before locking
+  const lockStartTimeRef = useRef<number | null>(null);
+  const lockMovesRef = useRef(0);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -159,6 +159,10 @@ export default function Rhythmia() {
     craftedCards,
     showCraftUI,
     damageMultiplier,
+    // Inventory & Shop
+    showInventory,
+    showShop,
+    gold,
     // Game mode
     gameMode,
     // Tower defense
@@ -222,8 +226,10 @@ export default function Rhythmia() {
     spawnTerrainParticles,
     craftCard,
     canCraftCard,
-    addInventoryItem,
     toggleCraftUI,
+    toggleInventory,
+    toggleShop,
+    purchaseItem,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -236,6 +242,17 @@ export default function Rhythmia() {
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
+
+  // Key bindings state (configurable)
+  const [keyBindings, setKeyBindings] = useState<KeyBindings>(() => loadKeyBindings());
+  const keyBindingsRef = useRef(keyBindings);
+  keyBindingsRef.current = keyBindings;
+
+  const updateKeyBindings = useCallback((newBindings: KeyBindings) => {
+    setKeyBindings(newBindings);
+    keyBindingsRef.current = newBindings;
+    saveKeyBindings(newBindings);
+  }, []);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -290,6 +307,25 @@ export default function Rhythmia() {
     return false;
   }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef]);
 
+  // Horizontal move with lock delay reset
+  const moveHorizontal = useCallback((dx: number): boolean => {
+    const result = movePiece(dx, 0);
+    if (result && lockStartTimeRef.current !== null) {
+      const piece = currentPieceRef.current;
+      if (piece) {
+        if (isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current)) {
+          // Moved off ground
+          lockStartTimeRef.current = null;
+        } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+          // Still on ground — reset lock timer
+          lockMovesRef.current++;
+          lockStartTimeRef.current = performance.now();
+        }
+      }
+    }
+    return result;
+  }, [movePiece, currentPieceRef, boardRef]);
+
   // Rotate piece
   const rotatePiece = useCallback((direction: 1 | -1) => {
     if (!currentPiece || gameOver || isPaused) return;
@@ -311,6 +347,18 @@ export default function Rhythmia() {
       setCurrentPiece(rotatedPiece);
       currentPieceRef.current = rotatedPiece;
       playRotateSound();
+
+      // Reset lock delay on successful rotation
+      if (lockStartTimeRef.current !== null) {
+        if (isValidPosition({ ...rotatedPiece, y: rotatedPiece.y + 1 }, boardRef.current)) {
+          // Rotation moved piece off ground (e.g. wall kick)
+          lockStartTimeRef.current = null;
+        } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+          // Still on ground — reset lock timer
+          lockMovesRef.current++;
+          lockStartTimeRef.current = performance.now();
+        }
+      }
     }
   }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound]);
 
@@ -330,23 +378,23 @@ export default function Rhythmia() {
         state.lastMoveTime = currentTime;
 
         if (currentArr === 0) {
-          while (movePiece(dx, 0)) { }
+          while (moveHorizontal(dx)) { }
         } else {
-          movePiece(dx, 0);
+          moveHorizontal(dx);
         }
       }
     } else {
       if (currentArr === 0) {
-        while (movePiece(dx, 0)) { }
+        while (moveHorizontal(dx)) { }
       } else {
         const timeSinceLastMove = currentTime - state.lastMoveTime;
         if (timeSinceLastMove >= currentArr) {
-          movePiece(dx, 0);
+          moveHorizontal(dx);
           state.lastMoveTime = currentTime;
         }
       }
     }
-  }, [movePiece, keyStatesRef, isPausedRef, gameOverRef, dasRef, arrRef]);
+  }, [moveHorizontal, keyStatesRef, isPausedRef, gameOverRef, dasRef, arrRef]);
 
   // Process soft drop (SDF)
   const processSoftDrop = useCallback((currentTime: number) => {
@@ -390,6 +438,10 @@ export default function Rhythmia() {
 
   // Handle piece locking and game advancement — branches by game mode
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
+    // Clear lock state for new piece
+    lockStartTimeRef.current = null;
+    lockMovesRef.current = 0;
+
     const mode = gameModeRef.current;
 
     // Beat judgment
@@ -520,6 +572,10 @@ export default function Rhythmia() {
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
   ]);
 
+  // Stable ref for handlePieceLock — used in game loop to avoid dep churn
+  const handlePieceLockRef = useRef(handlePieceLock);
+  handlePieceLockRef.current = handlePieceLock;
+
   // Hard drop
   const hardDrop = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
@@ -548,6 +604,10 @@ export default function Rhythmia() {
       });
     }
 
+    // Hard drop bypasses lock delay — lock immediately
+    lockStartTimeRef.current = null;
+    lockMovesRef.current = 0;
+
     playHardDropSound();
     handlePieceLock(newPiece, dropDistance);
   }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound]);
@@ -555,6 +615,10 @@ export default function Rhythmia() {
   // Hold current piece
   const holdCurrentPiece = useCallback(() => {
     if (!currentPiece || gameOver || isPaused || !canHold) return;
+
+    // Clear lock state — swapping to a new piece
+    lockStartTimeRef.current = null;
+    lockMovesRef.current = 0;
 
     const currentType = currentPiece.type;
 
@@ -586,7 +650,7 @@ export default function Rhythmia() {
     currentPieceRef, playRotateSound,
   ]);
 
-  // Gravity tick
+  // Gravity tick — moves piece down; lock delay is handled in the game loop
   const tick = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
     const piece = currentPieceRef.current;
@@ -600,52 +664,19 @@ export default function Rhythmia() {
     if (isValidPosition(newPiece, boardRef.current)) {
       setCurrentPiece(newPiece);
       currentPieceRef.current = newPiece;
-    } else {
-      handlePieceLock(piece);
     }
-  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, setCurrentPiece, handlePieceLock]);
+    // If piece can't move down, do nothing — lock delay check in game loop handles it
+  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, setCurrentPiece]);
 
   // Stable callback for toast dismiss — avoids resetting the toast timer on every render
   const dismissToast = useCallback(() => setToastIds([]), []);
 
-  // Shop purchase handler — deduct score and add item to inventory
-  const handleShopPurchase = useCallback((shopItemId: string, cost: number) => {
-    if (scoreRef.current < cost) return;
-    updateScore(scoreRef.current - cost);
-    // Map shop item ID to material item ID and add to inventory
-    const materialId = shopItemId.replace('buy_', '');
-    addInventoryItem(materialId, 1);
-  }, [updateScore, scoreRef, addInventoryItem]);
+  // Tutorial state — shows on first vanilla play
+  const [showTutorial, setShowTutorial] = useState(false);
+  const pendingModeRef = useRef<GameMode | null>(null);
 
-  // Toggle overlay helpers that auto-pause/unpause
-  const toggleInventory = useCallback(() => {
-    setShowInventory(prev => {
-      const next = !prev;
-      if (next) {
-        setShowShop(false);
-        setIsPaused(true);
-      } else {
-        setIsPaused(false);
-      }
-      return next;
-    });
-  }, [setIsPaused]);
-
-  const toggleShop = useCallback(() => {
-    setShowShop(prev => {
-      const next = !prev;
-      if (next) {
-        setShowInventory(false);
-        setIsPaused(true);
-      } else {
-        setIsPaused(false);
-      }
-      return next;
-    });
-  }, [setIsPaused]);
-
-  // Start game with selected mode
-  const startGame = useCallback((mode: GameMode) => {
+  // Actually start the game (after tutorial or directly)
+  const launchGame = useCallback((mode: GameMode) => {
     initAudio();
     initGame(mode);
 
@@ -658,8 +689,28 @@ export default function Rhythmia() {
     gameWorldsClearedRef.current = 0;
     advRecordedRef.current = false;
     liveNotifiedRef.current = new Set();
+    lockStartTimeRef.current = null;
+    lockMovesRef.current = 0;
     setToastIds([]);
   }, [initAudio, initGame]);
+
+  // Start game — intercept for tutorial on first vanilla play
+  const startGame = useCallback((mode: GameMode) => {
+    if (mode === 'vanilla' && !hasTutorialBeenSeen()) {
+      pendingModeRef.current = mode;
+      setShowTutorial(true);
+      return;
+    }
+    launchGame(mode);
+  }, [launchGame]);
+
+  // Tutorial completion — proceed with game launch
+  const handleTutorialComplete = useCallback(() => {
+    setShowTutorial(false);
+    const mode = pendingModeRef.current || 'vanilla';
+    pendingModeRef.current = null;
+    launchGame(mode);
+  }, [launchGame]);
 
   // Record advancement stats when game ends
   useEffect(() => {
@@ -686,6 +737,10 @@ export default function Rhythmia() {
   useEffect(() => {
     if (!isPaused && isPlaying && !gameOver) {
       lastBeatRef.current = Date.now();
+      // Reset lock delay timer on unpause to prevent instant lock from elapsed time
+      if (lockStartTimeRef.current !== null) {
+        lockStartTimeRef.current = performance.now();
+      }
     }
   }, [isPaused, isPlaying, gameOver, lastBeatRef]);
 
@@ -828,6 +883,21 @@ export default function Rhythmia() {
           tick();
           lastGravityRef.current = currentTime;
         }
+
+        // Lock delay check — piece gets a grace period on ground before locking
+        const piece = currentPieceRef.current;
+        if (piece) {
+          const onGround = !isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current);
+          if (onGround) {
+            if (lockStartTimeRef.current === null) {
+              lockStartTimeRef.current = currentTime;
+            } else if (currentTime - lockStartTimeRef.current >= LOCK_DELAY) {
+              handlePieceLockRef.current(piece);
+            }
+          } else {
+            lockStartTimeRef.current = null;
+          }
+        }
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -849,7 +919,31 @@ export default function Rhythmia() {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // --- Overlay close: Escape closes any open overlay ---
+      const key = e.key.toLowerCase();
+      const binds = keyBindingsRef.current;
+
+      // Handle inventory toggle
+      if (key === binds.inventory) {
+        e.preventDefault();
+        toggleInventory();
+        return;
+      }
+
+      // Handle shop toggle
+      if (key === binds.shop) {
+        e.preventDefault();
+        toggleShop();
+        return;
+      }
+
+      // Handle craft UI toggle
+      if (key === binds.forge) {
+        e.preventDefault();
+        toggleCraftUI();
+        return;
+      }
+
+      // Close any overlay with Escape
       if (e.key === 'Escape') {
         e.preventDefault();
         if (showInventory) { toggleInventory(); return; }
@@ -859,30 +953,7 @@ export default function Rhythmia() {
         return;
       }
 
-      // --- Inventory toggle (configurable key, default E) ---
-      if (isKeybind(e.key, 'inventory')) {
-        e.preventDefault();
-        if (showShop) { toggleShop(); }
-        toggleInventory();
-        return;
-      }
-
-      // --- Shop toggle (configurable key, default L) ---
-      if (isKeybind(e.key, 'shop')) {
-        e.preventDefault();
-        if (showInventory) { toggleInventory(); }
-        toggleShop();
-        return;
-      }
-
-      // Handle craft UI toggle with 'f' key
-      if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        toggleCraftUI();
-        return;
-      }
-
-      // Don't process game inputs while any overlay is open
+      // Don't process game inputs while overlays are open
       if (showCraftUI || showInventory || showShop) return;
 
       const currentTime = performance.now();
@@ -898,7 +969,7 @@ export default function Rhythmia() {
               lastMoveTime: currentTime,
               pressTime: currentTime,
             };
-            if (!isPaused) movePiece(-1, 0);
+            if (!isPaused) moveHorizontal(-1);
           }
           break;
 
@@ -912,7 +983,7 @@ export default function Rhythmia() {
               lastMoveTime: currentTime,
               pressTime: currentTime,
             };
-            if (!isPaused) movePiece(1, 0);
+            if (!isPaused) moveHorizontal(1);
           }
           break;
 
@@ -985,7 +1056,7 @@ export default function Rhythmia() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI, toggleInventory, toggleShop, isKeybind]);
+  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI, toggleInventory, toggleShop]);
 
   const world = WORLDS[worldIdx];
 
@@ -994,16 +1065,18 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
-      {/* Voxel World Background — mode-aware */}
-      <VoxelWorldBackground
-        seed={terrainSeed}
-        gameMode={gameMode}
-        terrainDestroyedCount={terrainDestroyedCount}
-        enemies={gameMode === 'td' ? enemies : []}
-        bullets={gameMode === 'td' ? bullets : []}
-        onTerrainReady={handleTerrainReady}
-        worldIdx={worldIdx}
-      />
+      {/* Voxel World Background — only render during gameplay */}
+      {isPlaying && (
+        <VoxelWorldBackground
+          seed={terrainSeed}
+          gameMode={gameMode}
+          terrainDestroyedCount={terrainDestroyedCount}
+          enemies={gameMode === 'td' ? enemies : []}
+          bullets={gameMode === 'td' ? bullets : []}
+          onTerrainReady={handleTerrainReady}
+          worldIdx={worldIdx}
+        />
+      )}
 
       {/* Terrain destruction particle effects */}
       <TerrainParticles particles={terrainParticles} />
@@ -1019,9 +1092,14 @@ export default function Rhythmia() {
         gameMode={gameMode}
       />
 
+      {/* Tutorial Guide — shown on first vanilla play */}
+      {showTutorial && (
+        <TutorialGuide onComplete={handleTutorialComplete} />
+      )}
+
       {/* Title Screen */}
-      {!isPlaying && !gameOver && (
-        <TitleScreen onStart={startGame} worldIdx={worldIdx} stageNumber={stageNumber} />
+      {!isPlaying && !gameOver && !showTutorial && (
+        <TitleScreen onStart={startGame} />
       )}
 
       {/* Game */}
@@ -1069,7 +1147,7 @@ export default function Rhythmia() {
                 boardBeat={boardBeat}
                 boardShake={boardShake}
                 gameOver={gameOver}
-                isPaused={isPaused && !showInventory && !showShop}
+                isPaused={isPaused}
                 score={score}
                 onRestart={() => startGame(gameMode)}
                 onResume={() => setIsPaused(false)}
@@ -1079,9 +1157,8 @@ export default function Rhythmia() {
                 combo={combo}
                 beatPhase={beatPhase}
                 boardElRef={boardElRef}
-                keybinds={keybinds}
-                onKeybindChange={setKeybind}
-                onKeybindReset={resetKeybinds}
+                keyBindings={keyBindings}
+                onKeyBindingsChange={updateKeyBindings}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
@@ -1098,8 +1175,8 @@ export default function Rhythmia() {
           </div>
 
           <TouchControls
-            onMoveLeft={() => movePiece(-1, 0)}
-            onMoveRight={() => movePiece(1, 0)}
+            onMoveLeft={() => moveHorizontal(-1)}
+            onMoveRight={() => moveHorizontal(1)}
             onMoveDown={() => movePiece(0, 1)}
             onRotateCW={() => rotatePiece(1)}
             onRotateCCW={() => rotatePiece(-1)}
@@ -1130,25 +1207,25 @@ export default function Rhythmia() {
         />
       )}
 
-      {/* Inventory overlay (Dungeons-style) */}
+      {/* Inventory UI overlay (Minecraft Dungeons style) */}
       {showInventory && (
-        <InventoryOverlay
+        <InventoryUI
           inventory={inventory}
           craftedCards={craftedCards}
           damageMultiplier={damageMultiplier}
+          level={level}
           onClose={toggleInventory}
-          closeKey={keybinds.inventory}
         />
       )}
 
-      {/* Shop overlay (LoL-style content) */}
+      {/* Shop UI overlay (LoL shop style) */}
       {showShop && (
-        <ShopOverlay
-          score={score}
+        <ShopUI
+          gold={gold}
           inventory={inventory}
-          onPurchase={handleShopPurchase}
+          craftedCards={craftedCards}
+          onPurchase={purchaseItem}
           onClose={toggleShop}
-          closeKey={keybinds.shop}
         />
       )}
 
