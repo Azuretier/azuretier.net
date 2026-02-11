@@ -8,12 +8,7 @@
     "postbuild": "next-sitemap",
     "start": "ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint",
-    "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts",
-    "bot:dev": "cd apps/discord-bot && npm run dev",
-    "bot:build": "cd apps/discord-bot && npm run build",
-    "bot:start": "cd apps/discord-bot && npm run start",
-    "bot:deploy-commands": "cd apps/discord-bot && npm run deploy-commands",
-    "bot:install": "cd apps/discord-bot && npm install"
+    "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.1.6",
@@ -44,6 +39,8 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@types/ws": "^8.18.1",
     "bufferutil": "^4.1.0",
     "class-variance-authority": "^0.7.0",
@@ -57,6 +54,7 @@
     "framer-motion": "^11.11.9",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.525.0",
+    "maath": "^0.10.8",
     "marked": "^15.0.12",
     "next": "^16.1.5",
     "next-intl": "^4.8.2",

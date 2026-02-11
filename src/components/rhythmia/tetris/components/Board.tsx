@@ -192,10 +192,16 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu, advancements, or settings sub-panel */}
+            {/* Overlay for Paused — main menu, advancements, or key bindings sub-panel */}
             {isPaused && !gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
-                    {!showAdvancements && !showSettings ? (
+                    {showKeyBinds && keybindings && onKeybindChange ? (
+                        <KeyBindSettings
+                            bindings={keybindings}
+                            onUpdate={onKeybindChange}
+                            onBack={() => setShowKeyBinds(false)}
+                        />
+                    ) : !showAdvancements ? (
                         <>
                             <h2>PAUSED</h2>
                             <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
@@ -215,13 +221,15 @@ export function Board({
                                         {unlockedCount}/{totalCount}
                                     </span>
                                 </button>
-                                <button
-                                    className={styles.pauseMenuBtn}
-                                    onClick={() => setShowSettings(true)}
-                                >
-                                    <span className={styles.pauseMenuBtnIcon}>&#x2699;</span>
-                                    Settings
-                                </button>
+                                {keyBindings && onKeyBindingsChange && (
+                                    <button
+                                        className={styles.pauseMenuBtn}
+                                        onClick={() => setShowKeyBinds(true)}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>⌨</span>
+                                        Key Bindings
+                                    </button>
+                                )}
                             </div>
 
                             {/* Theme selector */}
@@ -288,7 +296,7 @@ export function Board({
                             </div>
                         </div>
                     ) : (
-                        <Advancements embedded onClose={() => setShowAdvancements(false)} />
+                        <Advancements onClose={() => setShowAdvancements(false)} />
                     )}
                 </div>
             )}

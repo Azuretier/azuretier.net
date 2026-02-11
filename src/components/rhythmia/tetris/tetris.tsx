@@ -57,6 +57,9 @@ import {
   HealthManaHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
+  InventoryUI,
+  ShopUI,
+  KeyBindSettings,
 } from './components';
 
 /**
@@ -183,6 +186,10 @@ export default function Rhythmia() {
     craftedCards,
     showCraftUI,
     damageMultiplier,
+    // Inventory & Shop
+    showInventory,
+    showShop,
+    gold,
     // Game mode
     gameMode,
     // Tower defense
@@ -247,6 +254,9 @@ export default function Rhythmia() {
     craftCard,
     canCraftCard,
     toggleCraftUI,
+    toggleInventory,
+    toggleShop,
+    purchaseItem,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -259,6 +269,17 @@ export default function Rhythmia() {
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
+
+  // Key bindings state (configurable)
+  const [keyBindings, setKeyBindings] = useState<KeyBindings>(() => loadKeyBindings());
+  const keyBindingsRef = useRef(keyBindings);
+  keyBindingsRef.current = keyBindings;
+
+  const updateKeyBindings = useCallback((newBindings: KeyBindings) => {
+    setKeyBindings(newBindings);
+    keyBindingsRef.current = newBindings;
+    saveKeyBindings(newBindings);
+  }, []);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -1167,6 +1188,7 @@ export default function Rhythmia() {
             terrainTotal={gameMode === 'td' ? enemies.length : terrainTotal}
             stageNumber={stageNumber}
             gameMode={gameMode}
+            towerHealth={towerHealth}
           />
           {gameMode === 'vanilla' && (
             <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
