@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import type { AdvancementState, AdvancementCategory } from '@/lib/advancements/types';
@@ -10,8 +10,6 @@ import styles from './Advancements.module.css';
 
 interface Props {
   onClose: () => void;
-  /** When true, renders just the panel without a fullscreen overlay (for pause menu). */
-  embedded?: boolean;
 }
 
 const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer'];
@@ -43,7 +41,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString();
 }
 
-export const Advancements: React.FC<Props> = ({ onClose, embedded = false }) => {
+export const Advancements: React.FC<Props> = ({ onClose }) => {
   const [state, setState] = useState<AdvancementState | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<AdvancementCategory>('general');
   const t = useTranslations();
@@ -60,12 +58,12 @@ export const Advancements: React.FC<Props> = ({ onClose, embedded = false }) => 
 
   const filteredAdvancements = ADVANCEMENTS.filter(a => a.category === selectedCategory);
 
-  // Detect locale from translations
-  const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
+  // Get locale from next-intl
+  const locale = useLocale();
   const categoryLabels = CATEGORY_LABELS[locale] || CATEGORY_LABELS.en;
 
-  const panelContent = (
-    <>
+  return (
+    <div className={styles.panel}>
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
@@ -147,31 +145,7 @@ export const Advancements: React.FC<Props> = ({ onClose, embedded = false }) => 
           </motion.div>
         </AnimatePresence>
       </div>
-    </>
-  );
-
-  if (embedded) {
-    return <div className={styles.panel}>{panelContent}</div>;
-  }
-
-  return (
-    <motion.div
-      className={styles.overlay}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <motion.div
-        className={styles.panel}
-        initial={{ opacity: 0, y: 30, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.97 }}
-        transition={{ duration: 0.3 }}
-      >
-        {panelContent}
-      </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
