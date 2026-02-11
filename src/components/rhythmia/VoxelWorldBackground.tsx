@@ -897,7 +897,7 @@ export default function VoxelWorldBackground({
               const istate = interpBulletState.get(id);
               const ipos = istate ?? pos;
               // Only spawn impact if bullet hit something (not just fell to ground)
-              if (ipos.y > BULLET_GROUND_Y + 0.5) {
+              if (ipos.y > BULLET_GROUND_Y + 0.15) {
                 const ipx = ipos.x * cosR - ipos.z * sinR;
                 const ipz = ipos.x * sinR + ipos.z * cosR;
                 spawnImpactBurst(ipx, ipos.y, ipz, impactParticles, 12);
