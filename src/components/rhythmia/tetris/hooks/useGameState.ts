@@ -9,7 +9,7 @@ import {
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
-    BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
+    BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
@@ -86,6 +86,11 @@ export function useGameState() {
     // ===== Weapon Cards =====
     const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCraftUI, setShowCraftUI] = useState(false);
+
+    // ===== Inventory & Shop UI =====
+    const [showInventory, setShowInventory] = useState(false);
+    const [showShop, setShowShop] = useState(false);
+    const [gold, setGold] = useState(0);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -203,9 +208,11 @@ export function useGameState() {
         });
     }, []);
 
-    // Update score with pop animation
+    // Update score with pop animation — also grants gold
     const updateScore = useCallback((newScore: number) => {
+        const earned = Math.max(0, newScore - scoreRef.current);
         setScore(newScore);
+        setGold(prev => prev + earned);
         setScorePop(true);
         setTimeout(() => setScorePop(false), 100);
     }, []);
@@ -507,16 +514,35 @@ export function useGameState() {
             }
         }
 
-        // Create bullet from tower top toward enemy's grid-based world position
+        // Calculate parabolic arc velocity from turret to enemy
+        const startY = 11;
+        const targetY = 1.5;
+        const dx = closest.gridX * GRID_TILE_SIZE;
+        const dz = closest.gridZ * GRID_TILE_SIZE;
+        const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        // Flight time based on horizontal speed
+        const T = Math.max(0.3, horizontalDist / BULLET_SPEED);
+
+        // Horizontal velocity components
+        const vx = dx / T;
+        const vz = dz / T;
+
+        // Vertical velocity: solve y = y0 + vy*t - 0.5*g*t² for vy
+        // targetY = startY + vy*T - 0.5*g*T²
+        // vy = (targetY - startY + 0.5*g*T²) / T
+        const vy = (targetY - startY + 0.5 * BULLET_GRAVITY * T * T) / T;
+
+
         const bullet: Bullet = {
             id: nextBulletId++,
             x: 0,
-            y: 12,
+            y: startY,
             z: 0,
-            targetX: closest.gridX * GRID_TILE_SIZE,
-            targetY: 1.5,
-            targetZ: closest.gridZ * GRID_TILE_SIZE,
-            speed: BULLET_SPEED,
+            vx,
+            vy,
+            vz,
+            targetEnemyId: closest.id,
             alive: true,
         };
         setBullets(prev => [...prev, bullet]);
@@ -524,11 +550,19 @@ export function useGameState() {
         return true;
     }, []);
 
-    // Move bullets toward targets and check collision with enemies
+    // Move bullets with gravity and check collision with enemies
     // Returns the number of enemies killed this update
+    const lastBulletUpdateRef = useRef(Date.now());
     const updateBullets = useCallback((): number => {
         const currentBullets = bulletsRef.current;
-        if (currentBullets.length === 0) return 0;
+        if (currentBullets.length === 0) {
+            lastBulletUpdateRef.current = Date.now();
+            return 0;
+        }
+
+        const now = Date.now();
+        const dt = Math.min((now - lastBulletUpdateRef.current) / 1000, 0.5); // seconds, capped
+        lastBulletUpdateRef.current = now;
 
         const updatedBullets: Bullet[] = [];
         const damagedEnemyIds: Set<number> = new Set();
@@ -537,48 +571,82 @@ export function useGameState() {
         for (const b of currentBullets) {
             if (!b.alive) continue;
 
-            const dx = b.targetX - b.x;
-            const dy = b.targetY - b.y;
-            const dz = b.targetZ - b.z;
-            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            // Apply gravity and update position using Velocity Verlet (matches rendering)
+            const newVy = b.vy - BULLET_GRAVITY * dt;
+            const newX = b.x + b.vx * dt;
+            const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
+            const newZ = b.z + b.vz * dt;
 
-            if (dist < BULLET_KILL_RADIUS) {
-                // Bullet arrived — find and damage closest enemy at target
-                const alive = enemiesRef.current.filter(
-                    e => e.alive && !damagedEnemyIds.has(e.id)
+            // Check if bullet hit the ground — guaranteed hit on targeted enemy
+            if (newY <= BULLET_GROUND_Y) {
+                // Bullet has landed — damage the targeted enemy wherever it is
+                const targetEnemy = enemiesRef.current.find(
+                    e => e.id === b.targetEnemyId && e.alive
                 );
-                let closest: Enemy | null = null;
-                let bestDist = Infinity;
-                for (const e of alive) {
-                    const ed = Math.sqrt(
-                        (e.x - b.targetX) ** 2 + (e.z - b.targetZ) ** 2
-                    );
-                    if (ed < bestDist) {
-                        bestDist = ed;
-                        closest = e;
-                    }
-                }
-                if (closest && bestDist < BULLET_KILL_RADIUS * 3) {
-                    closest.health -= BULLET_DAMAGE;
-                    damagedEnemyIds.add(closest.id);
-                    if (closest.health <= 0) {
-                        closest.alive = false;
+                if (targetEnemy && !damagedEnemyIds.has(targetEnemy.id)) {
+                    targetEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(targetEnemy.id);
+                    if (targetEnemy.health <= 0) {
+                        targetEnemy.alive = false;
                         totalKills++;
                     }
                 }
-                // Bullet consumed — don't add to updated
-                continue;
+                continue; // bullet consumed
             }
 
-            // Move bullet toward target
-            const nx = dx / dist;
-            const ny = dy / dist;
-            const nz = dz / dist;
+            // In-flight proximity check — if bullet passes close to targeted enemy mid-arc
+            const targetEnemy = enemiesRef.current.find(
+                e => e.id === b.targetEnemyId && e.alive
+            );
+            if (targetEnemy) {
+                const targetDist = Math.sqrt(
+                    (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
+                );
+                if (targetDist < BULLET_KILL_RADIUS) {
+                    targetEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(targetEnemy.id);
+                    if (targetEnemy.health <= 0) {
+                        targetEnemy.alive = false;
+                        totalKills++;
+                    }
+                    continue;
+                }
+            }
+
+            // If targeted enemy is dead, check for any nearby enemy
+            if (!targetEnemy) {
+                const alive = enemiesRef.current.filter(
+                    e => e.alive && !damagedEnemyIds.has(e.id)
+                );
+                let hitEnemy: Enemy | null = null;
+                let bestDist = Infinity;
+                for (const e of alive) {
+                    const ed = Math.sqrt(
+                        (e.x - newX) ** 2 + (e.y - newY) ** 2 + (e.z - newZ) ** 2
+                    );
+                    if (ed < bestDist) {
+                        bestDist = ed;
+                        hitEnemy = e;
+                    }
+                }
+                if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
+                    hitEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(hitEnemy.id);
+                    if (hitEnemy.health <= 0) {
+                        hitEnemy.alive = false;
+                        totalKills++;
+                    }
+                    continue;
+                }
+            }
+
+            // Bullet still in flight
             updatedBullets.push({
                 ...b,
-                x: b.x + nx * b.speed,
-                y: b.y + ny * b.speed,
-                z: b.z + nz * b.speed,
+                x: newX,
+                y: newY,
+                z: newZ,
+                vy: newVy,
             });
         }
 
@@ -641,6 +709,66 @@ export function useGameState() {
         }
     }, [showCraftUI]);
 
+    // Toggle inventory UI
+    const toggleInventory = useCallback(() => {
+        setShowInventory(prev => {
+            const next = !prev;
+            if (next) {
+                // Close other overlays
+                setShowShop(false);
+                setShowCraftUI(false);
+                setIsPaused(true);
+            } else {
+                setIsPaused(false);
+                setGamePhase('PLAYING');
+            }
+            return next;
+        });
+    }, []);
+
+    // Toggle shop UI
+    const toggleShop = useCallback(() => {
+        setShowShop(prev => {
+            const next = !prev;
+            if (next) {
+                // Close other overlays
+                setShowInventory(false);
+                setShowCraftUI(false);
+                setIsPaused(true);
+            } else {
+                setIsPaused(false);
+                setGamePhase('PLAYING');
+            }
+            return next;
+        });
+    }, []);
+
+    // Purchase item from shop using gold
+    const purchaseItem = useCallback((itemId: string, price: number): boolean => {
+        if (gold < price) return false;
+        setGold(prev => prev - price);
+
+        // Check if it's a weapon card
+        const weaponCard = WEAPON_CARD_MAP[itemId];
+        if (weaponCard) {
+            setCraftedCards(prev => [...prev, { cardId: itemId, craftedAt: Date.now() }]);
+            return true;
+        }
+
+        // It's a material — add to inventory
+        setInventory(prev => {
+            const updated = [...prev];
+            const existing = updated.find(i => i.itemId === itemId);
+            if (existing) {
+                existing.count += 1;
+            } else {
+                updated.push({ itemId, count: 1 });
+            }
+            return updated;
+        });
+        return true;
+    }, [gold, inventory]);
+
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
         setGamePhase('PLAYING');
@@ -692,6 +820,9 @@ export function useGameState() {
         setFloatingItems([]);
         setTerrainParticles([]);
         setShowCraftUI(false);
+        setShowInventory(false);
+        setShowShop(false);
+        setGold(0);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -774,6 +905,10 @@ export function useGameState() {
         craftedCards,
         showCraftUI,
         damageMultiplier,
+        // Inventory & Shop
+        showInventory,
+        showShop,
+        gold,
         // Game mode
         gameMode,
 
@@ -852,6 +987,9 @@ export function useGameState() {
         craftCard,
         canCraftCard,
         toggleCraftUI,
+        toggleInventory,
+        toggleShop,
+        purchaseItem,
         enterPlayPhase,
         triggerCollapse,
         triggerTransition,
