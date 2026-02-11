@@ -1,5 +1,5 @@
 import React from 'react';
-import { WORLDS, ColorTheme } from '../constants';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
 import type { GameMode } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -8,12 +8,11 @@ interface TitleScreenProps {
 }
 
 /**
- * Title screen component with game mode selection
+ * Title screen component with game mode selection (black screen, no world info)
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
     return (
         <div className={styles.titleScreen}>
-            <p>リズムに乗ってブロックを積め！</p>
             <div className={styles.modeSelect}>
                 <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>
                     <span className={styles.modeBtnIcon}>🎵</span>
@@ -40,6 +39,39 @@ interface WorldDisplayProps {
 export function WorldDisplay({ worldIdx }: WorldDisplayProps) {
     return (
         <div className={styles.worldDisplay}>{WORLDS[worldIdx].name}</div>
+    );
+}
+
+interface WorldProgressDisplayProps {
+    worldIdx: number;
+    stageNumber: number;
+}
+
+/**
+ * In-game world progression indicator showing terrains cleared toward next world
+ */
+export function WorldProgressDisplay({ worldIdx, stageNumber }: WorldProgressDisplayProps) {
+    const world = WORLDS[worldIdx];
+    const terrainsCleared = (stageNumber - 1) % TERRAINS_PER_WORLD;
+    const isMaxWorld = worldIdx >= WORLDS.length - 1;
+
+    return (
+        <div className={styles.worldProgressDisplay}>
+            <span className={styles.worldProgressName}>{world.name}</span>
+            <div className={styles.worldProgressPips}>
+                {Array.from({ length: TERRAINS_PER_WORLD }).map((_, i) => (
+                    <div
+                        key={i}
+                        className={`${styles.worldProgressPip} ${i < terrainsCleared ? styles.worldProgressPipFilled : ''}`}
+                    />
+                ))}
+            </div>
+            <span className={styles.worldProgressLabel}>
+                {isMaxWorld
+                    ? `${terrainsCleared}/${TERRAINS_PER_WORLD}`
+                    : `${terrainsCleared}/${TERRAINS_PER_WORLD} → Next World`}
+            </span>
+        </div>
     );
 }
 

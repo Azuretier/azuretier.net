@@ -4,6 +4,7 @@ export { NextPiece, HoldPiece } from './PiecePreview';
 export {
     TitleScreen,
     WorldDisplay,
+    WorldProgressDisplay,
     ScoreDisplay,
     ComboDisplay,
     TerrainProgress,
@@ -20,3 +21,7 @@ export { CraftingUI } from './CraftingUI';
 export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
+export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
+export { InventoryUI } from './InventoryUI';
+export { ShopUI } from './ShopUI';
+export { KeyBindSettings } from './KeyBindSettings';
