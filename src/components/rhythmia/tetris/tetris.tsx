@@ -937,10 +937,12 @@ export default function Rhythmia() {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Handle inventory toggle
+      // Handle inventory toggle (only from in-game, not while paused)
       if (e.key.toLowerCase() === keybindings.inventory) {
         e.preventDefault();
         if (showShop) return;
+        // Block opening from pause menu; allow closing if already open
+        if (isPaused && !showInventory) return;
         if (showCraftUI) { toggleCraftUI(); }
         setShowInventory(prev => {
           const next = !prev;
@@ -956,10 +958,12 @@ export default function Rhythmia() {
         return;
       }
 
-      // Handle shop toggle
+      // Handle shop toggle (only from in-game, not while paused)
       if (e.key.toLowerCase() === keybindings.shop) {
         e.preventDefault();
         if (showInventory) return;
+        // Block opening from pause menu; allow closing if already open
+        if (isPaused && !showShop) return;
         if (showCraftUI) { toggleCraftUI(); }
         setShowShop(prev => {
           const next = !prev;
