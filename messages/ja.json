@@ -589,6 +589,12 @@
         "retry": "再試行",
         "refresh": "更新",
         "watchOnYouTube": "YouTubeで見る",
+        "makeAVideo": {
+            "heading": "最初の一人になろう",
+            "title": "動画を作ってみませんか？",
+            "description": "まだ動画がありません。RHYTHMIAのゲームプレイやレビューを撮影して、コミュニティに共有しよう！",
+            "cta": "チャンネルを見る →"
+        },
         "types": {
             "tutorial": "チュートリアル",
             "video": "動画",

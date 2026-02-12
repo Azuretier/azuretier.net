@@ -32,6 +32,8 @@ const DIFFICULTY_LABELS: Record<string, Record<string, string>> = {
     ja: { beginner: '初級', intermediate: '中級', advanced: '上級' },
 };
 
+const YOUTUBE_CHANNEL = 'https://www.youtube.com/@rhythmia_official';
+
 export default function ForYouTab({ locale, unlockedAdvancements, totalAdvancements }: ForYouTabProps) {
     const [cards, setCards] = useState<ContentCard[]>([]);
     const [loading, setLoading] = useState(true);
@@ -67,6 +69,9 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
+    const hasVideoWithoutUrl = cards.some((card) => card.type === 'video' && !card.url);
+    const displayCards = cards.filter((card) => !(card.type === 'video' && !card.url));
+
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -96,7 +101,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
             <div className={styles.cardGrid}>
                 <AnimatePresence mode="wait">
-                    {cards.map((card, index) => (
+                    {displayCards.map((card, index) => (
                         <motion.div
                             key={card.id}
                             className={`${styles.card} ${styles[card.type]}`}
@@ -135,6 +140,30 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                             )}
                         </motion.div>
                     ))}
+
+                    {hasVideoWithoutUrl && (
+                        <motion.div
+                            key="video-prompt"
+                            className={styles.videoPromptCard}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.4, delay: displayCards.length * 0.06 }}
+                        >
+                            <span className={styles.videoPromptIcon}>🎬</span>
+                            <span className={styles.videoPromptHeading}>{t('makeAVideo.heading')}</span>
+                            <h3 className={styles.videoPromptTitle}>{t('makeAVideo.title')}</h3>
+                            <p className={styles.videoPromptDescription}>{t('makeAVideo.description')}</p>
+                            <a
+                                href={YOUTUBE_CHANNEL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.videoPromptCta}
+                            >
+                                {t('makeAVideo.cta')}
+                            </a>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </div>
 
