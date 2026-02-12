@@ -15,7 +15,9 @@
         "battle": "バトル",
         "back": "← 戻る",
         "online": "オンライン",
-        "onlineCount": "{count} オンライン"
+        "onlineCount": "{count} オンライン",
+        "serversTab": "サーバー",
+        "forYouTab": "おすすめ"
     },
     "vanilla": {
         "badge": "公式",
@@ -224,6 +226,22 @@
             "dusk": "夕暮れ",
             "night": "夜",
             "dawn": "夜明け"
+        }
+    },
+    "forYou": {
+        "heading": "おすすめ",
+        "headingSubtitle": "あなたに合ったチュートリアルとヒント",
+        "title": "おすすめコンテンツ",
+        "subtitle": "あなたの進捗に合わせてセレクト",
+        "loading": "生成中",
+        "error": "おすすめを読み込めませんでした",
+        "retry": "再試行",
+        "refresh": "更新",
+        "watchOnYouTube": "YouTubeで見る",
+        "types": {
+            "tutorial": "チュートリアル",
+            "video": "動画",
+            "tip": "ヒント"
         }
     },
     "nav": {

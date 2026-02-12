@@ -15,7 +15,9 @@
         "battle": "BATTLE",
         "back": "← Back",
         "online": "Online",
-        "onlineCount": "{count} online"
+        "onlineCount": "{count} online",
+        "serversTab": "Servers",
+        "forYouTab": "For You"
     },
     "vanilla": {
         "badge": "OFFICIAL",
@@ -224,6 +226,22 @@
             "dusk": "Dusk",
             "night": "Night",
             "dawn": "Dawn"
+        }
+    },
+    "forYou": {
+        "heading": "FOR YOU",
+        "headingSubtitle": "Personalized tutorials and tips",
+        "title": "RECOMMENDED",
+        "subtitle": "Curated based on your progress",
+        "loading": "GENERATING",
+        "error": "Could not load recommendations",
+        "retry": "RETRY",
+        "refresh": "REFRESH",
+        "watchOnYouTube": "Watch on YouTube",
+        "types": {
+            "tutorial": "TUTORIAL",
+            "video": "VIDEO",
+            "tip": "TIP"
         }
     },
     "nav": {
