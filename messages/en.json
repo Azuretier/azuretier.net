@@ -162,6 +162,7 @@
         "xpToNext": "{xp} XP to next tier",
         "maxTier": "MAX TIER REACHED",
         "streakDays": "DAY STREAK",
+        "viewAll": "VIEW ALL BADGES & DETAILS",
         "tiers": {
             "new_beat": "New Beat",
             "syncopated": "Syncopated",

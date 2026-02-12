@@ -162,6 +162,7 @@
         "xpToNext": "次のティアまで {xp} XP",
         "maxTier": "最高ティア到達",
         "streakDays": "日連続",
+        "viewAll": "バッジ＆詳細を見る",
         "tiers": {
             "new_beat": "ニュービート",
             "syncopated": "シンコペーション",
