@@ -206,7 +206,11 @@
                 "3": "Zen Mode (relaxed, no pressure)"
             },
             "vote": "VOTE",
-            "voted": "Thanks for voting!"
+            "voted": "Thanks for voting!",
+            "loading": "Loading poll...",
+            "submitting": "Submitting...",
+            "noPoll": "No active poll right now.",
+            "totalVotes": "{count} votes"
         },
         "strategy": {
             "0": {

@@ -341,8 +341,15 @@
   font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0.05em;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   opacity: 0.85;
+}
+
+.pollTotalVotes {
+  font-size: 0.75rem;
+  opacity: 0.35;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
 }
 
 .pollOptions {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   LOYALTY_TIERS,
   LOYALTY_BADGES,
@@ -12,82 +12,96 @@ import {
   recordDailyVisit,
   syncFromGameplay,
   recordPollVote,
+  initAuth,
+  fetchActivePoll,
+  getUserVote,
+  submitVote,
+  ensureActivePoll,
+  syncLoyaltyToFirestore,
 } from '@/lib/loyalty';
-import type { LoyaltyState } from '@/lib/loyalty';
+import type { LoyaltyState, Poll } from '@/lib/loyalty';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import styles from './loyalty.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-const POLL_STORAGE_KEY = 'rhythmia_loyalty_poll';
-
-interface PollState {
-  voted: boolean;
-  selectedOption: number | null;
-  results: number[];
-}
-
 export default function LoyaltyDashboard() {
   const t = useTranslations('loyalty');
+  const locale = useLocale();
   const [state, setState] = useState<LoyaltyState | null>(null);
-  const [pollState, setPollState] = useState<PollState>({
-    voted: false,
-    selectedOption: null,
-    results: [42, 28, 18, 12],
-  });
 
-  // Load saved poll state
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(POLL_STORAGE_KEY);
-      if (saved) {
-        setPollState(JSON.parse(saved));
-      }
-    } catch {}
-  }, []);
+  // Poll state — driven by Firestore
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [pollLoading, setPollLoading] = useState(true);
 
-  // Initialize loyalty state
+  // Initialize loyalty + auth + poll
   useEffect(() => {
-    // Record daily visit
+    // Loyalty state (local)
     let loyaltyState = recordDailyVisit();
-
-    // Sync with game data
     const advState = loadAdvancementState();
     loyaltyState = syncFromGameplay(
       advState.stats.totalGamesPlayed,
       advState.stats.totalScore,
       advState.unlockedIds.length,
     );
-
     setState(loyaltyState);
+
+    // Auth + poll (async)
+    (async () => {
+      await initAuth();
+
+      // Sync loyalty state to Firestore
+      syncLoyaltyToFirestore(loyaltyState);
+
+      // Ensure a default poll exists, then load it
+      await ensureActivePoll();
+      const activePoll = await fetchActivePoll();
+      setPoll(activePoll);
+
+      if (activePoll) {
+        const existingVote = await getUserVote(activePoll.id);
+        if (existingVote) {
+          setHasVoted(true);
+          setSelectedOption(existingVote.optionIndex);
+        }
+      }
+
+      setPollLoading(false);
+    })();
   }, []);
 
   const handlePollSelect = useCallback((optionIndex: number) => {
-    if (pollState.voted) return;
-    setPollState(prev => ({ ...prev, selectedOption: optionIndex }));
-  }, [pollState.voted]);
+    if (hasVoted) return;
+    setSelectedOption(optionIndex);
+  }, [hasVoted]);
 
-  const handlePollVote = useCallback(() => {
-    if (pollState.selectedOption === null || pollState.voted) return;
+  const handlePollVote = useCallback(async () => {
+    if (selectedOption === null || hasVoted || !poll || isVoting) return;
+    setIsVoting(true);
 
-    const newResults = [...pollState.results];
-    newResults[pollState.selectedOption] += 1;
+    const success = await submitVote(poll.id, selectedOption);
+    if (success) {
+      // Update local poll data optimistically
+      const updatedVotes = [...poll.votes];
+      updatedVotes[selectedOption] += 1;
+      setPoll({
+        ...poll,
+        votes: updatedVotes,
+        totalVotes: poll.totalVotes + 1,
+      });
+      setHasVoted(true);
 
-    const newPollState: PollState = {
-      voted: true,
-      selectedOption: pollState.selectedOption,
-      results: newResults,
-    };
+      // Award XP for voting
+      const updated = recordPollVote();
+      setState(updated);
+      syncLoyaltyToFirestore(updated);
+    }
 
-    setPollState(newPollState);
-
-    try {
-      localStorage.setItem(POLL_STORAGE_KEY, JSON.stringify(newPollState));
-    } catch {}
-
-    const updated = recordPollVote();
-    setState(updated);
-  }, [pollState]);
+    setIsVoting(false);
+  }, [selectedOption, hasVoted, poll, isVoting]);
 
   if (!state) return null;
 
@@ -95,7 +109,7 @@ export default function LoyaltyDashboard() {
   const progress = tierProgress(state.xp);
   const nextTierXP = xpToNextTier(state.xp);
 
-  const totalPollVotes = pollState.results.reduce((sum, v) => sum + v, 0);
+  const pollText = (obj: { ja: string; en: string }) => (locale === 'ja' ? obj.ja : obj.en);
 
   return (
     <div className={styles.page}>
@@ -268,7 +282,7 @@ export default function LoyaltyDashboard() {
           </div>
         </motion.div>
 
-        {/* Community Poll */}
+        {/* Community Poll — Firestore backed */}
         <motion.div
           className={styles.pollSection}
           initial={{ opacity: 0, y: 20 }}
@@ -277,49 +291,64 @@ export default function LoyaltyDashboard() {
         >
           <h2 className={styles.sectionTitle}>{t('sections.community')}</h2>
           <div className={styles.pollCard}>
-            <div className={styles.pollQuestion}>{t('poll.question')}</div>
-
-            {!pollState.voted ? (
+            {pollLoading ? (
+              <div className={styles.pollQuestion} style={{ opacity: 0.3 }}>
+                {t('poll.loading')}
+              </div>
+            ) : poll ? (
               <>
-                <div className={styles.pollOptions}>
-                  {[0, 1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className={`${styles.pollOption} ${pollState.selectedOption === i ? styles.selected : ''}`}
-                      onClick={() => handlePollSelect(i)}
-                    >
-                      <div className={`${styles.pollRadio} ${pollState.selectedOption === i ? styles.checked : ''}`} />
-                      {t(`poll.options.${i}`)}
-                    </div>
-                  ))}
+                <div className={styles.pollQuestion}>{pollText(poll.question)}</div>
+                <div className={styles.pollTotalVotes}>
+                  {t('poll.totalVotes', { count: poll.totalVotes })}
                 </div>
-                <button
-                  className={styles.pollVoteButton}
-                  onClick={handlePollVote}
-                  disabled={pollState.selectedOption === null}
-                >
-                  {t('poll.vote')}
-                </button>
+
+                {!hasVoted ? (
+                  <>
+                    <div className={styles.pollOptions}>
+                      {poll.options.map((option, i) => (
+                        <div
+                          key={i}
+                          className={`${styles.pollOption} ${selectedOption === i ? styles.selected : ''}`}
+                          onClick={() => handlePollSelect(i)}
+                        >
+                          <div className={`${styles.pollRadio} ${selectedOption === i ? styles.checked : ''}`} />
+                          {pollText(option)}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      className={styles.pollVoteButton}
+                      onClick={handlePollVote}
+                      disabled={selectedOption === null || isVoting}
+                    >
+                      {isVoting ? t('poll.submitting') : t('poll.vote')}
+                    </button>
+                  </>
+                ) : (
+                  <div className={styles.pollResults}>
+                    {poll.options.map((option, i) => {
+                      const percentage = poll.totalVotes > 0 ? Math.round((poll.votes[i] / poll.totalVotes) * 100) : 0;
+                      return (
+                        <div key={i} className={styles.pollResultBar}>
+                          <div className={styles.pollResultLabel}>
+                            <span>{pollText(option)}</span>
+                            <span>{percentage}%</span>
+                          </div>
+                          <div className={styles.pollResultTrack}>
+                            <div
+                              className={styles.pollResultFill}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </>
             ) : (
-              <div className={styles.pollResults}>
-                {[0, 1, 2, 3].map((i) => {
-                  const percentage = totalPollVotes > 0 ? Math.round((pollState.results[i] / totalPollVotes) * 100) : 0;
-                  return (
-                    <div key={i} className={styles.pollResultBar}>
-                      <div className={styles.pollResultLabel}>
-                        <span>{t(`poll.options.${i}`)}</span>
-                        <span>{percentage}%</span>
-                      </div>
-                      <div className={styles.pollResultTrack}>
-                        <div
-                          className={styles.pollResultFill}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className={styles.pollQuestion} style={{ opacity: 0.3 }}>
+                {t('poll.noPoll')}
               </div>
             )}
           </div>

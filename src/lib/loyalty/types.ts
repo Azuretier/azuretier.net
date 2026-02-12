@@ -39,3 +39,24 @@ export interface LoyaltyState {
   xp: number;
   unlockedBadgeIds: string[];
 }
+
+// ===== Poll Types =====
+
+export interface PollOption {
+  ja: string;
+  en: string;
+}
+
+export interface Poll {
+  id: string;
+  question: { ja: string; en: string };
+  options: PollOption[];
+  votes: number[];     // vote count per option index
+  totalVotes: number;
+  active: boolean;
+}
+
+export interface PollVote {
+  pollId: string;
+  optionIndex: number;
+}

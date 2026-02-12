@@ -1,4 +1,4 @@
-export type { LoyaltyTier, LoyaltyBadge, LoyaltyStats, LoyaltyState, NumericLoyaltyStatKey } from './types';
+export type { LoyaltyTier, LoyaltyBadge, LoyaltyStats, LoyaltyState, NumericLoyaltyStatKey, Poll, PollOption, PollVote } from './types';
 export {
   LOYALTY_TIERS,
   LOYALTY_BADGES,
@@ -14,3 +14,11 @@ export {
   syncFromGameplay,
   recordPollVote,
 } from './storage';
+export {
+  initAuth,
+  fetchActivePoll,
+  getUserVote,
+  submitVote,
+  ensureActivePoll,
+  syncLoyaltyToFirestore,
+} from './firestore';
