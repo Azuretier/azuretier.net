@@ -64,7 +64,7 @@ export default function UpdatesPage() {
           <button className={styles.backBtn} onClick={() => router.push('/')}>
             ← {t('nav.lobby')}
           </button>
-          <span className={styles.logo}>RHYTHMIA</span>
+          <span className={styles.logo}>azuretier.net</span>
           <span className={styles.updatesLabel}>{t('nav.updates')}</span>
         </div>
         <div className={styles.headerRight}>
