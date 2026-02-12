@@ -593,7 +593,8 @@
             "heading": "BE A CREATOR",
             "title": "Show Us Your RHYTHMIA Skills!",
             "description": "Got epic gameplay? Share your T-Spins, perfect clears, or wild combos! Create a video for RHYTHMIA and inspire the community. We can't wait to see what you make!",
-            "cta": "Visit our channel for ideas →"
+            "cta": "Visit our channel for ideas →",
+            "tapToLearnMore": "Click to learn more →"
         },
         "types": {
             "tutorial": "TUTORIAL",

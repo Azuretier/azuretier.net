@@ -38,11 +38,13 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     const [cards, setCards] = useState<ContentCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [showVideoPrompt, setShowVideoPrompt] = useState(false);
     const t = useTranslations('forYou');
 
     const fetchContent = useCallback(async () => {
         setLoading(true);
         setError(false);
+        setShowVideoPrompt(false);
         try {
             const res = await fetch('/api/for-you', {
                 method: 'POST',
@@ -69,9 +71,6 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
-    const hasVideoWithoutUrl = cards.some((card) => card.type === 'video' && !card.url);
-    const displayCards = cards.filter((card) => !(card.type === 'video' && !card.url));
-
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -92,6 +91,14 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         );
     }
 
+    const handleCardClick = (card: ContentCard) => {
+        if (card.url) {
+            window.open(card.url, '_blank', 'noopener,noreferrer');
+        } else if (card.type === 'video') {
+            setShowVideoPrompt(true);
+        }
+    };
+
     return (
         <div className={styles.forYouContainer}>
             <div className={styles.sectionHeader}>
@@ -101,17 +108,17 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
             <div className={styles.cardGrid}>
                 <AnimatePresence mode="wait">
-                    {displayCards.map((card, index) => (
+                    {cards.map((card, index) => (
                         <motion.div
                             key={card.id}
-                            className={`${styles.card} ${styles[card.type]}`}
+                            className={`${styles.card} ${styles[card.type]} ${card.type === 'video' && !card.url ? styles.videoNoUrl : ''}`}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.35, delay: index * 0.06 }}
                             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            onClick={() => card.url && window.open(card.url, '_blank', 'noopener,noreferrer')}
-                            style={{ cursor: card.url ? 'pointer' : 'default' }}
+                            onClick={() => handleCardClick(card)}
+                            style={{ cursor: card.url || (card.type === 'video' && !card.url) ? 'pointer' : 'default' }}
                         >
                             <div className={styles.cardHeader}>
                                 <span className={styles.typeIcon}>{TYPE_ICONS[card.type] || '📌'}</span>
@@ -138,34 +145,47 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                                     {t('watchOnYouTube')} →
                                 </div>
                             )}
+                            {card.type === 'video' && !card.url && (
+                                <div className={styles.cardLinkPrompt}>
+                                    {t('makeAVideo.tapToLearnMore')}
+                                </div>
+                            )}
                         </motion.div>
                     ))}
-
-                    {hasVideoWithoutUrl && (
-                        <motion.div
-                            key="video-prompt"
-                            className={styles.videoPromptCard}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.4, delay: displayCards.length * 0.06 }}
-                        >
-                            <span className={styles.videoPromptIcon}>🎬</span>
-                            <span className={styles.videoPromptHeading}>{t('makeAVideo.heading')}</span>
-                            <h3 className={styles.videoPromptTitle}>{t('makeAVideo.title')}</h3>
-                            <p className={styles.videoPromptDescription}>{t('makeAVideo.description')}</p>
-                            <a
-                                href={YOUTUBE_CHANNEL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.videoPromptCta}
-                            >
-                                {t('makeAVideo.cta')}
-                            </a>
-                        </motion.div>
-                    )}
                 </AnimatePresence>
             </div>
+
+            <AnimatePresence>
+                {showVideoPrompt && (
+                    <motion.div
+                        className={styles.videoPromptCard}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                        <button
+                            className={styles.videoPromptClose}
+                            onClick={() => setShowVideoPrompt(false)}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                        <span className={styles.videoPromptIcon}>🎬</span>
+                        <span className={styles.videoPromptHeading}>{t('makeAVideo.heading')}</span>
+                        <h3 className={styles.videoPromptTitle}>{t('makeAVideo.title')}</h3>
+                        <p className={styles.videoPromptDescription}>{t('makeAVideo.description')}</p>
+                        <a
+                            href={YOUTUBE_CHANNEL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.videoPromptCta}
+                        >
+                            {t('makeAVideo.cta')}
+                        </a>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className={styles.refreshRow}>
                 <button className={styles.refreshButton} onClick={fetchContent}>
