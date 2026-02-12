@@ -177,7 +177,10 @@
     "localeSwitcher": {
         "label": "言語",
         "en": "English",
-        "ja": "日本語"
+        "ja": "日本語",
+        "th": "ไทย",
+        "es": "Español",
+        "fr": "Français"
     },
     "loyalty": {
         "meta": {
