@@ -191,8 +191,10 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
               )}
             </button>
           ))}
-          
+        </div>
+
         {/* Privacy setting */}
+        <div className={styles.sectionLabel}>{t('privacy')}</div>
         <div className={styles.privacySection}>
           <PrivacyToggle />
         </div>
