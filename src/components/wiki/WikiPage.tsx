@@ -137,9 +137,16 @@ export default function WikiPage() {
   const ja = locale === 'ja';
   const [activeSection, setActiveSection] = useState<WikiSection>('overview');
   const contentRef = useRef<HTMLElement>(null);
+  const isClickScrolling = useRef(false);
+  const clickScrollTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const scrollToSection = (id: WikiSection) => {
     setActiveSection(id);
+
+    // Suppress scroll-based highlight updates while the smooth scroll runs
+    isClickScrolling.current = true;
+    clearTimeout(clickScrollTimer.current);
+
     const el = document.getElementById(`wiki-${id}`);
     const container = contentRef.current;
     if (el && container) {
@@ -148,9 +155,17 @@ export default function WikiPage() {
       const offset = elRect.top - containerRect.top + container.scrollTop;
       container.scrollTo({ top: offset, behavior: 'smooth' });
     }
+
+    // Re-enable after the smooth scroll is expected to finish
+    clickScrollTimer.current = setTimeout(() => {
+      isClickScrolling.current = false;
+    }, 800);
   };
 
   const handleScroll = useCallback(() => {
+    // Don't update sidebar while a click-triggered scroll is animating
+    if (isClickScrolling.current) return;
+
     const container = contentRef.current;
     if (!container) return;
 
