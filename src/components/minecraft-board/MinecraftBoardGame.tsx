@@ -145,28 +145,43 @@ export default function MinecraftBoardGame() {
 
   // === Render ===
 
-  // Connection overlay
-  if (connectionStatus === 'connecting' || connectionStatus === 'reconnecting') {
-    return (
-      <div className={styles.page}>
-        <div className={styles.centerBox}>
-          <div className={styles.spinner} />
-          <p>{connectionStatus === 'connecting' ? 'Connecting...' : 'Reconnecting...'}</p>
+  // Determine if we're in an active game phase where we should show the game board
+  const inGame = phase === 'playing' || phase === 'countdown' || phase === 'ended';
+
+  // Connection overlay - only block UI when NOT in an active game phase
+  if (!inGame) {
+    if (connectionStatus === 'connecting' || connectionStatus === 'reconnecting') {
+      return (
+        <div className={styles.page}>
+          <div className={styles.centerBox}>
+            <div className={styles.spinner} />
+            <p>{connectionStatus === 'connecting' ? 'Connecting...' : 'Reconnecting...'}</p>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    if (connectionStatus === 'disconnected') {
+      return (
+        <div className={styles.page}>
+          <div className={styles.centerBox}>
+            <p>Disconnected from server</p>
+            <button className={styles.btn} onClick={connectWebSocket}>Reconnect</button>
+          </div>
+        </div>
+      );
+    }
   }
 
-  if (connectionStatus === 'disconnected') {
-    return (
-      <div className={styles.page}>
-        <div className={styles.centerBox}>
-          <p>Disconnected from server</p>
-          <button className={styles.btn} onClick={connectWebSocket}>Reconnect</button>
-        </div>
+  // Non-blocking connection overlay during active game phases
+  const connectionOverlay = inGame && connectionStatus !== 'connected' ? (
+    <div className={styles.reconnectOverlay}>
+      <div className={styles.reconnectBox}>
+        <div className={styles.spinner} />
+        <p>{connectionStatus === 'disconnected' ? 'Connection lost' : 'Reconnecting...'}</p>
       </div>
-    );
-  }
+    </div>
+  ) : null;
 
   // === Menu Phase ===
   if (phase === 'menu') {
@@ -364,6 +379,7 @@ export default function MinecraftBoardGame() {
   if (phase === 'countdown') {
     return (
       <div className={styles.page}>
+        {connectionOverlay}
         <div className={styles.centerBox}>
           <div className={styles.countdownNumber}>{countdownCount}</div>
           <p>Game starting...</p>
@@ -376,6 +392,7 @@ export default function MinecraftBoardGame() {
   if (phase === 'playing' && selfState && playerId) {
     return (
       <div className={styles.page}>
+        {connectionOverlay}
         <div className={styles.gameLayout}>
           {/* Board */}
           <div className={styles.boardArea}>
@@ -486,6 +503,7 @@ export default function MinecraftBoardGame() {
   if (phase === 'ended') {
     return (
       <div className={styles.page}>
+        {connectionOverlay}
         <div className={styles.centerBox}>
           <h1 className={styles.endTitle}>Game Over!</h1>
           {winner && (

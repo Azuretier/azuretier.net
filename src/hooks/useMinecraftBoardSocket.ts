@@ -34,6 +34,7 @@ export function useMinecraftBoardSocket() {
   const reconnectAttemptsRef = useRef(0);
   const reconnectTokenRef = useRef<string | null>(null);
   const lastPingRef = useRef<number>(Date.now());
+  const mountedRef = useRef(true);
 
   // Game state
   const [phase, setPhase] = useState<MCGamePhase>('menu');
@@ -55,28 +56,42 @@ export function useMinecraftBoardSocket() {
   const [gameMessage, setGameMessage] = useState<string | null>(null);
   const [winner, setWinner] = useState<{ id: string; name: string } | null>(null);
 
+  // Track mounted state
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // === WebSocket Connection ===
+  // Key fix: all event handlers guard against stale WebSocket instances
+  // by checking wsRef.current === ws before updating state.
 
   const connectWebSocket = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    // Clean up any existing connection to prevent stale handler races
+    if (wsRef.current) {
+      const old = wsRef.current;
+      wsRef.current = null;
+      old.onopen = null;
+      old.onclose = null;
+      old.onerror = null;
+      old.onmessage = null;
+      try { old.close(); } catch { /* ignore */ }
+    }
 
     setConnectionStatus('connecting');
     const ws = new WebSocket(MULTIPLAYER_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      // Guard: if a newer WebSocket has replaced us, ignore
+      if (wsRef.current !== ws || !mountedRef.current) return;
       setConnectionStatus('connected');
       reconnectAttemptsRef.current = 0;
       lastPingRef.current = Date.now();
-
-      // Try reconnect with token
-      const token = reconnectTokenRef.current || sessionStorage.getItem('mc_reconnectToken');
-      if (token) {
-        ws.send(JSON.stringify({ type: 'reconnect', reconnectToken: token }));
-      }
     };
 
     ws.onmessage = (event) => {
+      if (wsRef.current !== ws || !mountedRef.current) return;
       try {
         const msg = JSON.parse(event.data) as MCServerMessage | { type: string; [key: string]: unknown };
         handleServerMessage(msg as MCServerMessage);
@@ -84,29 +99,43 @@ export function useMinecraftBoardSocket() {
     };
 
     ws.onclose = () => {
-      setConnectionStatus('disconnected');
+      // Guard: if a newer WebSocket has replaced us, this is stale — ignore
+      if (wsRef.current !== ws) return;
       wsRef.current = null;
+      if (!mountedRef.current) return;
+      setConnectionStatus('disconnected');
       attemptReconnect();
     };
 
     ws.onerror = () => {
-      ws.close();
+      // onclose will fire after this
     };
   }, []);
 
   const attemptReconnect = useCallback(() => {
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
+    if (!mountedRef.current) return;
     reconnectAttemptsRef.current++;
     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 15000);
     setConnectionStatus('reconnecting');
-    setTimeout(connectWebSocket, delay);
+    setTimeout(() => {
+      if (!mountedRef.current) return;
+      if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
+      connectWebSocket();
+    }, delay);
   }, [connectWebSocket]);
 
   const disconnect = useCallback(() => {
     reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS; // Prevent auto-reconnect
-    if (wsRef.current) {
-      wsRef.current.close();
+    const ws = wsRef.current;
+    if (ws) {
       wsRef.current = null;
+      // Nullify handlers to prevent stale onclose from firing
+      ws.onopen = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
+      try { ws.close(); } catch { /* ignore */ }
     }
     setConnectionStatus('disconnected');
   }, []);
