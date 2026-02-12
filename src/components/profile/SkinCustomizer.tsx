@@ -1,12 +1,22 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { usePathname, useRouter } from '@/i18n/navigation';
+import { routing, type Locale } from '@/i18n/routing';
 import { useSkin } from '@/lib/skin/context';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
 import styles from './SkinCustomizer.module.css';
+
+const LOCALE_FLAGS: Record<string, string> = {
+  ja: '\u{1F1EF}\u{1F1F5}',
+  en: '\u{1F1FA}\u{1F1F8}',
+  th: '\u{1F1F9}\u{1F1ED}',
+  es: '\u{1F1EA}\u{1F1F8}',
+  fr: '\u{1F1EB}\u{1F1F7}',
+};
 
 interface SkinCustomizerProps {
   onClose: () => void;
@@ -54,8 +64,18 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
 
 export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const t = useTranslations('skin');
+  const tLocale = useTranslations('localeSwitcher');
   const { currentSkin, setSkin, skins } = useSkin();
   const { profile } = useProfile();
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleLocaleChange = (newLocale: Locale) => {
+    if (newLocale !== locale) {
+      router.replace(pathname, { locale: newLocale });
+    }
+  };
 
   const iconData = profile ? getIconById(profile.icon) : null;
 
@@ -125,6 +145,26 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             />
             {currentSkin.name} — {currentSkin.nameJa}
           </div>
+        </div>
+
+        {/* Language selection */}
+        <div className={styles.sectionLabel}>{t('selectLanguage')}</div>
+        <div className={styles.langGrid}>
+          {routing.locales.map((loc) => (
+            <button
+              key={loc}
+              className={`${styles.langOption} ${locale === loc ? styles.langOptionActive : ''}`}
+              onClick={() => handleLocaleChange(loc)}
+            >
+              <span className={styles.langFlag}>{LOCALE_FLAGS[loc]}</span>
+              <span className={styles.langName}>{tLocale(loc)}</span>
+              {locale === loc && (
+                <svg className={styles.langCheck} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
       </motion.div>
     </motion.div>

@@ -823,6 +823,7 @@
         "title": "プロフィール & スキン",
         "selectSkin": "カラースキンを選択",
         "currentSkin": "現在のスキン",
+        "selectLanguage": "言語設定",
         "profileButton": "プロフィール"
     }
 }
