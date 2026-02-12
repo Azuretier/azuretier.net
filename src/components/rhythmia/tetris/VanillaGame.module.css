@@ -2579,6 +2579,201 @@
   }
 }
 
+/* ===== KeyBindSettings Component ===== */
+.keyBindPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 320px;
+  max-width: 90vw;
+  padding: 28px 24px 20px;
+  background: rgba(10, 10, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.keyBindTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.keyBindSubtitle {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  margin-bottom: 14px;
+}
+
+.keyBindList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.keyBindRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.keyBindRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.keyBindLabelWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.keyBindLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.05em;
+}
+
+.keyBindLabelJa {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.08em;
+}
+
+/* Keyboard cap button */
+.keyBindKey {
+  padding: 7px 18px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom-width: 3px;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  min-width: 64px;
+  text-align: center;
+  transition: all 0.15s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.keyBindKey:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.07) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.keyBindKey:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Listening state — pulsing blue glow */
+.keyBindKeyListening {
+  background: linear-gradient(180deg, rgba(0, 127, 255, 0.2) 0%, rgba(0, 127, 255, 0.08) 100%);
+  border-color: rgba(0, 127, 255, 0.5);
+  border-bottom-color: rgba(0, 127, 255, 0.25);
+  color: #6EC6FF;
+  box-shadow: 0 2px 12px rgba(0, 127, 255, 0.2), 0 0 24px rgba(0, 127, 255, 0.08), inset 0 1px 0 rgba(0, 127, 255, 0.15);
+  animation: keyBindPulse 1.2s ease-in-out infinite;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+@keyframes keyBindPulse {
+  0%, 100% {
+    border-color: rgba(0, 127, 255, 0.5);
+    box-shadow: 0 2px 12px rgba(0, 127, 255, 0.2), 0 0 24px rgba(0, 127, 255, 0.08);
+  }
+  50% {
+    border-color: rgba(0, 127, 255, 0.8);
+    box-shadow: 0 2px 16px rgba(0, 127, 255, 0.35), 0 0 32px rgba(0, 127, 255, 0.12);
+  }
+}
+
+.keyBindActions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.keyBindResetBtn,
+.keyBindBackBtn {
+  flex: 1;
+  padding: 9px 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.keyBindResetBtn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.keyBindResetBtn:hover {
+  background: rgba(255, 80, 80, 0.1);
+  border-color: rgba(255, 80, 80, 0.3);
+  color: rgba(255, 120, 120, 0.9);
+}
+
+.keyBindBackBtn {
+  background: rgba(0, 127, 255, 0.1);
+  border: 1px solid rgba(0, 127, 255, 0.2);
+  color: rgba(100, 180, 255, 0.9);
+}
+
+.keyBindBackBtn:hover {
+  background: rgba(0, 127, 255, 0.2);
+  border-color: rgba(0, 127, 255, 0.4);
+  color: white;
+}
+
+@media (max-width: 480px) {
+  .keyBindPanel {
+    width: 280px;
+    padding: 20px 16px 16px;
+  }
+
+  .keyBindTitle { font-size: 0.85rem; }
+  .keyBindRow { padding: 10px 12px; }
+  .keyBindLabel { font-size: 0.7rem; }
+
+  .keyBindKey {
+    padding: 6px 14px;
+    font-size: 0.65rem;
+    min-width: 54px;
+  }
+}
+
 /* ===================================================================
    INVENTORY UI — Minecraft Dungeons Style
    =================================================================== */
