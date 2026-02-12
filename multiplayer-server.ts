@@ -4,6 +4,8 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { initDiscordBot, destroyDiscordBot } from './src/lib/discord-bot/client';
+import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
   ServerMessage,
@@ -549,10 +551,15 @@ function handleMessage(playerId: string, raw: string): void {
     case 'set_profile': {
       const profileMsg = message as unknown as { name: string; icon: string };
       if (conn) {
+        const isNewProfile = !conn.profileName;
         conn.profileName = (profileMsg.name || '').slice(0, 20);
         conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
         // Broadcast updated online users so all clients see the new profile
         broadcastOnlineCount();
+        // Notify Discord channels when a player comes online
+        if (isNewProfile && conn.profileName) {
+          notifyPlayerOnline(conn.profileName, conn.profileIcon || '', playerConnections.size);
+        }
       }
       break;
     }
@@ -1405,7 +1412,7 @@ const heartbeatInterval = setInterval(() => {
   });
 }, HEARTBEAT_INTERVAL);
 
-// Token cleanup
+// Token cleanup + notification cooldown cleanup
 const tokenCleanupInterval = setInterval(() => {
   const now = Date.now();
   reconnectTokens.forEach((data, token) => {
@@ -1413,6 +1420,7 @@ const tokenCleanupInterval = setInterval(() => {
       reconnectTokens.delete(token);
     }
   });
+  cleanupNotificationCooldowns();
 }, 60000);
 
 // ===== Connection Handler =====
@@ -1468,7 +1476,7 @@ wss.on('error', (error) => {
 
 // ===== Start Server =====
 
-server.listen(PORT, HOST, () => {
+server.listen(PORT, HOST, async () => {
   console.log(`
   RHYTHMIA Multiplayer Server
   ============================
@@ -1480,6 +1488,9 @@ server.listen(PORT, HOST, () => {
   Reconnect: ${RECONNECT_GRACE_PERIOD / 1000}s grace
   ============================
   `);
+
+  // Initialize Discord bot for channel notifications
+  await initDiscordBot();
 });
 
 // ===== Graceful Shutdown =====
@@ -1506,10 +1517,11 @@ function shutdown(signal: string) {
   });
 
   wss.close(() => {
-    server.close(() => {
+    server.close(async () => {
       roomManager.destroy();
       arenaManager.destroy();
       mcBoardManager.destroy();
+      await destroyDiscordBot();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });
