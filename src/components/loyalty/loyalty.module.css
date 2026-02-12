@@ -3,6 +3,8 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   color: #ffffff;
   position: relative;
   box-sizing: border-box;
