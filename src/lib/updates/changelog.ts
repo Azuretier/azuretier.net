@@ -472,6 +472,18 @@ export const PR_UPDATES: PRUpdate[] = [
     descriptionJa: 'UIインジケーター付きワールド進行追跡',
     highlights: ['Visual progress indicators', 'World tracking'],
     highlightsJa: ['ビジュアル進行インジケーター', 'ワールド追跡']
+  },
+  {
+    number: 177,
+    title: 'Add Wiki and redesigned Updates pages with comprehensive game documentation',
+    titleJa: 'Wikiと再設計されたアップデートページを包括的なゲームドキュメントと共に追加',
+    category: 'feature',
+    date: '2026-02-12',
+    merged: true,
+    description: 'Added comprehensive wiki system and redesigned updates page with full documentation',
+    descriptionJa: '包括的なWikiシステムと完全なドキュメント付きの再設計されたアップデートページを追加',
+    highlights: ['Wiki page with game documentation', 'Redesigned updates page', 'Comprehensive PR tracking system', 'Update notification system'],
+    highlightsJa: ['ゲームドキュメント付きWikiページ', '再設計されたアップデートページ', '包括的なPR追跡システム', '更新通知システム']
   }
 ];
 
