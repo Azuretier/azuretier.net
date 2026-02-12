@@ -48,66 +48,246 @@
         "unlocked": "SUCCÈS DÉBLOQUÉ",
         "locked": "VERROUILLÉ",
         "lockMessage": "{current}/{required} succès pour débloquer",
-        "lines_10": { "name": "Débutant des Lignes", "desc": "Éliminez 10 lignes au total" },
-        "lines_50": { "name": "Apprenti des Lignes", "desc": "Éliminez 50 lignes au total" },
-        "lines_200": { "name": "Expert des Lignes", "desc": "Éliminez 200 lignes au total" },
-        "lines_500": { "name": "Maître des Lignes", "desc": "Éliminez 500 lignes au total" },
-        "lines_1000": { "name": "Légende des Lignes", "desc": "Éliminez 1 000 lignes au total" },
-        "best_lines_10": { "name": "Échauffement", "desc": "Éliminez 10 lignes en une partie" },
-        "best_lines_25": { "name": "Premiers Pas", "desc": "Éliminez 25 lignes en une partie" },
-        "best_lines_50": { "name": "Machine à Lignes", "desc": "Éliminez 50 lignes en une partie" },
-        "best_lines_100": { "name": "Inarrêtable", "desc": "Éliminez 100 lignes en une partie" },
-        "tspin_1": { "name": "Premier Pivot", "desc": "Réalisez votre premier T-Spin" },
-        "tspin_10": { "name": "Docteur du Pivot", "desc": "Réalisez 10 T-Spins" },
-        "tspin_50": { "name": "Expert du T-Spin", "desc": "Réalisez 50 T-Spins" },
-        "tspin_200": { "name": "Légende du T-Spin", "desc": "Réalisez 200 T-Spins" },
-        "score_10k": { "name": "Novice du Score", "desc": "Accumulez 10 000 points au total" },
-        "score_100k": { "name": "Chasseur de Score", "desc": "Accumulez 100 000 points au total" },
-        "score_1m": { "name": "Maître du Score", "desc": "Accumulez 1 000 000 points au total" },
-        "score_10m": { "name": "Légende du Score", "desc": "Accumulez 10 000 000 points au total" },
-        "best_score_5k": { "name": "Belle Partie", "desc": "Marquez 5 000 points en une partie" },
-        "best_score_25k": { "name": "Super Partie", "desc": "Marquez 25 000 points en une partie" },
-        "best_score_100k": { "name": "Partie Incroyable", "desc": "Marquez 100 000 points en une partie" },
-        "best_score_500k": { "name": "Partie Légendaire", "desc": "Marquez 500 000 points en une partie" },
-        "combo_3": { "name": "Début de Combo", "desc": "Atteignez un combo de 3" },
-        "combo_10": { "name": "Roi du Combo", "desc": "Atteignez un combo de 10" },
-        "combo_20": { "name": "Dieu du Combo", "desc": "Atteignez un combo de 20" },
-        "games_1": { "name": "Premiers Pas", "desc": "Jouez votre première partie" },
-        "games_10": { "name": "Ça Devient Sérieux", "desc": "Jouez 10 parties" },
-        "games_50": { "name": "Joueur Dévoué", "desc": "Jouez 50 parties" },
-        "games_100": { "name": "Vétéran", "desc": "Jouez 100 parties" },
-        "worlds_5": { "name": "Globe-Trotter", "desc": "Terminez 5 mondes" },
-        "tetris_1": { "name": "Tetris !", "desc": "Éliminez 4 lignes d'un coup" },
-        "tetris_10": { "name": "Accro au Tetris", "desc": "Éliminez 4 lignes d'un coup 10 fois" },
-        "tetris_50": { "name": "Maître du Tetris", "desc": "Éliminez 4 lignes d'un coup 50 fois" },
-        "perfect_beats_10": { "name": "Novice du Rythme", "desc": "Réussissez 10 rythmes parfaits en une partie" },
-        "perfect_beats_50": { "name": "Maître du Rythme", "desc": "Réussissez 50 rythmes parfaits en une partie" },
-        "hard_drops_100": { "name": "Chute Rapide", "desc": "Effectuez 100 chutes dures" },
-        "hard_drops_1000": { "name": "Vitesse Terminale", "desc": "Effectuez 1 000 chutes dures" },
-        "pieces_100": { "name": "Constructeur de Blocs", "desc": "Placez 100 pièces" },
-        "pieces_1000": { "name": "Architecte de Blocs", "desc": "Placez 1 000 pièces" },
-        "pieces_10000": { "name": "Légende des Blocs", "desc": "Placez 10 000 pièces" },
-        "mp_win_1": { "name": "Première Victoire", "desc": "Gagnez votre premier match multijoueur" },
-        "mp_win_10": { "name": "Combattant d'Arène", "desc": "Gagnez 10 matchs multijoueur" },
-        "mp_win_50": { "name": "Champion d'Arène", "desc": "Gagnez 50 matchs multijoueur" },
-        "mp_streak_3": { "name": "Série en Feu", "desc": "Gagnez 3 matchs d'affilée" },
-        "mp_streak_5": { "name": "Domination", "desc": "Gagnez 5 matchs d'affilée" },
-        "mp_streak_10": { "name": "Incassable", "desc": "Gagnez 10 matchs d'affilée" },
-        "mp_games_10": { "name": "Habitué de l'Arène", "desc": "Jouez 10 matchs multijoueur" },
-        "mp_games_50": { "name": "Vétéran de l'Arène", "desc": "Jouez 50 matchs multijoueur" },
-        "loyalty_streak_3": { "name": "Série de 3 Jours", "desc": "Visitez 3 jours d'affilée" },
-        "loyalty_streak_7": { "name": "Rythme Hebdomadaire", "desc": "Visitez 7 jours d'affilée" },
-        "loyalty_streak_14": { "name": "Rythme Bimensuel", "desc": "Visitez 14 jours d'affilée" },
-        "loyalty_streak_30": { "name": "Pouls Mensuel", "desc": "Visitez 30 jours d'affilée" },
-        "loyalty_visits_5": { "name": "Habitué", "desc": "Visitez 5 fois" },
-        "loyalty_visits_25": { "name": "Visage Familier", "desc": "Visitez 25 fois" },
-        "loyalty_visits_100": { "name": "Membre de la Famille", "desc": "Visitez 100 fois" },
-        "loyalty_games_10": { "name": "Joueur", "desc": "Jouez 10 parties" },
-        "loyalty_games_50": { "name": "Passionné", "desc": "Jouez 50 parties" },
-        "loyalty_games_200": { "name": "Dévoué", "desc": "Jouez 200 parties" },
-        "loyalty_polls_1": { "name": "Premier Vote", "desc": "Votez dans votre premier sondage" },
-        "loyalty_polls_5": { "name": "Votant Actif", "desc": "Votez dans 5 sondages" },
-        "loyalty_polls_10": { "name": "Voix de la Communauté", "desc": "Votez dans 10 sondages" }
+        "lines_10": {
+            "name": "Débutant des Lignes",
+            "desc": "Éliminez 10 lignes au total"
+        },
+        "lines_50": {
+            "name": "Apprenti des Lignes",
+            "desc": "Éliminez 50 lignes au total"
+        },
+        "lines_200": {
+            "name": "Expert des Lignes",
+            "desc": "Éliminez 200 lignes au total"
+        },
+        "lines_500": {
+            "name": "Maître des Lignes",
+            "desc": "Éliminez 500 lignes au total"
+        },
+        "lines_1000": {
+            "name": "Légende des Lignes",
+            "desc": "Éliminez 1 000 lignes au total"
+        },
+        "best_lines_10": {
+            "name": "Échauffement",
+            "desc": "Éliminez 10 lignes en une partie"
+        },
+        "best_lines_25": {
+            "name": "Premiers Pas",
+            "desc": "Éliminez 25 lignes en une partie"
+        },
+        "best_lines_50": {
+            "name": "Machine à Lignes",
+            "desc": "Éliminez 50 lignes en une partie"
+        },
+        "best_lines_100": {
+            "name": "Inarrêtable",
+            "desc": "Éliminez 100 lignes en une partie"
+        },
+        "tspin_1": {
+            "name": "Premier Pivot",
+            "desc": "Réalisez votre premier T-Spin"
+        },
+        "tspin_10": {
+            "name": "Docteur du Pivot",
+            "desc": "Réalisez 10 T-Spins"
+        },
+        "tspin_50": {
+            "name": "Expert du T-Spin",
+            "desc": "Réalisez 50 T-Spins"
+        },
+        "tspin_200": {
+            "name": "Légende du T-Spin",
+            "desc": "Réalisez 200 T-Spins"
+        },
+        "score_10k": {
+            "name": "Novice du Score",
+            "desc": "Accumulez 10 000 points au total"
+        },
+        "score_100k": {
+            "name": "Chasseur de Score",
+            "desc": "Accumulez 100 000 points au total"
+        },
+        "score_1m": {
+            "name": "Maître du Score",
+            "desc": "Accumulez 1 000 000 points au total"
+        },
+        "score_10m": {
+            "name": "Légende du Score",
+            "desc": "Accumulez 10 000 000 points au total"
+        },
+        "best_score_5k": {
+            "name": "Belle Partie",
+            "desc": "Marquez 5 000 points en une partie"
+        },
+        "best_score_25k": {
+            "name": "Super Partie",
+            "desc": "Marquez 25 000 points en une partie"
+        },
+        "best_score_100k": {
+            "name": "Partie Incroyable",
+            "desc": "Marquez 100 000 points en une partie"
+        },
+        "best_score_500k": {
+            "name": "Partie Légendaire",
+            "desc": "Marquez 500 000 points en une partie"
+        },
+        "combo_3": {
+            "name": "Début de Combo",
+            "desc": "Atteignez un combo de 3"
+        },
+        "combo_10": {
+            "name": "Roi du Combo",
+            "desc": "Atteignez un combo de 10"
+        },
+        "combo_20": {
+            "name": "Dieu du Combo",
+            "desc": "Atteignez un combo de 20"
+        },
+        "games_1": {
+            "name": "Premiers Pas",
+            "desc": "Jouez votre première partie"
+        },
+        "games_10": {
+            "name": "Ça Devient Sérieux",
+            "desc": "Jouez 10 parties"
+        },
+        "games_50": {
+            "name": "Joueur Dévoué",
+            "desc": "Jouez 50 parties"
+        },
+        "games_100": {
+            "name": "Vétéran",
+            "desc": "Jouez 100 parties"
+        },
+        "worlds_5": {
+            "name": "Globe-Trotter",
+            "desc": "Terminez 5 mondes"
+        },
+        "tetris_1": {
+            "name": "Tetris !",
+            "desc": "Éliminez 4 lignes d'un coup"
+        },
+        "tetris_10": {
+            "name": "Accro au Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 10 fois"
+        },
+        "tetris_50": {
+            "name": "Maître du Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 50 fois"
+        },
+        "perfect_beats_10": {
+            "name": "Novice du Rythme",
+            "desc": "Réussissez 10 rythmes parfaits en une partie"
+        },
+        "perfect_beats_50": {
+            "name": "Maître du Rythme",
+            "desc": "Réussissez 50 rythmes parfaits en une partie"
+        },
+        "hard_drops_100": {
+            "name": "Chute Rapide",
+            "desc": "Effectuez 100 chutes dures"
+        },
+        "hard_drops_1000": {
+            "name": "Vitesse Terminale",
+            "desc": "Effectuez 1 000 chutes dures"
+        },
+        "pieces_100": {
+            "name": "Constructeur de Blocs",
+            "desc": "Placez 100 pièces"
+        },
+        "pieces_1000": {
+            "name": "Architecte de Blocs",
+            "desc": "Placez 1 000 pièces"
+        },
+        "pieces_10000": {
+            "name": "Légende des Blocs",
+            "desc": "Placez 10 000 pièces"
+        },
+        "mp_win_1": {
+            "name": "Première Victoire",
+            "desc": "Gagnez votre premier match multijoueur"
+        },
+        "mp_win_10": {
+            "name": "Combattant d'Arène",
+            "desc": "Gagnez 10 matchs multijoueur"
+        },
+        "mp_win_50": {
+            "name": "Champion d'Arène",
+            "desc": "Gagnez 50 matchs multijoueur"
+        },
+        "mp_streak_3": {
+            "name": "Série en Feu",
+            "desc": "Gagnez 3 matchs d'affilée"
+        },
+        "mp_streak_5": {
+            "name": "Domination",
+            "desc": "Gagnez 5 matchs d'affilée"
+        },
+        "mp_streak_10": {
+            "name": "Incassable",
+            "desc": "Gagnez 10 matchs d'affilée"
+        },
+        "mp_games_10": {
+            "name": "Habitué de l'Arène",
+            "desc": "Jouez 10 matchs multijoueur"
+        },
+        "mp_games_50": {
+            "name": "Vétéran de l'Arène",
+            "desc": "Jouez 50 matchs multijoueur"
+        },
+        "loyalty_streak_3": {
+            "name": "Série de 3 Jours",
+            "desc": "Visitez 3 jours d'affilée"
+        },
+        "loyalty_streak_7": {
+            "name": "Rythme Hebdomadaire",
+            "desc": "Visitez 7 jours d'affilée"
+        },
+        "loyalty_streak_14": {
+            "name": "Rythme Bimensuel",
+            "desc": "Visitez 14 jours d'affilée"
+        },
+        "loyalty_streak_30": {
+            "name": "Pouls Mensuel",
+            "desc": "Visitez 30 jours d'affilée"
+        },
+        "loyalty_visits_5": {
+            "name": "Habitué",
+            "desc": "Visitez 5 fois"
+        },
+        "loyalty_visits_25": {
+            "name": "Visage Familier",
+            "desc": "Visitez 25 fois"
+        },
+        "loyalty_visits_100": {
+            "name": "Membre de la Famille",
+            "desc": "Visitez 100 fois"
+        },
+        "loyalty_games_10": {
+            "name": "Joueur",
+            "desc": "Jouez 10 parties"
+        },
+        "loyalty_games_50": {
+            "name": "Passionné",
+            "desc": "Jouez 50 parties"
+        },
+        "loyalty_games_200": {
+            "name": "Dévoué",
+            "desc": "Jouez 200 parties"
+        },
+        "loyalty_polls_1": {
+            "name": "Premier Vote",
+            "desc": "Votez dans votre premier sondage"
+        },
+        "loyalty_polls_5": {
+            "name": "Votant Actif",
+            "desc": "Votez dans 5 sondages"
+        },
+        "loyalty_polls_10": {
+            "name": "Voix de la Communauté",
+            "desc": "Votez dans 10 sondages"
+        }
     },
     "arena": {
         "badge": "9J",
@@ -213,19 +393,71 @@
             "howItWorks": "COMMENT ÇA MARCHE"
         },
         "badges": {
-            "streak_3": { "icon": "\uD83D\uDD25", "name": "Série de 3 Jours", "desc": "Visitez 3 jours d'affilée" },
-            "streak_7": { "icon": "\uD83D\uDD25", "name": "Rythme Hebdomadaire", "desc": "Visitez 7 jours d'affilée" },
-            "streak_14": { "icon": "\uD83D\uDD25", "name": "Rythme Bimensuel", "desc": "Visitez 14 jours d'affilée" },
-            "streak_30": { "icon": "\uD83D\uDD25", "name": "Pouls Mensuel", "desc": "Visitez 30 jours d'affilée" },
-            "visits_5": { "icon": "\uD83D\uDC63", "name": "Habitué", "desc": "Visitez 5 fois" },
-            "visits_25": { "icon": "\uD83D\uDC63", "name": "Visage Familier", "desc": "Visitez 25 fois" },
-            "visits_100": { "icon": "\uD83D\uDC63", "name": "De la Famille", "desc": "Visitez 100 fois" },
-            "games_10": { "icon": "\uD83C\uDFAE", "name": "Joueur", "desc": "Jouez 10 parties" },
-            "games_50": { "icon": "\uD83C\uDFAE", "name": "Passionné", "desc": "Jouez 50 parties" },
-            "games_200": { "icon": "\uD83C\uDFAE", "name": "Dévoué", "desc": "Jouez 200 parties" },
-            "polls_1": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Premier Vote", "desc": "Votez dans votre premier sondage" },
-            "polls_5": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Votant Actif", "desc": "Votez dans 5 sondages" },
-            "polls_10": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Voix de la Communauté", "desc": "Votez dans 10 sondages" }
+            "streak_3": {
+                "icon": "🔥",
+                "name": "Série de 3 Jours",
+                "desc": "Visitez 3 jours d'affilée"
+            },
+            "streak_7": {
+                "icon": "🔥",
+                "name": "Rythme Hebdomadaire",
+                "desc": "Visitez 7 jours d'affilée"
+            },
+            "streak_14": {
+                "icon": "🔥",
+                "name": "Rythme Bimensuel",
+                "desc": "Visitez 14 jours d'affilée"
+            },
+            "streak_30": {
+                "icon": "🔥",
+                "name": "Pouls Mensuel",
+                "desc": "Visitez 30 jours d'affilée"
+            },
+            "visits_5": {
+                "icon": "👣",
+                "name": "Habitué",
+                "desc": "Visitez 5 fois"
+            },
+            "visits_25": {
+                "icon": "👣",
+                "name": "Visage Familier",
+                "desc": "Visitez 25 fois"
+            },
+            "visits_100": {
+                "icon": "👣",
+                "name": "De la Famille",
+                "desc": "Visitez 100 fois"
+            },
+            "games_10": {
+                "icon": "🎮",
+                "name": "Joueur",
+                "desc": "Jouez 10 parties"
+            },
+            "games_50": {
+                "icon": "🎮",
+                "name": "Passionné",
+                "desc": "Jouez 50 parties"
+            },
+            "games_200": {
+                "icon": "🎮",
+                "name": "Dévoué",
+                "desc": "Jouez 200 parties"
+            },
+            "polls_1": {
+                "icon": "🗳️",
+                "name": "Premier Vote",
+                "desc": "Votez dans votre premier sondage"
+            },
+            "polls_5": {
+                "icon": "🗳️",
+                "name": "Votant Actif",
+                "desc": "Votez dans 5 sondages"
+            },
+            "polls_10": {
+                "icon": "🗳️",
+                "name": "Voix de la Communauté",
+                "desc": "Votez dans 10 sondages"
+            }
         },
         "poll": {
             "question": "Quel devrait être le prochain mode de jeu RHYTHMIA ?",
@@ -288,7 +520,8 @@
             "refactor": "Refactorisations",
             "docs": "Documentation",
             "i18n": "Internationalisation"
-        }
+        },
+        "videoTitle": "Aperçu de la mise à jour"
     },
     "minecraft_board": {
         "title": "Jeu de Plateau Minecraft",
@@ -559,7 +792,9 @@
         "title": "Profil & Skin",
         "selectSkin": "Choisir un Skin de Couleur",
         "currentSkin": "Skin Actuel",
-        "profileButton": "Profil"
+        "profileButton": "Profil",
+        "selectLanguage": "Langue",
+        "privacy": "Confidentialité"
     },
     "googleSync": {
         "sectionTitle": "Synchronisation Google",
