@@ -99,7 +99,7 @@ Return ONLY the JSON array, no markdown fencing, no explanation.`;
                 description: String(card.description || '').slice(0, 150),
                 tags: Array.isArray(card.tags) ? card.tags.slice(0, 3) : [],
                 difficulty: ['beginner', 'intermediate', 'advanced'].includes(card.difficulty ?? '') ? card.difficulty : 'beginner',
-                url: card.url === '' ? '' : (card.url || undefined),
+                url: resolveVideoUrl(card.url),
             }));
         } catch {
             cards = getFallbackContent(locale, unlockedAdvancements, totalAdvancements);
