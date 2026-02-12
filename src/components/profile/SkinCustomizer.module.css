@@ -262,6 +262,57 @@
   flex-shrink: 0;
 }
 
+/* Language selection */
+.langGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 28px 24px;
+}
+
+.langOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.06));
+  border-radius: 10px;
+  color: var(--skin-foreground, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.langOption:hover {
+  background: var(--skin-accent-dim, rgba(255, 255, 255, 0.06));
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.15));
+}
+
+.langOptionActive {
+  border-color: var(--skin-accent, #007FFF) !important;
+  background: var(--skin-accent-dim, rgba(0, 127, 255, 0.08)) !important;
+  color: var(--skin-foreground, #ffffff);
+}
+
+.langFlag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.langName {
+  flex: 1;
+  letter-spacing: 0.02em;
+}
+
+.langCheck {
+  color: var(--skin-accent, #007FFF);
+  flex-shrink: 0;
+}
+
 /* Privacy Toggle */
 .privacySection {
   padding: 0 28px 24px;
@@ -347,6 +398,10 @@
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
+  }
+
+  .langGrid {
+    padding: 0 20px 20px;
   }
 
   .privacySection {
