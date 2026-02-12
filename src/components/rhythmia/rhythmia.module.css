@@ -2,9 +2,11 @@
 .page {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
+  min-height: 100vh;
   height: 100vh;
   max-width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: #ffffff;
   position: relative;
   box-sizing: border-box;
@@ -119,9 +121,7 @@
 .container {
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   flex: 1;

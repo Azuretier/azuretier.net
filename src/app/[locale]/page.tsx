@@ -13,6 +13,7 @@ import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -335,6 +336,9 @@ export default function RhythmiaPage() {
                             <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                         </motion.div>
                     </div>
+
+                    {/* Loyalty widget — visible immediately on landing */}
+                    <LoyaltyWidget />
                 </main>
 
                 <motion.footer
