@@ -4,7 +4,6 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
-import { initDiscordBot, destroyDiscordBot } from './src/lib/discord-bot/client';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -1476,7 +1475,7 @@ wss.on('error', (error) => {
 
 // ===== Start Server =====
 
-server.listen(PORT, HOST, async () => {
+server.listen(PORT, HOST, () => {
   console.log(`
   RHYTHMIA Multiplayer Server
   ============================
@@ -1488,9 +1487,6 @@ server.listen(PORT, HOST, async () => {
   Reconnect: ${RECONNECT_GRACE_PERIOD / 1000}s grace
   ============================
   `);
-
-  // Initialize Discord bot for channel notifications
-  await initDiscordBot();
 });
 
 // ===== Graceful Shutdown =====
@@ -1517,11 +1513,10 @@ function shutdown(signal: string) {
   });
 
   wss.close(() => {
-    server.close(async () => {
+    server.close(() => {
       roomManager.destroy();
       arenaManager.destroy();
       mcBoardManager.destroy();
-      await destroyDiscordBot();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });

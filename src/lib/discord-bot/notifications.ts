@@ -1,21 +1,21 @@
-import { sendToChannel } from './client';
+import { sendToWebhook } from './client';
 
 // Cooldown tracking to prevent spam when users reconnect rapidly
 const recentNotifications = new Map<string, number>();
 const NOTIFICATION_COOLDOWN = 5 * 60 * 1000; // 5 minutes per user
 
 /**
- * Parse the DISCORD_NOTIFICATION_CHANNEL_IDS env var into an array.
- * Supports comma-separated channel IDs.
+ * Parse the DISCORD_ONLINE_WEBHOOK_URLS env var into an array.
+ * Supports comma-separated webhook URLs.
  */
-function getNotificationChannelIds(): string[] {
-  const raw = process.env.DISCORD_NOTIFICATION_CHANNEL_IDS;
+function getWebhookUrls(): string[] {
+  const raw = process.env.DISCORD_ONLINE_WEBHOOK_URLS;
   if (!raw) return [];
-  return raw.split(',').map((id) => id.trim()).filter(Boolean);
+  return raw.split(',').map((url) => url.trim()).filter(Boolean);
 }
 
 /**
- * Send an "online" notification to all configured Discord channels.
+ * Send an "online" notification to all configured Discord webhooks.
  * Includes cooldown logic so rapid reconnects don't spam.
  */
 export async function notifyPlayerOnline(
@@ -23,8 +23,8 @@ export async function notifyPlayerOnline(
   playerIcon: string,
   onlineCount: number,
 ): Promise<void> {
-  const channels = getNotificationChannelIds();
-  if (channels.length === 0) return;
+  const webhooks = getWebhookUrls();
+  if (webhooks.length === 0) return;
 
   // Cooldown check — skip if this player was notified recently
   const now = Date.now();
@@ -36,7 +36,7 @@ export async function notifyPlayerOnline(
 
   const iconLabel = playerIcon || '🎮';
 
-  const embed = {
+  const body = {
     embeds: [
       {
         title: '🟢 Player Online',
@@ -52,23 +52,23 @@ export async function notifyPlayerOnline(
     ],
   };
 
-  for (const channelId of channels) {
-    sendToChannel(channelId, embed).catch((err) => {
-      console.error(`[DISCORD_BOT] Notification failed for channel ${channelId}:`, err);
+  for (const url of webhooks) {
+    sendToWebhook(url, body).catch((err) => {
+      console.error(`[DISCORD_WEBHOOK] Notification failed:`, err);
     });
   }
 }
 
 /**
- * Send a custom message to all configured notification channels.
+ * Send a custom message to all configured notification webhooks.
  */
 export async function sendNotification(
-  content: string | { embeds: object[] },
+  body: { content?: string; embeds?: object[] },
 ): Promise<void> {
-  const channels = getNotificationChannelIds();
-  for (const channelId of channels) {
-    sendToChannel(channelId, content).catch((err) => {
-      console.error(`[DISCORD_BOT] Notification failed for channel ${channelId}:`, err);
+  const webhooks = getWebhookUrls();
+  for (const url of webhooks) {
+    sendToWebhook(url, body).catch((err) => {
+      console.error(`[DISCORD_WEBHOOK] Notification failed:`, err);
     });
   }
 }
