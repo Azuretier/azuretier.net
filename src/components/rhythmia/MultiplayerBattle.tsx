@@ -943,6 +943,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
 
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      // Only record stats if game hasn't ended normally (player left via back button)
+      if (!gameOverRef.current) {
+        recordMultiplayerGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          won: false, // Player left mid-game, so they didn't win
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+      }
+    };
+  }, []);
+
   // ===== Render =====
   const board = boardRef.current;
   const piece = pieceRef.current;
