@@ -130,6 +130,18 @@ export default function RhythmiaPage() {
         sendProfileToWs();
     }, [sendProfileToWs]);
 
+    // Re-send profile to WS when privacy setting changes
+    useEffect(() => {
+        if (profile && wsRef.current?.readyState === WebSocket.OPEN && profileSentRef.current) {
+            wsRef.current.send(JSON.stringify({
+                type: 'set_profile',
+                name: profile.name,
+                icon: profile.icon,
+                isPrivate: profile.isPrivate,
+            }));
+        }
+    }, [profile?.isPrivate]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const requestOnlineUsers = () => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: 'get_online_users' }));
