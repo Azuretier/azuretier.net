@@ -43,24 +43,20 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
     ? (categorizedUpdates.get(selectedCategory) || []).slice(0, maxItems)
     : recentUpdates;
 
-  const categoryLabels = {
-    feature: locale === 'ja' ? '新機能' : 'Features',
-    enhancement: locale === 'ja' ? '改善' : 'Enhancements',
-    fix: locale === 'ja' ? '修正' : 'Fixes',
-    refactor: locale === 'ja' ? 'リファクタ' : 'Refactors',
-    docs: locale === 'ja' ? 'ドキュメント' : 'Documentation',
-    i18n: locale === 'ja' ? '国際化' : 'Internationalization',
+  // Get category labels from translations
+  const getCategoryLabel = (category: string): string => {
+    return t(`updates.categories.${category}`);
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>
-          {locale === 'ja' ? '📋 最新アップデート' : '📋 Recent Updates'}
+          📋 {t('updates.title')}
         </h2>
         <div className={styles.stats}>
           <span className={styles.statBadge}>
-            {stats.merged} {locale === 'ja' ? '件のPR' : 'PRs merged'}
+            {stats.merged} {t('updates.prsMerged')}
           </span>
         </div>
       </div>
@@ -71,7 +67,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
             className={`${styles.categoryBtn} ${!selectedCategory ? styles.active : ''}`}
             onClick={() => setSelectedCategory(null)}
           >
-            {locale === 'ja' ? 'すべて' : 'All'}
+            {t('updates.all')}
           </button>
           {Object.entries(stats.byCategory).map(([category, count]) => (
             <button
@@ -84,7 +80,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
             >
               <span className={styles.categoryIcon}>{CATEGORY_ICONS[category]}</span>
               <span className={styles.categoryLabel}>
-                {categoryLabels[category as keyof typeof categoryLabels]}
+                {getCategoryLabel(category)}
               </span>
               <span className={styles.categoryCount}>{count}</span>
             </button>
@@ -111,7 +107,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
                     backgroundColor: CATEGORY_COLORS[update.category],
                   }}
                 >
-                  {CATEGORY_ICONS[update.category]} {categoryLabels[update.category as keyof typeof categoryLabels]}
+                  {CATEGORY_ICONS[update.category]} {getCategoryLabel(update.category)}
                 </span>
                 <span className={styles.prNumber}>#{update.number}</span>
               </div>
@@ -144,7 +140,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
                   rel="noopener noreferrer"
                   className={styles.prLink}
                 >
-                  {locale === 'ja' ? 'PRを見る' : 'View PR'} →
+                  {t('updates.viewPR')} →
                 </a>
               </div>
             </motion.div>
@@ -160,7 +156,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
             rel="noopener noreferrer"
             className={styles.viewAllBtn}
           >
-            {locale === 'ja' ? 'すべてのPRを見る' : 'View all PRs'} →
+            {t('updates.viewAllPRs')} →
           </a>
         </div>
       )}
