@@ -320,7 +320,8 @@ export default function RhythmiaPage() {
                                 <span className={styles.featureTag}>{t('arena.features.sync')}</span>
                             </div>
                             <div className={styles.cardStats}>
-                                <div className={styles.stat}>                                    <div className={styles.statValue}>9</div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>9</div>
                                     <div className={styles.statLabel}>{t('arena.stats.players')}</div>
                                 </div>
                                 <div className={styles.stat}>
