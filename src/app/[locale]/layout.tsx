@@ -45,10 +45,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         keywords: t('keywords'),
         metadataBase: new URL(baseUrl),
         alternates: {
-            canonical: locale === 'ja' ? baseUrl : `${baseUrl}/en`,
+            canonical: locale === 'ja' ? baseUrl : `${baseUrl}/${locale}`,
             languages: {
                 'ja': baseUrl,
                 'en': `${baseUrl}/en`,
+                'th': `${baseUrl}/th`,
+                'es': `${baseUrl}/es`,
+                'fr': `${baseUrl}/fr`,
             },
         },
         openGraph: {
@@ -61,10 +64,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             ],
             title: t('ogTitle'),
             description: t('ogDescription'),
-            locale: locale === 'ja' ? 'ja_JP' : 'en_US',
-            alternateLocale: locale === 'ja' ? ['en_US'] : ['ja_JP'],
+            locale: { ja: 'ja_JP', en: 'en_US', th: 'th_TH', es: 'es_ES', fr: 'fr_FR' }[locale] || 'en_US',
+            alternateLocale: ['ja_JP', 'en_US', 'th_TH', 'es_ES', 'fr_FR'].filter(l => l !== ({ ja: 'ja_JP', en: 'en_US', th: 'th_TH', es: 'es_ES', fr: 'fr_FR' }[locale] || 'en_US')),
             type: 'website',
-            url: locale === 'ja' ? baseUrl : `${baseUrl}/en`,
+            url: locale === 'ja' ? baseUrl : `${baseUrl}/${locale}`,
             siteName: 'Azuretia',
         },
         twitter: {
@@ -92,9 +95,13 @@ export default async function LocaleLayout({ children, params }: Props) {
         "operatingSystem": "Web",
         "applicationCategory": "GameApplication",
         "genre": ["PuzzleGame", "MusicGame"],
-        "description": locale === 'ja'
-            ? "テトリスとリズムゲームを融合させたブラウザパズルゲーム。"
-            : "A browser-based puzzle game merging Tetris and rhythm mechanics.",
+        "description": {
+            ja: "テトリスとリズムゲームを融合させたブラウザパズルゲーム。",
+            en: "A browser-based puzzle game merging Tetris and rhythm mechanics.",
+            th: "เกมพัซเซิลบนเบราว์เซอร์ที่ผสมผสานเตตริสและกลไกจังหวะ",
+            es: "Un juego de puzzles en el navegador que fusiona Tetris y mecánicas de ritmo.",
+            fr: "Un jeu de puzzle en navigateur fusionnant Tetris et mécaniques de rythme."
+        }[locale] || "A browser-based puzzle game merging Tetris and rhythm mechanics.",
         "author": {
             "@type": "Person",
             "name": "Azuretier"
