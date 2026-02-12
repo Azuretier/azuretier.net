@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
+import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
 import { initAppCheck } from "@/lib/firebase/initAppCheck";
 

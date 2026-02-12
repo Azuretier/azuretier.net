@@ -5,6 +5,12 @@ import {
     AppCheck,
 } from "firebase/app-check";
 
+/**
+ * Initialize Firebase App Check with ReCaptchaV3Provider.
+ * Automatically enables the debug provider on localhost.
+ *
+ * Call this once per Firebase app, after initializeApp().
+ */
 export function initAppCheck(app: FirebaseApp): AppCheck | null {
     if (typeof window === "undefined") return null;
 
