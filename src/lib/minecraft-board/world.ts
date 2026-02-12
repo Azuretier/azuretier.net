@@ -200,6 +200,13 @@ export class WorldGenerator {
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
         const tile = world[y][x];
+        
+        // Ice in snowy biome - must be placed BEFORE skipping water tiles
+        if (tile.biome === 'snowy' && (tile.block === 'water' || tile.block === 'deep_water')) {
+          world[y][x] = { ...tile, block: 'ice' };
+          continue;
+        }
+        
         if (tile.block === 'water' || tile.block === 'deep_water') continue;
 
         // Trees
@@ -293,11 +300,6 @@ export class WorldGenerator {
         // Gravel in mountains
         if (tile.biome === 'mountains' && rng.chance(0.05)) {
           world[y][x] = { ...tile, block: 'gravel' };
-        }
-
-        // Ice in snowy biome near water
-        if (tile.biome === 'snowy' && tile.block === 'water') {
-          world[y][x] = { ...tile, block: 'ice' };
         }
 
         // Obsidian - very rare, deep in mountains
