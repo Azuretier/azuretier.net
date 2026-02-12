@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -136,12 +136,53 @@ export default function WikiPage() {
   const router = useRouter();
   const ja = locale === 'ja';
   const [activeSection, setActiveSection] = useState<WikiSection>('overview');
+  const contentRef = useRef<HTMLElement>(null);
 
   const scrollToSection = (id: WikiSection) => {
     setActiveSection(id);
     const el = document.getElementById(`wiki-${id}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const container = contentRef.current;
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const offset = elRect.top - containerRect.top + container.scrollTop;
+      container.scrollTo({ top: offset, behavior: 'smooth' });
+    }
   };
+
+  const handleScroll = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+
+    // When scrolled to the bottom, activate the last visible section
+    const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
+    if (isAtBottom) {
+      for (const s of [...SECTIONS].reverse()) {
+        const el = document.getElementById(`wiki-${s.id}`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < containerRect.bottom) {
+            setActiveSection(s.id);
+            return;
+          }
+        }
+      }
+    }
+
+    // Normal: find the topmost section whose top has scrolled past the threshold
+    for (const s of [...SECTIONS].reverse()) {
+      const el = document.getElementById(`wiki-${s.id}`);
+      if (el) {
+        const relativeTop = el.getBoundingClientRect().top - containerRect.top;
+        if (relativeTop < 100) {
+          setActiveSection(s.id);
+          return;
+        }
+      }
+    }
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -180,16 +221,7 @@ export default function WikiPage() {
         </nav>
 
         {/* Main content */}
-        <main className={styles.content} onScroll={(e) => {
-          const target = e.currentTarget;
-          for (const s of [...SECTIONS].reverse()) {
-            const el = document.getElementById(`wiki-${s.id}`);
-            if (el && el.offsetTop - target.scrollTop < 200) {
-              setActiveSection(s.id);
-              break;
-            }
-          }
-        }}>
+        <main ref={contentRef} className={styles.content} onScroll={handleScroll}>
 
           {/* === OVERVIEW === */}
           <section id="wiki-overview" className={styles.section}>
