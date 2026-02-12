@@ -1,5 +1,5 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore } from "firebase/firestore";
 import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
 const firebaseConfig = {
@@ -12,14 +12,20 @@ const firebaseConfig = {
 };
 
 // Singleton pattern to prevent re-initialization in Next.js dev mode
-let app;
-try {
-  app = getApp('rank-card');
-} catch (error) {
-  app = initializeApp(firebaseConfig, 'rank-card');
-}
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
 
-if (typeof window !== 'undefined') initAppCheck(app);
-const db = getFirestore(app);
+if (typeof window !== 'undefined') {
+  try {
+    app = getApp('rank-card');
+  } catch (error) {
+    app = initializeApp(firebaseConfig, 'rank-card');
+  }
+
+  if (app) {
+    initAppCheck(app);
+    db = getFirestore(app);
+  }
+}
 
 export { db };
