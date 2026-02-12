@@ -17,6 +17,7 @@ import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import { SkinMenu } from '../../components/main/SkinMenu';
 import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 
@@ -272,6 +273,7 @@ export default function RhythmiaPage() {
                             {t('nav.updates')}
                         </button>
                         <LocaleSwitcher />
+                        <SkinMenu />
                         <a
                             href="https://discord.gg/7mBCasYkJY"
                             target="_blank"

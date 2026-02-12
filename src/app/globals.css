@@ -16,4 +16,53 @@ body {
     height: 100%;
 }
 
+/* ===== Skin / Theme Variables ===== */
+
+/* Dark theme (default) */
+:root,
+html.dark {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --border: rgba(255, 255, 255, 0.12);
+    --subtext: rgba(255, 255, 255, 0.5);
+    --skin-accent: #007FFF;
+    --skin-accent-hover: #0066CC;
+    --skin-surface: rgba(255, 255, 255, 0.05);
+    --skin-surface-hover: rgba(255, 255, 255, 0.08);
+    color-scheme: dark;
+}
+
+/* Light theme */
+html.light {
+    --background: #fafafa;
+    --foreground: #171717;
+    --border: rgba(0, 0, 0, 0.1);
+    --subtext: rgba(0, 0, 0, 0.5);
+    --skin-accent: #007FFF;
+    --skin-accent-hover: #0066CC;
+    --skin-surface: rgba(0, 0, 0, 0.03);
+    --skin-surface-hover: rgba(0, 0, 0, 0.06);
+    color-scheme: light;
+}
+
+/* Kawaii theme — pastel cute aesthetic */
+html.kawaii {
+    --background: #1a1020;
+    --foreground: #f5e6f0;
+    --border: rgba(255, 150, 200, 0.2);
+    --subtext: rgba(255, 180, 210, 0.6);
+    --skin-accent: #ff6b9d;
+    --skin-accent-hover: #ff4785;
+    --skin-surface: rgba(255, 100, 160, 0.08);
+    --skin-surface-hover: rgba(255, 100, 160, 0.14);
+    color-scheme: dark;
+}
+
+html.kawaii *::selection {
+    background: rgba(255, 107, 157, 0.3);
+    color: #fff;
+}
+
+/* ===== End Skin Variables ===== */
+
 /* Existing CSS content below */

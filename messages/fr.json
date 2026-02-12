@@ -554,5 +554,24 @@
         "wiki": "Wiki",
         "updates": "Mises à jour",
         "lobby": "Lobby"
+    },
+    "skin": {
+        "title": "Apparence",
+        "active": "Actif",
+        "locked": "{current}/{required} accomplissements pour débloquer",
+        "skins": {
+            "dark": {
+                "name": "Sombre",
+                "desc": "Thème sombre par défaut"
+            },
+            "light": {
+                "name": "Clair",
+                "desc": "Thème clair et épuré"
+            },
+            "kawaii": {
+                "name": "Kawaii",
+                "desc": "Esthétique pastel mignonne"
+            }
+        }
     }
 }

@@ -572,5 +572,24 @@
         "onlineTitle": "Online Players",
         "onlineCount": "{count} online",
         "noOnlineUsers": "No players online right now"
+    },
+    "skin": {
+        "title": "Appearance",
+        "active": "Active",
+        "locked": "{current}/{required} advancements to unlock",
+        "skins": {
+            "dark": {
+                "name": "Dark",
+                "desc": "Default dark theme"
+            },
+            "light": {
+                "name": "Light",
+                "desc": "Clean light theme"
+            },
+            "kawaii": {
+                "name": "Kawaii",
+                "desc": "Cute pastel aesthetic"
+            }
+        }
     }
 }

@@ -572,5 +572,24 @@
         "onlineTitle": "オンラインのプレイヤー",
         "onlineCount": "{count}人がオンライン",
         "noOnlineUsers": "現在オンラインのプレイヤーはいません"
+    },
+    "skin": {
+        "title": "外観",
+        "active": "適用中",
+        "locked": "解除に{required}個中{current}個の実績が必要",
+        "skins": {
+            "dark": {
+                "name": "ダーク",
+                "desc": "デフォルトのダークテーマ"
+            },
+            "light": {
+                "name": "ライト",
+                "desc": "明るいテーマ"
+            },
+            "kawaii": {
+                "name": "かわいい",
+                "desc": "パステルカラーのかわいいテーマ"
+            }
+        }
     }
 }
