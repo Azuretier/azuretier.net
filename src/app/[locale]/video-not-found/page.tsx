@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getMessages } from 'next-intl/server';
 import VideoNotFound from '@/components/video-not-found/VideoNotFound';
+import forYouConfig from '../../../../for-you.config.json';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -14,5 +15,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function VideoNotFoundRoute() {
-  return <VideoNotFound />;
+  const videos = forYouConfig.videos
+    .filter((v) => v.url)
+    .map((v) => ({ id: v.id, title: v.title, category: v.category, url: v.url }));
+
+  return <VideoNotFound videos={videos} youtubeChannel={forYouConfig.youtubeChannel} />;
 }

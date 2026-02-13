@@ -111,7 +111,10 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                                 if (card.url) {
                                     window.open(card.url, '_blank', 'noopener,noreferrer');
                                 } else if (card.type === 'video') {
-                                    router.push('/video-not-found');
+                                    const params = new URLSearchParams();
+                                    params.set('topic', card.title);
+                                    if (card.tags?.length) params.set('tags', card.tags.join(','));
+                                    router.push(`/video-not-found?${params.toString()}`);
                                 }
                             }}
                             style={{ cursor: card.url || card.type === 'video' ? 'pointer' : 'default' }}
