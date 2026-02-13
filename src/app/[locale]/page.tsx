@@ -19,6 +19,7 @@ import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
+import NostalgicStories from '../../components/nostalgic-stories/NostalgicStories';
 import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -32,6 +33,7 @@ export default function RhythmiaPage() {
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
+    const [showStories, setShowStories] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
 
@@ -246,6 +248,12 @@ export default function RhythmiaPage() {
                 )}
             </AnimatePresence>
 
+            {/* Nostalgic stories panel */}
+            <NostalgicStories
+                isOpen={showStories}
+                onClose={() => setShowStories(false)}
+            />
+
             <div className={styles.container}>
                 <motion.header
                     className={styles.header}
@@ -282,6 +290,12 @@ export default function RhythmiaPage() {
                             onClick={() => router.push('/updates')}
                         >
                             {t('nav.updates')}
+                        </button>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => setShowStories(true)}
+                        >
+                            {t('nostalgicStories.navButton')}
                         </button>
                         <button
                             className={styles.advButton}

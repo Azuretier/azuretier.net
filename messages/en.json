@@ -831,5 +831,77 @@
         "selectLanguage": "Language",
         "privacy": "Privacy",
         "profileButton": "Profile"
+    },
+    "nostalgicStories": {
+        "title": "NOSTALGIC STORIES",
+        "subtitle": "Tales from the world of RHYTHMIA",
+        "navButton": "Stories",
+        "close": "Close",
+        "clickToContinue": "CLICK TO CONTINUE",
+        "endOfChapter": "END OF CHAPTER",
+        "backToStories": "Back to Stories",
+        "sceneCount": "{count} scenes",
+        "origin": {
+            "title": "The First Beat",
+            "subtitle": "Before the rhythm existed, there was only silence. This is how it all began.",
+            "characters": {
+                "narrator": "Narrator",
+                "melodia": "Melodia"
+            },
+            "scenes": {
+                "s1": "In the beginning, there was nothing but endless void. No sound, no light, no rhythm. The universe held its breath, waiting for something... a single vibration to set everything in motion.",
+                "s2": "I remember the silence. It was so heavy, so absolute. But deep within that nothingness, I could feel it\u2014a heartbeat, faint and fragile, like a candle flame in infinite darkness.",
+                "s3": "The first beat echoed through the void like a crack in glass. It rippled outward, carrying with it colors never seen and harmonies never heard. From that single pulse, Melodia was born\u2014the world of rhythm.",
+                "s4": "When I opened my eyes, everything was music. The ground hummed beneath my feet, the sky sang in shifting chords. I knew then that this world was alive, and it needed guardians to keep its rhythm steady.",
+                "s5": "And so the age of RHYTHMIA began. Melodia\u2019s first beat still echoes in every line you clear, every combo you chain. The rhythm never truly stops\u2014it only waits for someone to listen."
+            }
+        },
+        "silence": {
+            "title": "The Silence Chamber",
+            "subtitle": "What lies beyond the final world? A wanderer seeks the answer in frozen stillness.",
+            "characters": {
+                "narrator": "Narrator",
+                "wanderer": "Wanderer",
+                "echo": "Echo"
+            },
+            "scenes": {
+                "s1": "They told me not to go past Fortissimo. They said beyond the last crescendo, there is only silence\u2014a place where rhythm dies and nothing returns. But I had to know.",
+                "s2": "The wanderer pressed onward. With each step the music dimmed, the colors faded. The vibrant beats of Crescenda became whispers, then murmurs, then... nothing. The Silence Chamber stretched before them, vast and frozen.",
+                "s3": "It\u2019s beautiful here, in a way I didn\u2019t expect. The silence isn\u2019t empty\u2014it\u2019s full. Full of every note that was ever played, every beat that was ever dropped. They\u2019re all here, resting.",
+                "s4": "You hear it too, don\u2019t you? The silence between the notes\u2014that\u2019s where the real music lives. I\u2019ve been waiting here, preserving these echoes, for someone who would understand.",
+                "s5": "The wanderer smiled and turned back toward the light. The Silence Chamber wasn\u2019t an ending\u2014it was a rest note, a breath between movements. The music would continue, as long as someone remembered to listen."
+            }
+        },
+        "ember": {
+            "title": "The Last Ember",
+            "subtitle": "When the rhythm falters, one keeper tends the dying flame that keeps the world alive.",
+            "characters": {
+                "narrator": "Narrator",
+                "keeper": "The Keeper",
+                "flame": "The Ember"
+            },
+            "scenes": {
+                "s1": "The fires of Fortissimo are fading. I\u2019ve watched them for centuries\u2014great pillars of rhythm-flame that once lit the entire horizon. Now, only embers remain. But even embers can reignite.",
+                "s2": "Deep in the world\u2019s core, the Keeper tended the last ember\u2014a tiny spark no larger than a heartbeat. Around it, the darkness pressed in, hungry and patient. The rhythm of the world depended on this fragile flame.",
+                "s3": "Every line cleared, every perfect beat, every T-Spin\u2014they all feed this fire. The players don\u2019t know it, but their rhythm sustains us. When they play with passion, I can feel the ember grow warm again.",
+                "s4": "I am small, but I carry the memory of every song. Feed me your combos, your perfect clears, your unbroken streaks. I remember them all. And when enough players believe in the rhythm, I will burn again\u2014brighter than before.",
+                "s5": "The Keeper looked at the ember and saw it glow, just a little brighter than yesterday. Somewhere in the world above, a player had just cleared their first line. The rhythm was still alive. The fire would endure."
+            }
+        },
+        "bloom": {
+            "title": "The Petal Requiem",
+            "subtitle": "In Harmonia's eternal garden, blossoms carry memories of players who once played here.",
+            "characters": {
+                "narrator": "Narrator",
+                "sakura": "Sakura"
+            },
+            "scenes": {
+                "s1": "In Harmonia, there is a garden that never stops blooming. Each petal carries a memory\u2014a high score, a close match, a moment of joy. The trees remember every player who ever set foot in this world.",
+                "s2": "I am the garden\u2019s voice. When a petal falls, I feel its memory\u2014a player who cleared 100 lines, another who won their first battle, someone who simply stayed and listened to the music for a while. Each one matters.",
+                "s3": "Sometimes, late at night when the servers are quiet, I walk among the petals and remember. This one\u2014a player from far away who played every day for a month. That one\u2014two friends who battled until dawn, laughing.",
+                "s4": "Don\u2019t be sad when a petal falls. It doesn\u2019t disappear\u2014it becomes part of the soil, nourishing new blooms. Every ending becomes a new beginning. That\u2019s the cycle of the garden. That\u2019s the rhythm of memory.",
+                "s5": "The wind stirred the garden once more, carrying petals across the sky like a gentle rain of forgotten melodies. Somewhere, a new player was starting their first game. A new bud was already forming on the ancient tree."
+            }
+        }
     }
 }

@@ -1,0 +1,549 @@
+/* ===== Full-screen Story Viewer ===== */
+.viewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 500;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Splash art background */
+.splashArt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: background 0.8s ease;
+}
+
+/* Vignette overlay */
+.vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, var(--vignette-intensity, 0.6)) 100%);
+    pointer-events: none;
+}
+
+/* Pixel art silhouette overlay */
+.silhouette {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 45%;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 100%);
+    pointer-events: none;
+}
+
+/* Pixel art character silhouette */
+.characterSilhouette {
+    position: absolute;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 160px;
+    image-rendering: pixelated;
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+/* ===== Particle overlays ===== */
+.particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+/* Stars */
+.star {
+    background: #ffffff;
+    box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.4);
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Snow */
+.snow {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 3px 1px rgba(200, 220, 255, 0.3);
+}
+
+@keyframes snowfall {
+    0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(100vh) translateX(30px) rotate(360deg); opacity: 0; }
+}
+
+/* Embers */
+.ember {
+    background: var(--ambient-color, #fb923c);
+    box-shadow: 0 0 6px 2px var(--ambient-color, #fb923c);
+}
+
+@keyframes emberRise {
+    0% { transform: translateY(100vh) translateX(0) scale(1); opacity: 0; }
+    10% { opacity: 0.9; }
+    80% { opacity: 0.5; }
+    100% { transform: translateY(-40px) translateX(40px) scale(0.2); opacity: 0; }
+}
+
+/* Petals */
+.petal {
+    width: 8px;
+    height: 6px;
+    border-radius: 50% 0 50% 0;
+    background: var(--ambient-color, #f472b6);
+    opacity: 0.7;
+}
+
+@keyframes petalFall {
+    0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.7; }
+    50% { transform: translateY(50vh) translateX(60px) rotate(180deg); opacity: 0.5; }
+    100% { transform: translateY(100vh) translateX(-20px) rotate(360deg); opacity: 0; }
+}
+
+/* Rain */
+.raindrop {
+    width: 1px;
+    height: 16px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, transparent, rgba(150, 200, 255, 0.5));
+}
+
+@keyframes rainfall {
+    0% { transform: translateY(-20px); opacity: 0; }
+    10% { opacity: 0.6; }
+    100% { transform: translateY(100vh); opacity: 0.1; }
+}
+
+/* ===== Dialog box ===== */
+.dialogContainer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0 24px 32px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.dialogBox {
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 20px 28px 24px;
+    backdrop-filter: blur(12px);
+    pointer-events: auto;
+    position: relative;
+}
+
+.dialogBox::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ambient-color, rgba(255, 255, 255, 0.3)), transparent);
+    opacity: 0.6;
+}
+
+.characterName {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ambient-color, rgba(255, 255, 255, 0.8));
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.characterName::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ambient-color, rgba(255, 255, 255, 0.8));
+    box-shadow: 0 0 6px var(--ambient-color, rgba(255, 255, 255, 0.4));
+}
+
+.dialogText {
+    font-size: 0.95rem;
+    line-height: 1.85;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    min-height: 3.6em;
+}
+
+.dialogCursor {
+    display: inline-block;
+    width: 8px;
+    height: 2px;
+    background: var(--ambient-color, rgba(255, 255, 255, 0.6));
+    margin-left: 4px;
+    animation: cursorBlink 0.8s ease-in-out infinite;
+    vertical-align: middle;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Advance indicator */
+.advanceHint {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+}
+
+/* Scene counter */
+.sceneCounter {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 400;
+    z-index: 10;
+}
+
+/* Close button */
+.closeButton {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    padding: 8px 16px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.25s;
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
+.closeButton:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* ===== Story Selection Panel ===== */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.panel {
+    width: 100%;
+    max-width: 720px;
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.panelHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panelTitleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.panelTitle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: #ffffff;
+}
+
+.panelSubtitle {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.1em;
+    font-weight: 300;
+}
+
+.panelCloseBtn {
+    padding: 8px 16px;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.08em;
+}
+
+.panelCloseBtn:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.panelBody {
+    padding: 20px 28px 28px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Story card */
+.storyCard {
+    position: relative;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.storyCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--card-accent, rgba(255, 255, 255, 0.2));
+    opacity: 0.5;
+    transition: opacity 0.35s;
+}
+
+.storyCard:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.storyCard:hover::before {
+    opacity: 1;
+}
+
+/* Splash art preview strip */
+.splashPreview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 160px;
+    height: 100%;
+    opacity: 0.15;
+    transition: opacity 0.35s;
+    mask-image: linear-gradient(90deg, transparent, black 40%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 40%);
+    pointer-events: none;
+}
+
+.storyCard:hover .splashPreview {
+    opacity: 0.25;
+}
+
+.storyCardBadge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border: 1px solid var(--card-accent, rgba(255, 255, 255, 0.2));
+    border-radius: 3px;
+    color: var(--card-accent, rgba(255, 255, 255, 0.7));
+    margin-bottom: 12px;
+}
+
+.storyCardTitle {
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.storyCardSubtitle {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+.storyCardScenes {
+    margin-top: 12px;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Chapter end screen */
+.endScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+}
+
+.endTitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+}
+
+.endStoryTitle {
+    font-size: 1.6rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.endActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.endBtn {
+    padding: 10px 24px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.endBtnPrimary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.endBtnPrimary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+.endBtnSecondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.endBtnSecondary:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .dialogContainer {
+        padding: 0 12px 20px;
+    }
+
+    .dialogBox {
+        padding: 16px 20px 20px;
+    }
+
+    .dialogText {
+        font-size: 0.85rem;
+        line-height: 1.75;
+    }
+
+    .characterSilhouette {
+        width: 80px;
+        height: 110px;
+        bottom: 160px;
+    }
+
+    .panelBody {
+        padding: 16px 20px 20px;
+    }
+
+    .storyCard {
+        padding: 20px;
+    }
+
+    .splashPreview {
+        width: 100px;
+    }
+
+    .endStoryTitle {
+        font-size: 1.2rem;
+    }
+
+    .endActions {
+        flex-direction: column;
+    }
+}
