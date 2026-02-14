@@ -10,6 +10,7 @@ import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
 import { ProfileProvider } from '@/lib/profile/context';
 import { SkinProvider } from '@/lib/skin/context';
+import { UiThemeProvider } from '@/lib/theme/context';
 
 // Vercel Analytics
 import { Analytics } from "@vercel/analytics/next"
@@ -127,11 +128,13 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <NextIntlClientProvider messages={messages}>
                     <ProfileProvider>
                         <SkinProvider>
-                            <VersionProvider>
-                                <Provider>
-                                    {children}
-                                </Provider>
-                            </VersionProvider>
+                            <UiThemeProvider>
+                                <VersionProvider>
+                                    <Provider>
+                                        {children}
+                                    </Provider>
+                                </VersionProvider>
+                            </UiThemeProvider>
                         </SkinProvider>
                     </ProfileProvider>
                 </NextIntlClientProvider>
