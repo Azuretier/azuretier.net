@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Character3D from './Character3D';
 import RetroDialogBox from './RetroDialogBox';
@@ -28,6 +28,13 @@ export default function CharacterDialog({
   const [lineIndex, setLineIndex] = useState(0);
   const [animationState, setAnimationState] = useState<AnimationState>('idle');
   const [expression, setExpression] = useState<Expression>('neutral');
+
+  // Reset state when scene changes to prevent stale lineIndex or out-of-bounds access
+  useEffect(() => {
+    setLineIndex(0);
+    setAnimationState('idle');
+    setExpression('neutral');
+  }, [scene.id]);
 
   const currentLine: DialogLine | null = useMemo(
     () => scene.lines[lineIndex] ?? null,
