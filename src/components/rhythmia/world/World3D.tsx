@@ -4,8 +4,9 @@ import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls } from '@react-three/drei';
 import type { WorldData, StoryPoint, MovementState, Vector3 } from '@/types/world';
-import type { PlayerStats } from '@/types/skills';
+import type { PlayerStats, SkillCastEvent } from '@/types/skills';
 import { PlayerCharacter, StoryMarker, Ground } from './WorldObjects';
+import { SkillEffectsManager } from './SkillEffects';
 import { usePlayerInput } from './usePlayerInput';
 import { useSkills } from './useSkills';
 import { sampleSkills, initialPlayerStats } from './skillData';
@@ -36,6 +37,9 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
   const [activeStoryPoint, setActiveStoryPoint] = useState<StoryPoint | null>(null);
   const [completedStories, setCompletedStories] = useState<Set<string>>(new Set());
   const [nearbyStoryPoint, setNearbyStoryPoint] = useState<StoryPoint | null>(null);
+
+  // Skill effects state
+  const [activeSkillEffects, setActiveSkillEffects] = useState<SkillCastEvent[]>([]);
 
   // Input and skills
   const { getInputState, isMoving } = usePlayerInput();
@@ -142,6 +146,7 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
             ...prev,
             mana: prev.mana - event.skill.manaCost,
           }));
+          setActiveSkillEffects((prev) => [...prev, event]);
         }
       }
       if (input.skillW && !activeStoryPoint) {
@@ -151,6 +156,7 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
             ...prev,
             mana: prev.mana - event.skill.manaCost,
           }));
+          setActiveSkillEffects((prev) => [...prev, event]);
         }
       }
       if (input.skillE && !activeStoryPoint) {
@@ -160,6 +166,7 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
             ...prev,
             mana: prev.mana - event.skill.manaCost,
           }));
+          setActiveSkillEffects((prev) => [...prev, event]);
         }
       }
       if (input.skillR && !activeStoryPoint) {
@@ -169,6 +176,7 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
             ...prev,
             mana: prev.mana - event.skill.manaCost,
           }));
+          setActiveSkillEffects((prev) => [...prev, event]);
         }
       }
 
@@ -206,6 +214,10 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
     // Close dialog
     setActiveStoryPoint(null);
   }, [activeStoryPoint, onStoryComplete]);
+
+  const handleSkillEffectComplete = useCallback((effectIndex: number) => {
+    setActiveSkillEffects((prev) => prev.filter((_, i) => i !== effectIndex));
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -252,6 +264,12 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
               isInRange={nearbyStoryPoint?.id === point.id}
             />
           ))}
+
+          {/* Skill Effects */}
+          <SkillEffectsManager
+            activeEffects={activeSkillEffects}
+            onEffectComplete={handleSkillEffectComplete}
+          />
 
           {/* Camera Controls */}
           <OrbitControls
