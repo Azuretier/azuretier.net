@@ -11,6 +11,8 @@ import { VersionProvider } from '@/lib/version/context';
 import { ProfileProvider } from '@/lib/profile/context';
 import { SkinProvider } from '@/lib/skin/context';
 
+// Vercel Analytics
+import { Analytics } from "@vercel/analytics/next"
 import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = localFont({
