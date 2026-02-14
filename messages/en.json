@@ -208,6 +208,42 @@
             "name": "Combo Deity",
             "desc": "Reach a 100 combo"
         },
+        "combo_150": {
+            "name": "Combo Celestial",
+            "desc": "Reach a 150 combo"
+        },
+        "combo_200": {
+            "name": "Combo Eternal",
+            "desc": "Reach a 200 combo"
+        },
+        "total_combo_50": {
+            "name": "Combo Collector",
+            "desc": "Accumulate 50 total combo across games"
+        },
+        "total_combo_100": {
+            "name": "Combo Hoarder",
+            "desc": "Accumulate 100 total combo across games"
+        },
+        "total_combo_250": {
+            "name": "Combo Veteran",
+            "desc": "Accumulate 250 total combo across games"
+        },
+        "total_combo_500": {
+            "name": "Combo Master",
+            "desc": "Accumulate 500 total combo across games"
+        },
+        "total_combo_1000": {
+            "name": "Combo Legend",
+            "desc": "Accumulate 1,000 total combo across games"
+        },
+        "total_combo_2500": {
+            "name": "Combo Mythic",
+            "desc": "Accumulate 2,500 total combo across games"
+        },
+        "total_combo_5000": {
+            "name": "Combo Infinite",
+            "desc": "Accumulate 5,000 total combo across games"
+        },
         "games_1": {
             "name": "First Steps",
             "desc": "Play your first game"
