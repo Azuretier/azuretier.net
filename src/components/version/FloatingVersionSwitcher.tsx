@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Tag } from 'lucide-react';
+import { useGitHubTags } from '@/hooks/useGitHubTags';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -22,6 +23,7 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
 export default function FloatingVersionSwitcher() {
   const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
   const [isOpen, setIsOpen] = useState(false);
+  const { tags, isLoading: tagsLoading, error: tagsError } = useGitHubTags();
 
   const handleVersionChange = (version: UIVersion) => {
     if (version === currentVersion) return;
@@ -173,12 +175,85 @@ export default function FloatingVersionSwitcher() {
                       })}
                     </div>
                   </section>
+
+                  {/* ── Deployments Section ── */}
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Tag size={14} className="text-white/40" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                        Deployments
+                      </h4>
+                    </div>
+                    {tagsLoading ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="h-14 rounded-xl bg-white/[0.03] animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : tagsError ? (
+                      <p className="text-xs text-white/30">
+                        Failed to load deployments
+                      </p>
+                    ) : tags.length === 0 ? (
+                      <p className="text-xs text-white/30">
+                        No tagged deployments available
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {tags.map((tag) => (
+                          <button
+                            key={tag.name}
+                            disabled={!tag.deploymentUrl || tag.isCurrent}
+                            onClick={() => {
+                              if (tag.deploymentUrl) {
+                                window.location.href = tag.deploymentUrl;
+                              }
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                              tag.isCurrent
+                                ? 'bg-white/10 border-white/20'
+                                : tag.deploymentUrl
+                                  ? 'bg-white/[0.03] border-transparent hover:bg-white/[0.06] hover:border-white/10'
+                                  : 'bg-white/[0.03] border-transparent opacity-40 cursor-not-allowed'
+                            }`}
+                          >
+                            <div
+                              className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+                                tag.isCurrent
+                                  ? 'bg-white/15 text-white'
+                                  : 'bg-white/5 text-white/40'
+                              }`}
+                            >
+                              <Tag size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-semibold text-white truncate block">
+                                {tag.name}
+                              </span>
+                              <p className="text-xs text-white/40 font-mono truncate">
+                                {tag.sha.slice(0, 7)}
+                              </p>
+                            </div>
+                            {tag.isCurrent && (
+                              <Check
+                                size={16}
+                                className="flex-shrink-0 text-emerald-400"
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 </div>
 
                 {/* Footer */}
                 <div className="px-6 py-3 border-t border-white/5">
                   <p className="text-[11px] text-white/25 text-center">
-                    Settings are saved locally in your browser.
+                    Settings are saved locally. Deployments link to past versions.
                   </p>
                 </div>
               </div>
