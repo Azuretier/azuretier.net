@@ -27,6 +27,16 @@ export default function FloatingVersionSwitcher() {
     if (version === currentVersion) return;
     setVersion(version);
     setIsOpen(false);
+    
+    // Navigate to the appropriate page
+    // Use window.location.href for full reload to ensure clean state
+    if (version === '1.0.0') {
+      window.location.href = '/';
+    } else if (version === '1.0.1') {
+      window.location.href = '/current';
+    } else if (version === '1.0.2') {
+      window.location.href = '/';
+    }
   };
 
   const handleAccentChange = (color: AccentColor) => {
