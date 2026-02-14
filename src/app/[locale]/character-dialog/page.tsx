@@ -249,9 +249,9 @@ export default function CharacterDialogPage() {
           '✓ Typewriter Effect',
           '✓ Mouse Tracking',
           '✓ Animation Sync',
-        ].map((feature, i) => (
+        ].map((feature) => (
           <div
-            key={i}
+            key={feature}
             style={{
               background: 'rgba(0, 0, 0, 0.7)',
               backdropFilter: 'blur(10px)',
