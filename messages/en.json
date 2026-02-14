@@ -120,6 +120,22 @@
             "name": "T-Spin Immortal",
             "desc": "Perform 1,000 T-Spins"
         },
+        "best_tspin_1": {
+            "name": "Spin Initiate",
+            "desc": "Perform 1 T-Spin in one game"
+        },
+        "best_tspin_5": {
+            "name": "Spin Specialist",
+            "desc": "Perform 5 T-Spins in one game"
+        },
+        "best_tspin_10": {
+            "name": "Spin Virtuoso",
+            "desc": "Perform 10 T-Spins in one game"
+        },
+        "best_tspin_25": {
+            "name": "Spin Prodigy",
+            "desc": "Perform 25 T-Spins in one game"
+        },
         "score_10k": {
             "name": "Score Rookie",
             "desc": "Accumulate 10,000 total score"
@@ -184,6 +200,14 @@
             "name": "Combo Immortal",
             "desc": "Reach a 50 combo"
         },
+        "combo_75": {
+            "name": "Combo Transcendent",
+            "desc": "Reach a 75 combo"
+        },
+        "combo_100": {
+            "name": "Combo Deity",
+            "desc": "Reach a 100 combo"
+        },
         "games_1": {
             "name": "First Steps",
             "desc": "Play your first game"
@@ -232,6 +256,22 @@
             "name": "Tetris God",
             "desc": "Clear 4 lines at once 200 times"
         },
+        "best_tetris_1": {
+            "name": "Four-Liner",
+            "desc": "Clear 4 lines at once in one game"
+        },
+        "best_tetris_3": {
+            "name": "Tetris Streak",
+            "desc": "Clear 4 lines at once 3 times in one game"
+        },
+        "best_tetris_5": {
+            "name": "Tetris Specialist",
+            "desc": "Clear 4 lines at once 5 times in one game"
+        },
+        "best_tetris_10": {
+            "name": "Tetris Prodigy",
+            "desc": "Clear 4 lines at once 10 times in one game"
+        },
         "perfect_beats_10": {
             "name": "Rhythm Rookie",
             "desc": "Hit 10 perfect beats in one game"
@@ -244,6 +284,22 @@
             "name": "Rhythm Legend",
             "desc": "Hit 100 perfect beats in one game"
         },
+        "total_perfect_beats_50": {
+            "name": "Beat Collector",
+            "desc": "Hit 50 total perfect beats"
+        },
+        "total_perfect_beats_200": {
+            "name": "Beat Enthusiast",
+            "desc": "Hit 200 total perfect beats"
+        },
+        "total_perfect_beats_500": {
+            "name": "Beat Virtuoso",
+            "desc": "Hit 500 total perfect beats"
+        },
+        "total_perfect_beats_1000": {
+            "name": "Beat Immortal",
+            "desc": "Hit 1,000 total perfect beats"
+        },
         "hard_drops_100": {
             "name": "Speed Dropper",
             "desc": "Perform 100 hard drops"
@@ -255,6 +311,22 @@
         "hard_drops_5000": {
             "name": "Meteor Strike",
             "desc": "Perform 5,000 hard drops"
+        },
+        "best_hard_drops_50": {
+            "name": "Quick Dropper",
+            "desc": "Perform 50 hard drops in one game"
+        },
+        "best_hard_drops_100": {
+            "name": "Speed Demon",
+            "desc": "Perform 100 hard drops in one game"
+        },
+        "best_hard_drops_200": {
+            "name": "Drop Machine",
+            "desc": "Perform 200 hard drops in one game"
+        },
+        "best_hard_drops_500": {
+            "name": "Gravity Master",
+            "desc": "Perform 500 hard drops in one game"
         },
         "pieces_100": {
             "name": "Block Builder",
@@ -275,6 +347,22 @@
         "pieces_100000": {
             "name": "Block Immortal",
             "desc": "Place 100,000 pieces"
+        },
+        "best_pieces_50": {
+            "name": "Piece Placer",
+            "desc": "Place 50 pieces in one game"
+        },
+        "best_pieces_100": {
+            "name": "Piece Stacker",
+            "desc": "Place 100 pieces in one game"
+        },
+        "best_pieces_250": {
+            "name": "Piece Master",
+            "desc": "Place 250 pieces in one game"
+        },
+        "best_pieces_500": {
+            "name": "Piece Titan",
+            "desc": "Place 500 pieces in one game"
         },
         "mp_win_1": {
             "name": "First Victory",

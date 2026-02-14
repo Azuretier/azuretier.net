@@ -25,6 +25,12 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'tspin_500', category: 'tspin', icon: '🌀', threshold: 500, statKey: 'totalTSpins' },
   { id: 'tspin_1000', category: 'tspin', icon: '🌀', threshold: 1000, statKey: 'totalTSpins' },
 
+  // === Best T-Spins Per Game ===
+  { id: 'best_tspin_1', category: 'tspin', icon: '💫', threshold: 1, statKey: 'bestTSpinsPerGame' },
+  { id: 'best_tspin_5', category: 'tspin', icon: '💫', threshold: 5, statKey: 'bestTSpinsPerGame' },
+  { id: 'best_tspin_10', category: 'tspin', icon: '💫', threshold: 10, statKey: 'bestTSpinsPerGame' },
+  { id: 'best_tspin_25', category: 'tspin', icon: '💫', threshold: 25, statKey: 'bestTSpinsPerGame' },
+
   // === Total Score ===
   { id: 'score_10k', category: 'score', icon: '💎', threshold: 10000, statKey: 'totalScore' },
   { id: 'score_100k', category: 'score', icon: '💎', threshold: 100000, statKey: 'totalScore' },
@@ -46,6 +52,8 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'combo_20', category: 'combo', icon: '🔥', threshold: 20, statKey: 'bestCombo' },
   { id: 'combo_30', category: 'combo', icon: '🔥', threshold: 30, statKey: 'bestCombo' },
   { id: 'combo_50', category: 'combo', icon: '🔥', threshold: 50, statKey: 'bestCombo' },
+  { id: 'combo_75', category: 'combo', icon: '🔥', threshold: 75, statKey: 'bestCombo' },
+  { id: 'combo_100', category: 'combo', icon: '🔥', threshold: 100, statKey: 'bestCombo' },
 
   // === General ===
   { id: 'games_1', category: 'general', icon: '🎮', threshold: 1, statKey: 'totalGamesPlayed' },
@@ -60,17 +68,40 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'tetris_50', category: 'general', icon: '💥', threshold: 50, statKey: 'totalTetrisClears' },
   { id: 'tetris_100', category: 'general', icon: '💥', threshold: 100, statKey: 'totalTetrisClears' },
   { id: 'tetris_200', category: 'general', icon: '💥', threshold: 200, statKey: 'totalTetrisClears' },
+  // === Best Tetris Clears Per Game ===
+  { id: 'best_tetris_1', category: 'general', icon: '🎆', threshold: 1, statKey: 'bestTetrisClearsPerGame' },
+  { id: 'best_tetris_3', category: 'general', icon: '🎆', threshold: 3, statKey: 'bestTetrisClearsPerGame' },
+  { id: 'best_tetris_5', category: 'general', icon: '🎆', threshold: 5, statKey: 'bestTetrisClearsPerGame' },
+  { id: 'best_tetris_10', category: 'general', icon: '🎆', threshold: 10, statKey: 'bestTetrisClearsPerGame' },
+  // === Best Perfect Beats Per Game ===
   { id: 'perfect_beats_10', category: 'general', icon: '🎵', threshold: 10, statKey: 'bestPerfectBeatsPerGame' },
   { id: 'perfect_beats_50', category: 'general', icon: '🎵', threshold: 50, statKey: 'bestPerfectBeatsPerGame' },
   { id: 'perfect_beats_100', category: 'general', icon: '🎵', threshold: 100, statKey: 'bestPerfectBeatsPerGame' },
+  // === Total Perfect Beats ===
+  { id: 'total_perfect_beats_50', category: 'general', icon: '🎶', threshold: 50, statKey: 'totalPerfectBeats' },
+  { id: 'total_perfect_beats_200', category: 'general', icon: '🎶', threshold: 200, statKey: 'totalPerfectBeats' },
+  { id: 'total_perfect_beats_500', category: 'general', icon: '🎶', threshold: 500, statKey: 'totalPerfectBeats' },
+  { id: 'total_perfect_beats_1000', category: 'general', icon: '🎶', threshold: 1000, statKey: 'totalPerfectBeats' },
+  // === Total Hard Drops ===
   { id: 'hard_drops_100', category: 'general', icon: '⚡', threshold: 100, statKey: 'totalHardDrops' },
   { id: 'hard_drops_1000', category: 'general', icon: '⚡', threshold: 1000, statKey: 'totalHardDrops' },
   { id: 'hard_drops_5000', category: 'general', icon: '⚡', threshold: 5000, statKey: 'totalHardDrops' },
+  // === Best Hard Drops Per Game ===
+  { id: 'best_hard_drops_50', category: 'general', icon: '⚡', threshold: 50, statKey: 'bestHardDropsPerGame' },
+  { id: 'best_hard_drops_100', category: 'general', icon: '⚡', threshold: 100, statKey: 'bestHardDropsPerGame' },
+  { id: 'best_hard_drops_200', category: 'general', icon: '⚡', threshold: 200, statKey: 'bestHardDropsPerGame' },
+  { id: 'best_hard_drops_500', category: 'general', icon: '⚡', threshold: 500, statKey: 'bestHardDropsPerGame' },
+  // === Total Pieces Placed ===
   { id: 'pieces_100', category: 'general', icon: '🧱', threshold: 100, statKey: 'totalPiecesPlaced' },
   { id: 'pieces_1000', category: 'general', icon: '🧱', threshold: 1000, statKey: 'totalPiecesPlaced' },
   { id: 'pieces_10000', category: 'general', icon: '🧱', threshold: 10000, statKey: 'totalPiecesPlaced' },
   { id: 'pieces_50000', category: 'general', icon: '🧱', threshold: 50000, statKey: 'totalPiecesPlaced' },
   { id: 'pieces_100000', category: 'general', icon: '🧱', threshold: 100000, statKey: 'totalPiecesPlaced' },
+  // === Best Pieces Per Game ===
+  { id: 'best_pieces_50', category: 'general', icon: '🧩', threshold: 50, statKey: 'bestPiecesPerGame' },
+  { id: 'best_pieces_100', category: 'general', icon: '🧩', threshold: 100, statKey: 'bestPiecesPerGame' },
+  { id: 'best_pieces_250', category: 'general', icon: '🧩', threshold: 250, statKey: 'bestPiecesPerGame' },
+  { id: 'best_pieces_500', category: 'general', icon: '🧩', threshold: 500, statKey: 'bestPiecesPerGame' },
 
   // === Multiplayer ===
   { id: 'mp_win_1', category: 'multiplayer', icon: '🏆', threshold: 1, statKey: 'multiplayerWins' },
