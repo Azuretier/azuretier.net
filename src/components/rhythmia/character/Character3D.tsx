@@ -473,6 +473,11 @@ export default function Character3D({
     setLoadError(true);
   }, []);
 
+  // Reset loadError when modelPath changes to allow retrying with new model
+  useEffect(() => {
+    setLoadError(false);
+  }, [modelPath]);
+
   return (
     <div
       className={cn(styles.container, className)}
