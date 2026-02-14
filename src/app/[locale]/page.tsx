@@ -18,7 +18,7 @@ import onlineStyles from '../../components/profile/OnlineUsers.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
-import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
+
 import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -294,22 +294,12 @@ export default function RhythmiaPage() {
                 </motion.header>
 
                 <main className={styles.main}>
-                    <motion.div
-                        className={styles.heroText}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.7, delay: 0.2 }}
-                    >
-                        <h1>{t('lobby.selectServer')}</h1>
-                        <p>{t('lobby.chooseMode')}</p>
-                    </motion.div>
-
                     {/* For You Section — personalized experience shown first */}
                     <motion.div
                         className={styles.forYouSection}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.6, delay: 0.3 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
                     >
                         <ForYouTab
                             locale={locale}
@@ -318,8 +308,16 @@ export default function RhythmiaPage() {
                         />
                     </motion.div>
 
-                    {/* Loyalty widget — visible immediately on landing */}
-                    <LoyaltyWidget />
+                    {/* SELECT SERVER heading — below personalized content */}
+                    <motion.div
+                        className={styles.heroText}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.7, delay: 0.3 }}
+                    >
+                        <h1>{t('lobby.selectServer')}</h1>
+                        <p>{t('lobby.chooseMode')}</p>
+                    </motion.div>
 
                     <div className={styles.serverGrid}>
                         {/* Rhythmia (Solo Mode) */}
