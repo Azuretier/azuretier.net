@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import type { AdvancementState, PlayerStats } from './types';
+import { getDefaultStats } from './storage';
 
 const COLLECTION = 'rhythmia_advancements';
 const NOTIFICATIONS_SUB = 'notifications';
@@ -113,7 +114,7 @@ export async function loadFromFirestore(): Promise<AdvancementState | null> {
     if (docSnap.exists()) {
       const data = docSnap.data() as FirestoreAdvancementDoc;
       return {
-        stats: data.stats,
+        stats: { ...getDefaultStats(), ...data.stats },
         unlockedIds: data.unlockedIds || [],
         newlyUnlockedIds: [],
       };
@@ -136,7 +137,7 @@ export function mergeStates(
   const mergedStats = { ...local.stats };
 
   for (const key of Object.keys(mergedStats) as (keyof PlayerStats)[]) {
-    mergedStats[key] = Math.max(local.stats[key], remote.stats[key]);
+    mergedStats[key] = Math.max(local.stats[key] ?? 0, remote.stats[key] ?? 0);
   }
 
   const mergedUnlocked = Array.from(

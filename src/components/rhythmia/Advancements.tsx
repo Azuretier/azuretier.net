@@ -114,7 +114,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
           >
             {filteredAdvancements.map(adv => {
               const unlocked = state.unlockedIds.includes(adv.id);
-              const currentValue = state.stats[adv.statKey];
+              const currentValue = state.stats[adv.statKey] ?? 0;
               const progress = Math.min(1, currentValue / adv.threshold);
               const displayName = t(`advancements.${adv.id}.name`);
               const displayDesc = t(`advancements.${adv.id}.desc`);

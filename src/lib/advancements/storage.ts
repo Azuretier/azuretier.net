@@ -4,7 +4,7 @@ import { syncToFirestore, writeNotification } from './firestore';
 
 const STORAGE_KEY = 'rhythmia_advancements';
 
-function getDefaultStats(): PlayerStats {
+export function getDefaultStats(): PlayerStats {
   return {
     totalLines: 0,
     bestLinesPerGame: 0,
