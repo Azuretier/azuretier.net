@@ -46,7 +46,7 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'best_score_500k', category: 'score', icon: '⭐', threshold: 500000, statKey: 'bestScorePerGame' },
   { id: 'best_score_1m', category: 'score', icon: '⭐', threshold: 1000000, statKey: 'bestScorePerGame' },
 
-  // === Combo ===
+  // === Combo (Best Chain) ===
   { id: 'combo_3', category: 'combo', icon: '🔥', threshold: 3, statKey: 'bestCombo' },
   { id: 'combo_10', category: 'combo', icon: '🔥', threshold: 10, statKey: 'bestCombo' },
   { id: 'combo_20', category: 'combo', icon: '🔥', threshold: 20, statKey: 'bestCombo' },
@@ -54,6 +54,17 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'combo_50', category: 'combo', icon: '🔥', threshold: 50, statKey: 'bestCombo' },
   { id: 'combo_75', category: 'combo', icon: '🔥', threshold: 75, statKey: 'bestCombo' },
   { id: 'combo_100', category: 'combo', icon: '🔥', threshold: 100, statKey: 'bestCombo' },
+  { id: 'combo_150', category: 'combo', icon: '🔥', threshold: 150, statKey: 'bestCombo' },
+  { id: 'combo_200', category: 'combo', icon: '🔥', threshold: 200, statKey: 'bestCombo' },
+
+  // === Total Combos (Accumulated Across Games) ===
+  { id: 'total_combo_50', category: 'combo', icon: '💥', threshold: 50, statKey: 'totalCombos' },
+  { id: 'total_combo_100', category: 'combo', icon: '💥', threshold: 100, statKey: 'totalCombos' },
+  { id: 'total_combo_250', category: 'combo', icon: '💥', threshold: 250, statKey: 'totalCombos' },
+  { id: 'total_combo_500', category: 'combo', icon: '💥', threshold: 500, statKey: 'totalCombos' },
+  { id: 'total_combo_1000', category: 'combo', icon: '💥', threshold: 1000, statKey: 'totalCombos' },
+  { id: 'total_combo_2500', category: 'combo', icon: '💥', threshold: 2500, statKey: 'totalCombos' },
+  { id: 'total_combo_5000', category: 'combo', icon: '💥', threshold: 5000, statKey: 'totalCombos' },
 
   // === General ===
   { id: 'games_1', category: 'general', icon: '🎮', threshold: 1, statKey: 'totalGamesPlayed' },

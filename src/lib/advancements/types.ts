@@ -24,6 +24,7 @@ export interface PlayerStats {
   bestScorePerGame: number;
   totalGamesPlayed: number;
   bestCombo: number;
+  totalCombos: number;
   totalPerfectBeats: number;
   bestPerfectBeatsPerGame: number;
   worldsCleared: number;

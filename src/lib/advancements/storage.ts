@@ -14,6 +14,7 @@ function getDefaultStats(): PlayerStats {
     bestScorePerGame: 0,
     totalGamesPlayed: 0,
     bestCombo: 0,
+    totalCombos: 0,
     totalPerfectBeats: 0,
     bestPerfectBeatsPerGame: 0,
     worldsCleared: 0,
@@ -117,6 +118,7 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
   if (stats.lines > state.stats.bestLinesPerGame) {
     state.stats.bestLinesPerGame = stats.lines;
   }
+  state.stats.totalCombos += stats.bestCombo;
   if (stats.bestCombo > state.stats.bestCombo) {
     state.stats.bestCombo = stats.bestCombo;
   }
@@ -228,6 +230,7 @@ export function checkLiveGameAdvancements(sessionStats: GameEndStats): string[] 
   if (sessionStats.lines > projected.bestLinesPerGame) {
     projected.bestLinesPerGame = sessionStats.lines;
   }
+  projected.totalCombos += sessionStats.bestCombo;
   if (sessionStats.bestCombo > projected.bestCombo) {
     projected.bestCombo = sessionStats.bestCombo;
   }
