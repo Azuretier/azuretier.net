@@ -1386,6 +1386,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
                             </div>
                         </div>
 
+                        {/* Both competitors are judged against this same beat. */}
+                        <div className={styles.beatIndicator} aria-label="AI beat timing">
+                            <div className={styles.beatTrack}>
+                                <div className={styles.beatPerfectZoneLeft} />
+                                <div className={styles.beatPerfectZoneRight} />
+                                <div
+                                    className={`${styles.beatCursor} ${beatZone === 'perfect' ? styles.beatCursorPerfect : beatZone === 'great' ? styles.beatCursorGreat : beatZone === 'good' ? styles.beatCursorGood : ''}`}
+                                    style={{ left: `${beatIndicatorPos * 100}%` }}
+                                />
+                            </div>
+                            <div className={styles.beatLabel}>
+                                {beatZone !== 'miss' ? beatZone.toUpperCase() : 'BEAT'}
+                            </div>
+                        </div>
+
                         <div className={styles.statsRow}>
                             <span>Lines: {opponentLines}</span>
                             {opponentCombo >= 3 && <span>Combo: {opponentCombo}</span>}
