@@ -2,7 +2,9 @@
 // Smart AI opponent for ranked matches
 // Uses heuristic-based evaluation with configurable difficulty
 
-import { ARR, DAS } from '@/components/rhythmia/multiplayer-battle-engine';
+import { ARR, BPM, DAS, addGarbageLines } from '@/components/rhythmia/multiplayer-battle-engine';
+import { resolveBattlePlacement } from '@/components/rhythmia/multiplayer-battle-rules';
+import { getBeatJudgment } from '@/components/rhythmia/tetris/utils';
 import type { BoardCell } from '@/types/multiplayer';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -762,6 +764,7 @@ export class TetrisAIGame {
   private nextQueue: PieceType[] = [];
   private visibleRows: number;
   private hiddenRows: number;
+  private beatStartedAt = 0;
 
   constructor(
     seed: number,
@@ -813,6 +816,7 @@ export class TetrisAIGame {
 
   start(): void {
     this.paused = false;
+    this.beatStartedAt = Date.now();
     this.playNextPiece();
   }
 
@@ -930,13 +934,6 @@ export class TetrisAIGame {
 
   private beginPieceExecution(pieceType: PieceType): void {
     if (this.gameOver) return;
-
-    // Apply pending garbage before placing
-    if (this.pendingGarbage > 0) {
-      this.applyGarbage(this.pendingGarbage);
-      this.pendingGarbage = 0;
-      if (this.gameOver) return;
-    }
 
     const sourcePiece = createSpawnPiece(pieceType, this.hiddenRows);
     if (!isValid(sourcePiece, this.board)) {
@@ -1084,29 +1081,30 @@ export class TetrisAIGame {
       return;
     }
 
-    // Lock piece
+    const lastMovement = executionPlan.move.inputPlan.actions
+      .filter(action => action !== 'hardDrop' && action !== 'hold')
+      .at(-1);
+    const wasRotation = lastMovement === 'rotateCW' || lastMovement === 'rotateCCW';
+
+    // Lock piece, then receive pending garbage before clearing just like the player.
     const boardBeforeLock = this.board.map(row => [...row]);
     this.board = lockPiece(landedPiece, this.board);
+    if (this.pendingGarbage > 0) {
+      this.applyGarbage(this.pendingGarbage);
+      this.pendingGarbage = 0;
+    }
 
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
     this.board = clearedBoard;
-    const tSpin = detectTSpin(landedPiece, boardBeforeLock, landedPiece.type === 'T');
-
-    if (cleared > 0) {
-      this.combo++;
-      const base = [0, 100, 300, 500, 800][cleared];
-      this.score += base * Math.max(1, this.combo);
-      this.lines += cleared;
-
-      // Send garbage
-      const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(this.combo / 3);
-      if (garbageToSend > 0) {
-        this.callbacks.onGarbage(garbageToSend);
-      }
-    } else {
-      this.combo = 0;
-    }
+    const tSpin = detectTSpin(landedPiece, boardBeforeLock, wasRotation);
+    const beatInterval = 60000 / BPM;
+    const beatPhase = ((Date.now() - this.beatStartedAt) % beatInterval) / beatInterval;
+    const result = resolveBattlePlacement(cleared, tSpin, getBeatJudgment(beatPhase), this.combo);
+    this.combo = result.combo;
+    this.score += result.score;
+    this.lines += cleared;
+    if (result.garbage > 0) this.callbacks.onGarbage(result.garbage);
 
     // Emit board update
     this.callbacks.onBoardUpdate(
@@ -1149,13 +1147,6 @@ export class TetrisAIGame {
         return;
       }
     }
-    const newBoard = this.board.slice(rowsToRaise);
-    for (let i = 0; i < rowsToRaise; i++) {
-      const row: (BoardCell | null)[] = Array(W).fill({ color: '#555555' } as BoardCell);
-      const gap = Math.floor(this.garbageRng() * W);
-      row[gap] = null;
-      newBoard.push(row);
-    }
-    this.board = newBoard;
+    this.board = addGarbageLines(this.board, rowsToRaise, this.garbageRng);
   }
 }
