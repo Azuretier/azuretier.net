@@ -17,7 +17,7 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
-import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
+import { getBeatJudgment } from './tetris/utils';
 import { trackEvent } from '@/lib/analytics';
 import type { PieceType, Piece } from './multiplayer-battle-engine';
 import {
@@ -25,6 +25,7 @@ import {
     createRNG, create7Bag, getShape, createEmptyBoard, isValid,
     tryRotate, lockPiece, clearLines, getGhostY, addGarbageLines, detectTSpin,
 } from './multiplayer-battle-engine';
+import { resolveBattlePlacement } from './multiplayer-battle-rules';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
@@ -493,10 +494,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
         // Beat judgment
         const phase = beatPhaseRef.current;
         const timing = getBeatJudgment(phase);
-        const mult = getBeatMultiplier(timing);
+        const previousCombo = comboRef.current;
+
+        const placementResult = resolveBattlePlacement(
+            0,
+            'none',
+            timing,
+            comboRef.current,
+        );
+        comboRef.current = placementResult.combo;
 
         if (timing !== 'miss') {
-            comboRef.current++;
             const judgmentConfig = {
                 perfect: { text: 'PERFECT', color: '#00FFFF' },
                 great:   { text: 'GREAT',   color: '#76FF03' },
@@ -513,10 +521,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 vfx.emit({ type: 'feverStart', combo: comboRef.current });
             }
         } else {
-            if (comboRef.current >= 10) {
+            if (previousCombo >= 10) {
                 vfx.emit({ type: 'feverEnd' });
             }
-            comboRef.current = 0;
         }
 
         // T-Spin tracking
@@ -600,27 +607,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
             const boardCenterY = window.innerHeight / 2;
             spawnTerrainParticles(clearedRows, boardCenterX, boardCenterY);
 
-            // Base scoring with T-Spin bonuses
-            let base = [0, 100, 300, 500, 800][cleared];
-            if (tSpin === 'full') {
-                base += 400 + 400 * cleared;
-            } else if (tSpin === 'mini') {
-                base += 100 + 200 * cleared;
-            }
-
-            const pts = base * mult * Math.max(1, comboRef.current);
-            scoreRef.current += pts;
+            const clearResult = resolveBattlePlacement(cleared, tSpin, timing, previousCombo);
+            scoreRef.current += clearResult.score;
             linesRef.current += cleared;
-
-            // Enhanced garbage calculation with T-Spin bonus
-            let garbageToSend = [0, 0, 1, 2, 4][cleared];
-            if (tSpin === 'full') {
-                garbageToSend += [0, 2, 4, 6, 6][cleared]; // T-Spin bonus garbage
-            } else if (tSpin === 'mini') {
-                garbageToSend += 1;
-            }
-            garbageToSend += Math.floor(comboRef.current / 3);
-            sendGarbage(garbageToSend);
+            sendGarbage(clearResult.garbage);
             playLineClear(cleared, worldIdx);
 
             // VFX: line clear (offset rows by BUFFER_ZONE for VFX hook coordinate system)
