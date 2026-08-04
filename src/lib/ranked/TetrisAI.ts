@@ -5,6 +5,7 @@
 import { ARR, BPM, DAS, addGarbageLines } from '@/components/rhythmia/multiplayer-battle-engine';
 import { resolveBattlePlacement } from '@/components/rhythmia/multiplayer-battle-rules';
 import { getBeatJudgment } from '@/components/rhythmia/tetris/utils';
+import { getThemedColor } from '@/components/rhythmia/tetris/constants';
 import type { BoardCell } from '@/types/multiplayer';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -78,11 +79,6 @@ const AI_ACTION_MS = 50;
 const HOLD_ADVANTAGE_THRESHOLD = 0.5;
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
-
-const COLORS: Record<PieceType, string> = {
-  I: '#00F0F0', O: '#F0F000', T: '#A000F0', S: '#00F000',
-  Z: '#F00000', J: '#0000F0', L: '#F0A000',
-};
 
 const SHAPES: Record<PieceType, number[][][]> = {
   I: [
@@ -371,7 +367,7 @@ function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | nu
   const boardHeight = getBoardHeight(board);
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
+  const color = getThemedColor(piece.type, 'stage', 0);
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
       if (shape[y][x]) {
@@ -874,8 +870,25 @@ export class TetrisAIGame {
   }
 
   private emitActivePieceUpdate(): void {
+    const displayBoard = this.board.map(row => row.map(cell => cell ? { ...cell } : null));
+    if (this.activePiece) {
+      const shape = getShape(this.activePiece.type, this.activePiece.rotation);
+      const color = getThemedColor(this.activePiece.type, 'stage', 0);
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          const boardY = this.activePiece.y + y;
+          const boardX = this.activePiece.x + x;
+          if (shape[y][x] && boardY >= 0 && boardY < displayBoard.length && boardX >= 0 && boardX < W) {
+            displayBoard[boardY][boardX] = { color };
+          }
+        }
+      }
+    }
+    // Send every visible input step, not just locked pieces, so the rival uses
+    // the same live-moving board presentation as the player.
+    this.callbacks.onBoardUpdate(displayBoard, this.score, this.lines, this.combo, this.activePiece?.type, this.holdPiece);
     this.callbacks.onActivePieceUpdate?.(
-      this.board,
+      displayBoard,
       this.activePiece ? { ...this.activePiece } : null,
       this.holdPiece,
     );
@@ -1002,7 +1015,11 @@ export class TetrisAIGame {
         this.activePiece = { ...this.activePiece, y: getGhostY(this.activePiece, this.board) };
         this.inputStepIndex = executionPlan.move.inputPlan.steps.length;
         this.emitActivePieceUpdate();
-        this.scheduleInputPhase(executionPlan, AI_ACTION_MS);
+        // Wait for the next beat before locking, just like rhythm play rather
+        // than resolving immediately as ordinary Tetris would.
+        const beatInterval = 60000 / BPM;
+        const elapsedInBeat = (Date.now() - this.beatStartedAt) % beatInterval;
+        this.scheduleInputPhase(executionPlan, Math.max(AI_ACTION_MS, beatInterval - elapsedInBeat));
         return;
     }
 
