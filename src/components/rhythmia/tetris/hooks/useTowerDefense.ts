@@ -15,6 +15,7 @@ import {
 } from '../constants';
 import { generateWave, pickEnemyType, type TDWaveConfig } from '../td-waves';
 import { applyGarbageRise } from '../utils/boardUtils';
+import { distanceToSegment, selectProjectileTarget } from '../td-projectile-physics';
 
 let nextEnemyId = 0;
 let nextBulletId = 0;
@@ -393,6 +394,7 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
             statusOnHit: rollStatusEffect(),
             pierce: effects.towerPierce,
             hitEnemyIds: [],
+            createdAt: Date.now(),
         };
         setBullets(prev => [...prev, bullet]);
 
@@ -518,6 +520,9 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         for (const b of currentBullets) {
             if (!b.alive) continue;
 
+            // Never leave a missed projectile in the world indefinitely.
+            if (now - b.createdAt > 5000) continue;
+
             const newVy = b.vy - BULLET_GRAVITY * dt;
             const newX = b.x + b.vx * dt;
             const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
@@ -539,14 +544,16 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
                 continue;
             }
 
-            // Check collision with target enemy
+            // Swept collision prevents tunnelling between beat-sized physics updates.
             let bulletConsumed = false;
-            const targetEnemy = enemiesRef.current.find(
-                e => e.id === b.targetEnemyId && e.alive && !b.hitEnemyIds.includes(e.id)
+            const targetEnemy = selectProjectileTarget(
+                enemiesRef.current, b.targetEnemyId, b, b.hitEnemyIds,
             );
             if (targetEnemy) {
-                const targetDist = Math.sqrt(
-                    (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
+                const targetDist = distanceToSegment(
+                    targetEnemy,
+                    b,
+                    { x: newX, y: newY, z: newZ },
                 );
                 if (targetDist < BULLET_KILL_RADIUS) {
                     bulletConsumed = handleHit(b, targetEnemy);
@@ -554,17 +561,15 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
                 }
             }
 
-            // If target dead/missing, check any nearby enemy
-            if (!targetEnemy && !bulletConsumed) {
+            // Piercing shots can hit another enemy along the remainder of the segment.
+            if (!bulletConsumed) {
                 const alive = enemiesRef.current.filter(
                     e => e.alive && !damagedEnemyIds.has(e.id) && !b.hitEnemyIds.includes(e.id)
                 );
                 let hitEnemy: Enemy | null = null;
                 let bestDist = Infinity;
                 for (const e of alive) {
-                    const ed = Math.sqrt(
-                        (e.x - newX) ** 2 + (e.y - newY) ** 2 + (e.z - newZ) ** 2
-                    );
+                    const ed = distanceToSegment(e, b, { x: newX, y: newY, z: newZ });
                     if (ed < bestDist) {
                         bestDist = ed;
                         hitEnemy = e;

@@ -270,9 +270,11 @@ function MobEnemy({ pathPosition, enemyType, id, health, maxHealth, effects, fly
         prevPosRef.current = { x: s.x, z: s.z };
         groupRef.current.rotation.y = facingAngleRef.current;
 
-        // Animate mob limbs
+        // Animate only while interpolation is actually moving the mob. Stunned or
+        // stationary enemies now settle into their neutral pose between beats.
         if (mobRef.current) {
-            animateMob(mobRef.current, clock.elapsedTime, !isStunned);
+            const isMoving = !isStunned && (dx * dx + dz * dz > 0.000001);
+            animateMob(mobRef.current, clock.elapsedTime, isMoving);
         }
     });
 
