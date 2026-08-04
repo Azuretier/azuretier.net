@@ -22,6 +22,65 @@
     margin-top: 8px;
 }
 
+/* Ranked play uses a tournament-style, symmetrical stage. The local board is
+   framed by HOLD on the left and NEXT on the right, while both playfields stay
+   the same size and align along their top and bottom edges. */
+.rankedArena {
+    --ranked-board-width: clamp(220px, calc((100vh - 190px) / 2), 310px);
+    --ranked-rail-width: 72px;
+    max-width: 1080px;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.rankedArena .playerSide,
+.rankedArena .opponentSide {
+    flex: 1 1 0;
+    max-width: none;
+    justify-content: center;
+}
+
+.rankedArena .playerSide {
+    display: grid;
+    grid-template-columns: var(--ranked-rail-width) var(--ranked-board-width) var(--ranked-rail-width);
+    align-items: start;
+    gap: 10px;
+}
+
+.rankedArena .sidePanel {
+    display: contents;
+}
+
+.rankedArena .holdBox {
+    grid-column: 1;
+}
+
+.rankedArena .nextBox {
+    grid-column: 3;
+}
+
+.rankedArena .boardSection {
+    grid-column: 2;
+    grid-row: 1;
+    width: var(--ranked-board-width);
+}
+
+.rankedArena .opponentSide .boardSection {
+    width: var(--ranked-board-width);
+}
+
+.rankedArena .holdBox,
+.rankedArena .nextBox {
+    width: var(--ranked-rail-width);
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.52);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rankedArena .nextBox {
+    min-height: 192px;
+}
+
 /* Player Sides */
 .playerSide,
 .opponentSide {
@@ -689,6 +748,25 @@
     .previewCell {
         width: 10px;
         height: 10px;
+    }
+
+    .rankedArena {
+        --ranked-board-width: min(58vw, 270px);
+        --ranked-rail-width: 52px;
+        gap: 10px;
+    }
+
+    .rankedArena .playerSide {
+        display: grid;
+        grid-template-columns: var(--ranked-rail-width) var(--ranked-board-width) var(--ranked-rail-width);
+        width: auto;
+    }
+
+    .rankedArena .opponentSide .boardSection {
+        width: var(--ranked-board-width);
+        transform: scale(0.72);
+        transform-origin: top center;
+        margin-bottom: calc(var(--ranked-board-width) * -0.56);
     }
 }
 

@@ -384,6 +384,7 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
             gameSeed={gameSeed}
             onGameEnd={handleGameEnd}
             onBackToLobby={handleBackToLobby}
+            rankedLayout
           />
           {connectionStatus !== 'connected' && (
             <div className={styles.reconnectingOverlay}>

@@ -41,6 +41,7 @@ interface Props {
     gameSeed: number;
     onGameEnd: (winnerId: string) => void;
     onBackToLobby: () => void;
+    rankedLayout?: boolean;
 }
 
 // ===== Component =====
@@ -53,6 +54,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     gameSeed,
     onGameEnd,
     onBackToLobby,
+    rankedLayout = false,
 }) => {
     const opponent = opponents[0];
     const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
@@ -1231,7 +1233,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             {/* Floating item drops from terrain */}
             <FloatingItems items={floatingItems} />
 
-            <div className={styles.battleArena}>
+            <div className={`${styles.battleArena} ${rankedLayout ? styles.rankedArena : ''}`}>
                 {/* Player Side */}
                 <div className={styles.playerSide}>
                     {/* Hold + Next */}
