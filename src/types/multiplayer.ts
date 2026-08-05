@@ -512,6 +512,7 @@ export interface BoardUpdatePayload {
   combo: number;
   piece?: string;
   hold?: string | null;
+  nextQueue?: string[];
 }
 
 export interface GarbagePayload {

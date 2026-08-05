@@ -139,6 +139,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const opponentScoreRef = useRef(0);
     const opponentLinesRef = useRef(0);
     const opponentComboRef = useRef(0);
+    const opponentHoldRef = useRef<PieceType | null>(null);
+    const opponentNextQueueRef = useRef<PieceType[]>([]);
 
     // For re-rendering
     const [, forceRender] = useState(0);
@@ -332,6 +334,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             combo: comboRef.current,
             piece: pieceRef.current?.type,
             hold: holdRef.current,
+            nextQueue: nextQueueRef.current.slice(0, 3),
         });
     }, [sendRelay]);
 
@@ -794,6 +797,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                         opponentScoreRef.current = payload.score;
                         opponentLinesRef.current = payload.lines;
                         opponentComboRef.current = payload.combo ?? 0;
+                        opponentHoldRef.current = (payload.hold as PieceType | null | undefined) ?? null;
+                        opponentNextQueueRef.current = (payload.nextQueue as PieceType[] | undefined) ?? [];
                         render();
                     } else if (payload.event === 'garbage') {
                         pendingGarbageRef.current += payload.lines;
@@ -864,6 +869,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
         liveNotifiedRef.current = new Set();
         setToastIds([]);
         opponentBoardRef.current = createEmptyBoard();
+        opponentHoldRef.current = null;
+        opponentNextQueueRef.current = [];
         opponentScoreRef.current = 0;
         opponentLinesRef.current = 0;
         opponentComboRef.current = 0;
@@ -1121,6 +1128,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const opponentScore = opponentScoreRef.current;
     const opponentLines = opponentLinesRef.current;
     const opponentCombo = opponentComboRef.current;
+    const opponentHold = opponentHoldRef.current;
+    const opponentNextQueue = opponentNextQueueRef.current;
 
     // Beat phase indicator position (0 = start of beat, 1 = end)
     const beatIndicatorPos = beatPhaseDisplay;
@@ -1363,6 +1372,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
                 {/* Opponent Side */}
                 <div className={styles.opponentSide}>
+                    {/* AI/Opponent Hold + Next */}
+                    <div className={styles.sidePanel}>
+                        <div className={styles.holdBox}>
+                            <div className={styles.panelLabel}>HOLD</div>
+                            {opponentHold ? renderPreview(opponentHold) : <div className={styles.emptyPreview} />}
+                        </div>
+                        <div className={styles.nextBox}>
+                            <div className={styles.panelLabel}>NEXT</div>
+                            {opponentNextQueue.slice(0, 3).map((type, i) => (
+                                <div key={i} className={styles.nextItem}>
+                                    {renderPreview(type)}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className={styles.boardSection}>
                         <div className={styles.opponentHeader}>
                             <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
