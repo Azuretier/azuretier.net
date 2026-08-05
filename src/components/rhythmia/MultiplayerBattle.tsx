@@ -32,6 +32,45 @@ const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
     ssr: false,
 });
 
+
+const getFeverColor = (baseColor: string, cellIndex: number, combo: number, beatPhase: number) => {
+    if (combo < 10) return baseColor;
+
+    const comboVelocity = 1 + Math.min(1.5, (combo - 10) * 0.08);
+    const baseHue = (beatPhase * 360 * comboVelocity) % 360;
+    const row = Math.floor(cellIndex / W);
+    const col = cellIndex % W;
+    const boardWaveOffset = row * 13 + col * 23;
+
+    return `hsl(${(baseHue + boardWaveOffset) % 360}, 90%, 60%)`;
+};
+
+const getBattleCellStyle = (
+    cell: ({ color: string; ghost?: boolean } | null),
+    cellIndex: number,
+    combo: number,
+    beatPhase: number,
+    glowAlpha = '40'
+): React.CSSProperties => {
+    if (!cell) return {};
+
+    const color = getFeverColor(cell.color, cellIndex, combo, beatPhase);
+
+    if (cell.ghost) {
+        return {
+            borderColor: combo >= 10 ? `${color}CC` : `${color}40`,
+            boxShadow: combo >= 10 ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
+        };
+    }
+
+    return {
+        backgroundColor: color,
+        boxShadow: combo >= 10
+            ? `0 0 12px ${color}, 0 0 4px ${color}`
+            : `0 0 8px ${color}${glowAlpha}`,
+    };
+};
+
 interface Props {
     ws: WebSocket;
     roomCode: string;
@@ -1304,7 +1343,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     <div
                                         key={i}
                                         className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
-                                        style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
+                                        style={getBattleCellStyle(cell, i, combo, beatPhaseDisplay)}
                                     />
                                 ))}
                             </div>
@@ -1382,7 +1421,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     <div
                                         key={i}
                                         className={`${styles.cell} ${cell ? styles.filled : ''}`}
-                                        style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
+                                        style={getBattleCellStyle(cell, i, opponentCombo, beatPhaseDisplay, '30')}
                                     />
                                 ))}
                             </div>
