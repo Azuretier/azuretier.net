@@ -579,16 +579,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
         gamePiecesPlacedRef.current++;
 
         // Lock to board
-        let newBoard = lockPiece(piece, boardRef.current, worldIdx);
+        const newBoard = lockPiece(piece, boardRef.current, worldIdx);
 
-        // Apply pending garbage before clearing
-        const garbage = pendingGarbageRef.current;
-        if (garbage > 0) {
-            newBoard = addGarbageLines(newBoard, garbage, garbageRngRef.current);
-            pendingGarbageRef.current = 0;
-        }
-
-        // Clear lines
+        // Clear lines before applying pending garbage so the outgoing attack from this
+        // placement can cancel incoming garbage. Applying lethal queued garbage before
+        // cancellation caused ranked AI matches to top out even when the clear fully offset it.
         const { board: clearedBoard, cleared, clearedRows } = clearLines(newBoard);
         boardRef.current = clearedBoard;
 
@@ -654,7 +649,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
             const clearResult = resolveBattlePlacement(cleared, tSpin, timing, previousCombo);
             scoreRef.current += clearResult.score;
             linesRef.current += cleared;
-            sendGarbage(clearResult.garbage);
+
+            const canceledGarbage = Math.min(pendingGarbageRef.current, clearResult.garbage);
+            pendingGarbageRef.current -= canceledGarbage;
+            const outgoingGarbage = clearResult.garbage - canceledGarbage;
+            sendGarbage(outgoingGarbage);
             playLineClear(cleared, worldIdx);
 
             // VFX: line clear (offset rows by BUFFER_ZONE for VFX hook coordinate system)
@@ -665,6 +664,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 onBeat: timing !== 'miss',
                 combo: comboRef.current,
             });
+        }
+
+        if (cleared === 0 && pendingGarbageRef.current > 0) {
+            boardRef.current = addGarbageLines(boardRef.current, pendingGarbageRef.current, garbageRngRef.current);
+            pendingGarbageRef.current = 0;
         }
 
         pieceRef.current = null;

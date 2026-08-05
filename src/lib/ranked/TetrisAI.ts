@@ -1103,13 +1103,10 @@ export class TetrisAIGame {
       .at(-1);
     const wasRotation = lastMovement === 'rotateCW' || lastMovement === 'rotateCCW';
 
-    // Lock piece, then receive pending garbage before clearing just like the player.
+    // Lock piece, then clear before applying pending garbage so outgoing garbage
+    // from this placement can cancel incoming garbage using the same rules as the player.
     const boardBeforeLock = this.board.map(row => [...row]);
     this.board = lockPiece(landedPiece, this.board);
-    if (this.pendingGarbage > 0) {
-      this.applyGarbage(this.pendingGarbage);
-      this.pendingGarbage = 0;
-    }
 
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
@@ -1121,7 +1118,16 @@ export class TetrisAIGame {
     this.combo = result.combo;
     this.score += result.score;
     this.lines += cleared;
-    if (result.garbage > 0) this.callbacks.onGarbage(result.garbage);
+
+    const canceledGarbage = Math.min(this.pendingGarbage, result.garbage);
+    this.pendingGarbage -= canceledGarbage;
+    const outgoingGarbage = result.garbage - canceledGarbage;
+    if (outgoingGarbage > 0) this.callbacks.onGarbage(outgoingGarbage);
+
+    if (cleared === 0 && this.pendingGarbage > 0) {
+      this.applyGarbage(this.pendingGarbage);
+      this.pendingGarbage = 0;
+    }
 
     // Emit board update
     this.callbacks.onBoardUpdate(
