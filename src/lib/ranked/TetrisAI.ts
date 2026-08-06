@@ -737,6 +737,7 @@ export class TetrisAIGame {
   private score = 0;
   private lines = 0;
   private combo = 0;
+  private lastClearWasDifficult = false;
   private gameOver = false;
   private difficulty: AIDifficulty;
   private speedMultiplier = 1;
@@ -1114,7 +1115,18 @@ export class TetrisAIGame {
     const tSpin = detectTSpin(landedPiece, boardBeforeLock, wasRotation);
     const beatInterval = 60000 / BPM;
     const beatPhase = ((Date.now() - this.beatStartedAt) % beatInterval) / beatInterval;
-    const result = resolveBattlePlacement(cleared, tSpin, getBeatJudgment(beatPhase), this.combo);
+    const isDifficultClear = cleared > 0 && (cleared === 4 || tSpin !== 'none');
+    const isBackToBack = isDifficultClear && this.lastClearWasDifficult;
+    const isPerfectClear = cleared > 0 && this.board.every(row => row.every(cell => cell === null));
+    const result = resolveBattlePlacement(
+      cleared,
+      tSpin,
+      getBeatJudgment(beatPhase),
+      this.combo,
+      isBackToBack,
+      isPerfectClear,
+    );
+    if (cleared > 0) this.lastClearWasDifficult = isDifficultClear;
     this.combo = result.combo;
     this.score += result.score;
     this.lines += cleared;

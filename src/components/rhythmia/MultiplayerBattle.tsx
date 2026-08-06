@@ -586,6 +586,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         // cancellation caused ranked AI matches to top out even when the clear fully offset it.
         const { board: clearedBoard, cleared, clearedRows } = clearLines(newBoard);
         boardRef.current = clearedBoard;
+        const wasBackToBack = lastClearWasDifficultRef.current;
 
         // Compose and show action messages (T-spin, Tetris, Back-to-Back)
         {
@@ -646,7 +647,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
             const boardCenterY = window.innerHeight / 2;
             spawnTerrainParticles(clearedRows, boardCenterX, boardCenterY);
 
-            const clearResult = resolveBattlePlacement(cleared, tSpin, timing, previousCombo);
+            const isDifficultClear = cleared === 4 || tSpin !== 'none';
+            const isBackToBack = isDifficultClear && wasBackToBack;
+            const isPerfectClear = clearedBoard.every(row => row.every(cell => cell === null));
+            const clearResult = resolveBattlePlacement(
+                cleared,
+                tSpin,
+                timing,
+                previousCombo,
+                isBackToBack,
+                isPerfectClear,
+            );
             scoreRef.current += clearResult.score;
             linesRef.current += cleared;
 
