@@ -166,7 +166,8 @@ export function animateMob(mob: MobMeshData, time: number, isMoving: boolean): v
       if (mob.leftArm) mob.leftArm.rotation.z = -0.3 + wingFlap;
       if (mob.rightArm) mob.rightArm.rotation.z = 0.3 - wingFlap;
       // Gentle bob
-      mob.group.position.y = (mob.group.position.y || 0) + Math.sin(time * 4) * 0.03;
+      // Set an absolute offset: adding every frame caused bees to drift away.
+      mob.group.position.y = Math.sin(time * 4) * 0.03;
       break;
     }
   }
@@ -231,6 +232,7 @@ export function resetMobPose(mob: MobMeshData): void {
       if (mob.rightLeg) mob.rightLeg.rotation.x = 0;
       break;
     case 'bee':
+      mob.group.position.y = 0;
       if (mob.leftArm) mob.leftArm.rotation.z = 0;
       if (mob.rightArm) mob.rightArm.rotation.z = 0;
       break;

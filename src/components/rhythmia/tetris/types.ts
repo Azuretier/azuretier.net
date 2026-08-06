@@ -303,6 +303,7 @@ export type Bullet = {
     statusOnHit: TDStatusEffect | null;
     pierce: number;       // remaining pierces (0 = dies on first hit)
     hitEnemyIds: number[]; // enemies already hit by this bullet (for pierce)
+    createdAt: number;
 };
 
 // ===== Terrain Particle =====
